@@ -1,0 +1,9 @@
+const games=[
+{name:'Final Fantasy VII Rebirth',genre:'RPG',type:'rpg',meta:'PS5 • Digital rental',price:'Message for rate',image:'assets/final-fantasy-vii-rebirth.jpg'},
+{name:'The Witcher 3: Wild Hunt – Remastered',genre:'Adventure',type:'adventure',meta:'PS5 • Digital rental',price:'Message for rate',image:'assets/the-witcher-3-remastered.jpg'},
+{name:'Marvel’s Wolverine',genre:'Action',type:'action',meta:'PS5 • Digital rental',price:'Message for rate',image:'assets/marvel-wolverine.jpg'},
+{name:'Onimusha: Way of the Sword',genre:'Action',type:'action',meta:'PS5 • Digital rental',price:'Message for rate',image:'assets/onimusha-way-of-the-sword.jpg'}
+];
+const grid=document.querySelector('#gameGrid');const search=document.querySelector('#search');let filter='all';
+function render(){const q=search.value.toLowerCase();grid.innerHTML='';games.filter(g=>(filter==='all'||g.type===filter)&&g.name.toLowerCase().includes(q)).forEach(g=>{const card=document.createElement('article');card.className='game-card';card.innerHTML=`<div class="cover-wrap"><img class="cover" src="${g.image}" alt="${g.name}" loading="lazy"><span class="tag">${g.genre.toUpperCase()}</span></div><div class="game-info"><h3>${g.name}</h3><div class="meta">${g.meta}</div><div class="game-bottom"><span class="price">${g.price}</span><button class="rent" type="button">Rent Now ↗</button></div></div>`;card.querySelector('.rent').addEventListener('click',()=>{const msg=encodeURIComponent(`Hi JDigitalsRental! I want to rent ${g.name}. Please send me the available rental plans and instructions.`);window.location.href=`https://m.me/?ref=${msg}`});grid.appendChild(card)})}
+document.querySelectorAll('.filter').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filter=btn.dataset.filter;render()}));search.addEventListener('input',render);render();
