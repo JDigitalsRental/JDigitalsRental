@@ -604,3 +604,48 @@ footer {
     height: 42px;
   }
 }
+/* Better game cards on mobile */
+@media (max-width: 520px) {
+  .game-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .game-card {
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .cover {
+    aspect-ratio: 16 / 10;
+    object-position: center 20%;
+  }
+
+  .game-info {
+    padding: 18px;
+  }
+
+  .game-info h3 {
+    font-size: 19px;
+    margin-bottom: 8px;
+  }
+
+  .meta {
+    font-size: 13px;
+  }
+
+  .availability {
+    font-size: 12px;
+    padding: 12px;
+  }
+
+  .price {
+    font-size: 14px;
+  }
+
+  .rent {
+    padding: 12px 16px;
+    font-size: 12px;
+  }
+}
