@@ -427,6 +427,8 @@
       manageTitle.textContent =
         card.querySelector('h3').textContent;
 
+      manageWeekly.value = card.querySelector('.details').textContent.match(/Weekly:\s*₱(\d+)/)?.[1] || '';
+manageMonthly.value = card.querySelector('.details').textContent.match(/Monthly:\s*₱(\d+)/)?.[1] || '';
       manageModal.classList.add('active');
     });
   });
