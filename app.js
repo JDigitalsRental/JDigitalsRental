@@ -99,12 +99,8 @@ function render() {
       `;
 
       card.querySelector('.rent').addEventListener('click', () => {
-        window.open(
-          'https://www.facebook.com/share/1DajrF4mTy/',
-          '_blank',
-          'noopener,noreferrer'
-        );
-      });
+  openRentalModal(g);
+});
 
       grid.appendChild(card);
     });
