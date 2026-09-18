@@ -727,7 +727,7 @@ footer {
   justify-content: center;
 }
 
-.rental-modal.show {
+.rental-modal.active {
   display: flex;
 }
 
