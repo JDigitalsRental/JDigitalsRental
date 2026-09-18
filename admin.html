@@ -4,34 +4,315 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JDigitalsRental Management</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, #0b3b91 0, transparent 35%),
+        #020817;
+      color: #ffffff;
+      min-height: 100vh;
+    }
+
+    .header {
+      padding: 22px 18px;
+      border-bottom: 1px solid #17356b;
+      background: rgba(2, 8, 23, 0.92);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 0 20px rgba(22, 140, 255, 0.45);
+    }
+
+    .brand h1 {
+      font-size: 20px;
+    }
+
+    .brand h1 span {
+      color: #39a9ff;
+    }
+
+    .brand p {
+      color: #8294b8;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .container {
+      width: min(100% - 28px, 1000px);
+      margin: auto;
+      padding: 28px 0 50px;
+    }
+
+    .eyebrow {
+      color: #39a9ff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #91a0bf;
+      line-height: 1.6;
+      margin-bottom: 26px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .stat {
+      background: rgba(9, 24, 55, 0.75);
+      border: 1px solid #173d7c;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .stat span {
+      color: #8294b8;
+      font-size: 12px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 25px;
+      margin-top: 7px;
+    }
+
+    .section-title {
+      margin-bottom: 16px;
+      font-size: 21px;
+    }
+
+    .game-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .game-card {
+      background: linear-gradient(145deg, #081a3d, #041027);
+      border: 1px solid #173d7c;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .game-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .game-card h3 {
+      font-size: 17px;
+      line-height: 1.4;
+    }
+
+    .status {
+      white-space: nowrap;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 7px 9px;
+      border-radius: 20px;
+    }
+
+    .available {
+      color: #70ffb1;
+      background: rgba(19, 157, 88, 0.15);
+      border: 1px solid #16764a;
+    }
+
+    .rented {
+      color: #ff8d8d;
+      background: rgba(210, 45, 45, 0.15);
+      border: 1px solid #842f3a;
+    }
+
+    .details {
+      color: #8ea0c5;
+      font-size: 13px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .manage {
+      width: 100%;
+      border: 1px solid #168cff;
+      border-radius: 10px;
+      padding: 12px;
+      background: linear-gradient(135deg, #168cff, #0754d9);
+      color: #ffffff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .note {
+      margin-top: 25px;
+      padding: 15px;
+      border-radius: 12px;
+      background: rgba(22, 140, 255, 0.08);
+      border: 1px solid #173d7c;
+      color: #8ea0c5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (min-width: 700px) {
+      .stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .game-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-  <h1>🎮 JDigitalsRental Management</h1>
-  <p>Admin Dashboard</p>
+  <header class="header">
+    <div class="brand">
+      <img src="assets/jdigitals-logo.png"
+           alt="JDigitalsRental Logo"
+           class="logo">
 
-  <h2>Game Management</h2>
+      <div>
+        <h1>JDigitals<span>Rental</span></h1>
+        <p>Management Dashboard</p>
+      </div>
+    </div>
+  </header>
 
-  <div>
-    <h3>Final Fantasy VII Rebirth</h3>
-    <button>Manage Game</button>
-  </div>
+  <main class="container">
 
-  <div>
-    <h3>The Witcher 3: Wild Hunt – Remastered</h3>
-    <button>Manage Game</button>
-  </div>
+    <p class="eyebrow">ADMIN MANAGEMENT</p>
+    <h2 class="title">Game Dashboard</h2>
+    <p class="subtitle">
+      Manage your JDigitalsRental game library and availability.
+    </p>
 
-  <div>
-    <h3>Marvel’s Wolverine</h3>
-    <button>Manage Game</button>
-  </div>
+    <section class="stats">
+      <div class="stat">
+        <span>TOTAL GAMES</span>
+        <strong>4</strong>
+      </div>
 
-  <div>
-    <h3>Onimusha: Way of the Sword</h3>
-    <button>Manage Game</button>
-  </div>
+      <div class="stat">
+        <span>AVAILABLE</span>
+        <strong>2</strong>
+      </div>
+
+      <div class="stat">
+        <span>RENTED</span>
+        <strong>2</strong>
+      </div>
+
+      <div class="stat">
+        <span>WAITING LIST</span>
+        <strong>0</strong>
+      </div>
+    </section>
+
+    <h2 class="section-title">🎮 Game Management</h2>
+
+    <section class="game-grid">
+
+      <article class="game-card">
+        <div class="game-top">
+          <h3>Final Fantasy VII Rebirth</h3>
+          <span class="status available">● AVAILABLE</span>
+        </div>
+
+        <div class="details">
+          Weekly: ₱250<br>
+          Monthly: ₱500
+        </div>
+
+        <button class="manage">Manage Game</button>
+      </article>
+
+      <article class="game-card">
+        <div class="game-top">
+          <h3>The Witcher 3: Wild Hunt – Remastered</h3>
+          <span class="status available">● AVAILABLE</span>
+        </div>
+
+        <div class="details">
+          Weekly: ₱250<br>
+          Monthly: ₱500
+        </div>
+
+        <button class="manage">Manage Game</button>
+      </article>
+
+      <article class="game-card">
+        <div class="game-top">
+          <h3>Marvel’s Wolverine</h3>
+          <span class="status rented">● CURRENTLY RENTED</span>
+        </div>
+
+        <div class="details">
+          Weekly: ₱350<br>
+          Monthly: ₱700<br>
+          🏆 Trophy: September 23, 2026<br>
+          🎮 Non-Trophy: September 23, 2026
+        </div>
+
+        <button class="manage">Manage Game</button>
+      </article>
+
+      <article class="game-card">
+        <div class="game-top">
+          <h3>Onimusha: Way of the Sword</h3>
+          <span class="status rented">● CURRENTLY RENTED</span>
+        </div>
+
+        <div class="details">
+          Weekly: ₱350<br>
+          Monthly: ₱700<br>
+          🏆 Trophy: September 25, 2026<br>
+          🎮 Non-Trophy: September 20, 2026
+        </div>
+
+        <button class="manage">Manage Game</button>
+      </article>
+
+    </section>
+
+    <div class="note">
+      🔒 Management controls are currently in setup mode.
+      Secure editing and saving will be added next.
+    </div>
+
+  </main>
 
 </body>
 </html>
