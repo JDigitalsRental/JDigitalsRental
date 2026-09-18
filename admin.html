@@ -409,6 +409,37 @@
 
   </div>
   </div>
+<script>
+  const manageModal = document.querySelector('.manage-modal');
+  const manageButtons = document.querySelectorAll('.manage');
+  const manageTitle = document.getElementById('manageGameTitle');
+  const manageStatus = document.getElementById('manageStatus');
+  const manageWeekly = document.getElementById('manageWeekly');
+  const manageMonthly = document.getElementById('manageMonthly');
+  const manageTrophyDate = document.getElementById('manageTrophyDate');
+  const manageNonTrophyDate = document.getElementById('manageNonTrophyDate');
+  const saveGameChanges = document.getElementById('saveGameChanges');
 
+  manageButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const card = button.closest('.game-card');
+
+      manageTitle.textContent =
+        card.querySelector('h3').textContent;
+
+      manageModal.classList.add('active');
+    });
+  });
+
+  manageModal.addEventListener('click', event => {
+    if (event.target === manageModal) {
+      manageModal.classList.remove('active');
+    }
+  });
+
+  saveGameChanges.addEventListener('click', () => {
+    alert('Save system will be connected next. 🎮');
+  });
+</script>
 </body>
 </html>
