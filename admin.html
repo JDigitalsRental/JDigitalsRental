@@ -419,7 +419,29 @@
   const manageTrophyDate = document.getElementById('manageTrophyDate');
   const manageNonTrophyDate = document.getElementById('manageNonTrophyDate');
   const saveGameChanges = document.getElementById('saveGameChanges');
+function formatDateForInput(dateText) {
+  const months = {
+    January: '01',
+    February: '02',
+    March: '03',
+    April: '04',
+    May: '05',
+    June: '06',
+    July: '07',
+    August: '08',
+    September: '09',
+    October: '10',
+    November: '11',
+    December: '12'
+  };
 
+  const parts = dateText.replace(',', '').split(/\s+/);
+  const month = months[parts[0]];
+  const day = parts[1].padStart(2, '0');
+  const year = parts[2];
+
+  return `${year}-${month}-${day}`;
+}
   manageButtons.forEach(button => {
     button.addEventListener('click', () => {
       const card = button.closest('.game-card');
@@ -436,11 +458,11 @@ const trophyMatch = detailsText.match(/Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/
 const nonTrophyMatch = detailsText.match(/Non-Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/);
 
 manageTrophyDate.value = trophyMatch
-  ? new Date(trophyMatch[1]).toISOString().split('T')[0]
+  formatDateForInput(trophyMatch[1])
   : '';
 
 manageNonTrophyDate.value = nonTrophyMatch
-  ? new Date(nonTrophyMatch[1]).toISOString().split('T')[0]
+  formatDateForInput(nonTrophyMatch[1])
   : '';
       manageModal.classList.add('active');
     });
