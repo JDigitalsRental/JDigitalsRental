@@ -429,6 +429,7 @@
 
       manageWeekly.value = card.querySelector('.details').textContent.match(/Weekly:\s*₱(\d+)/)?.[1] || '';
 manageMonthly.value = card.querySelector('.details').textContent.match(/Monthly:\s*₱(\d+)/)?.[1] || '';
+     manageStatus.value = card.querySelector('.status').classList.contains('rented') ? 'currently-rented' : 'available';
       manageModal.classList.add('active');
     });
   });
