@@ -430,6 +430,18 @@
       manageWeekly.value = card.querySelector('.details').textContent.match(/Weekly:\s*₱(\d+)/)?.[1] || '';
 manageMonthly.value = card.querySelector('.details').textContent.match(/Monthly:\s*₱(\d+)/)?.[1] || '';
      manageStatus.value = card.querySelector('.status').classList.contains('rented') ? 'currently-rented' : 'available';
+      const detailsText = card.querySelector('.details').textContent;
+
+const trophyMatch = detailsText.match(/Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/);
+const nonTrophyMatch = detailsText.match(/Non-Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/);
+
+manageTrophyDate.value = trophyMatch
+  ? new Date(trophyMatch[1]).toISOString().split('T')[0]
+  : '';
+
+manageNonTrophyDate.value = nonTrophyMatch
+  ? new Date(nonTrophyMatch[1]).toISOString().split('T')[0]
+  : '';
       manageModal.classList.add('active');
     });
   });
