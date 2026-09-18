@@ -120,42 +120,106 @@ document.querySelectorAll('.filter').forEach(btn => {
 
 search.addEventListener('input', render);
 render();
+let selectedGame = null;
+let selectedPeriod = null;
+let selectedAccount = null;
+
+const rentalModal = document.getElementById('rentalModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalPrice = document.getElementById('modalPrice');
+const continueRental = document.getElementById('continueRental');
+
 function openRentalModal(g) {
-  const isRented = g.status === 'currently-rented';
+  selectedGame = g;
+  selectedPeriod = null;
+  selectedAccount = null;
 
-  const period = prompt(
-    `${isRented ? 'JOIN WAITING LIST' : 'RENT GAME'}\n\n` +
-    `${g.name}\n\n` +
-    `Choose rental period:\n` +
-    `1 - 1 Week (₱${g.weekly})\n` +
-    `2 - 1 Month (₱${g.monthly})`
-  );
+  modalTitle.textContent =
+    g.status === 'currently-rented'
+      ? `Join Waiting List — ${g.name}`
+      : `Rent — ${g.name}`;
 
-  if (period !== '1' && period !== '2') return;
+  modalPrice.textContent = '₱0';
 
-  const account = prompt(
-    `Choose account type:\n\n` +
-    `1 - Trophy\n` +
-    `2 - Non-Trophy`
-  );
+  document.querySelectorAll('.period-option, .account-option')
+    .forEach(btn => btn.classList.remove('active'));
 
-  if (account !== '1' && account !== '2') return;
+  continueRental.textContent =
+    g.status === 'currently-rented'
+      ? 'Join Waiting List'
+      : 'Continue to Facebook';
 
-  const duration = period === '1' ? '1 Week' : '1 Month';
-  const price = period === '1' ? g.weekly : g.monthly;
-  const accountType = account === '1' ? 'Trophy' : 'Non-Trophy';
+  rentalModal.classList.add('active');
+}
+
+document.querySelectorAll('.period-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-option')
+      .forEach(b => b.classList.remove('active'));
+
+    btn.classList.add('active');
+    selectedPeriod = btn.dataset.period;
+
+    const price =
+      selectedPeriod === 'week'
+        ? selectedGame.weekly
+        : selectedGame.monthly;
+
+    modalPrice.textContent = `₱${price}`;
+  });
+});
+
+document.querySelectorAll('.account-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.account-option')
+      .forEach(b => b.classList.remove('active'));
+
+    btn.classList.add('active');
+    selectedAccount = btn.dataset.account;
+  });
+});
+
+continueRental.addEventListener('click', () => {
+  if (!selectedGame || !selectedPeriod || !selectedAccount) {
+    alert('Please choose rental period and account type.');
+    return;
+  }
+
+  const duration =
+    selectedPeriod === 'week' ? '1 Week' : '1 Month';
+
+  const price =
+    selectedPeriod === 'week'
+      ? selectedGame.weekly
+      : selectedGame.monthly;
+
+  const accountType =
+    selectedAccount === 'trophy' ? 'Trophy' : 'Non-Trophy';
 
   const message =
-    `${isRented ? 'I want to join the waiting list for:' : 'I want to rent:'} ${g.name}\n` +
+    `${selectedGame.status === 'currently-rented'
+      ? 'I want to join the waiting list for:'
+      : 'I want to rent:'} ${selectedGame.name}\n` +
     `For how long: ${duration}\n` +
     `Trophy or Non-Trophy: ${accountType}\n` +
     `Price: ₱${price}`;
 
-  alert(message);
+  navigator.clipboard.writeText(message).catch(() => {});
+
+  alert(
+    message +
+    '\n\nYour rental details have been copied. Paste them in Messenger. 😊'
+  );
 
   window.open(
     'https://www.facebook.com/share/1DajrF4mTy/',
     '_blank',
     'noopener,noreferrer'
   );
-}
+});
+
+rentalModal.addEventListener('click', e => {
+  if (e.target === rentalModal) {
+    rentalModal.classList.remove('active');
+  }
+});
