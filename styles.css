@@ -713,3 +713,179 @@ footer {
     margin: 0 !important;
   }
 }
+/* ===== JDIGITALS RENTAL MODAL ===== */
+
+.rental-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 5, 20, 0.88);
+  backdrop-filter: blur(8px);
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.rental-modal.show {
+  display: flex;
+}
+
+.rental-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 22px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #071a45, #02091d);
+  border: 1px solid rgba(45, 156, 255, 0.35);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.modal-eyebrow {
+  color: #31a8ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.rental-modal-card h2 {
+  color: white;
+  font-size: 28px;
+  margin: 0 0 5px;
+}
+
+.rental-modal-card h3 {
+  color: #55baff;
+  font-size: 16px;
+  margin: 0 0 25px;
+}
+
+.modal-label {
+  color: #aab7d4;
+  font-size: 12px;
+  margin: 18px 0 8px;
+}
+
+.modal-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.period-option,
+.account-option {
+  padding: 13px 8px;
+  border-radius: 10px;
+  border: 1px solid #23426f;
+  background: #071329;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.period-option.active,
+.account-option.active {
+  border-color: #32aaff;
+  background: #0b3b75;
+  box-shadow: 0 0 15px rgba(50,170,255,0.25);
+}
+
+.modal-price {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(49,168,255,0.2);
+}
+
+.modal-price span {
+  color: #8ea0c2;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.modal-price strong {
+  color: #55d6ff;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.modal-label {
+  margin-top: 18px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.modal-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.period-option,
+.account-option {
+  width: 100%;
+  padding: 13px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.period-option.active,
+.account-option.active {
+  border-color: #32aaff;
+  background: #0b3b75;
+  box-shadow: 0 0 15px rgba(50,170,255,0.25);
+}
+
+#continueRental {
+  width: 100%;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .modal-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .period-option,
+  .account-option {
+    font-size: 12px;
+    padding: 12px 6px;
+  }
+
+  .modal-price strong {
+    font-size: 19px;
+  }
+}
