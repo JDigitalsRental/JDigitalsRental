@@ -475,8 +475,61 @@ manageNonTrophyDate.value = nonTrophyMatch
   });
 
   saveGameChanges.addEventListener('click', () => {
-    alert('Save system will be connected next. 🎮');
-  });
+  const card = [...document.querySelectorAll('.game-card')]
+    .find(card => card.querySelector('h3').textContent === manageTitle.textContent);
+
+  if (!card) return;
+
+  const weekly = manageWeekly.value;
+  const monthly = manageMonthly.value;
+  const status = manageStatus.value;
+
+  const formatDate = value => {
+    if (!value) return '';
+
+    const [year, month, day] = value.split('-');
+
+    const date = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day)
+    );
+
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const trophyDate = formatDate(manageTrophyDate.value);
+  const nonTrophyDate = formatDate(manageNonTrophyDate.value);
+
+  const statusElement = card.querySelector('.status');
+  const detailsElement = card.querySelector('.details');
+
+  if (status === 'currently-rented') {
+    statusElement.textContent = '● CURRENTLY RENTED';
+    statusElement.className = 'status rented';
+
+    detailsElement.innerHTML =
+      `Weekly: ₱${weekly}<br>` +
+      `Monthly: ₱${monthly}<br>` +
+      `🏆 Trophy: ${trophyDate}<br>` +
+      `🎮 Non-Trophy: ${nonTrophyDate}`;
+  } else {
+    statusElement.textContent = '● AVAILABLE';
+    statusElement.className = 'status available';
+
+    detailsElement.innerHTML =
+      `Weekly: ₱${weekly}<br>` +
+      `Monthly: ₱${monthly}`;
+  }
+
+  manageModal.classList.remove('active');
+
+  alert('Game updated successfully! 🎮');
+});
 </script>
 </body>
 </html>
