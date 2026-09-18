@@ -185,8 +185,8 @@ continueRental.addEventListener('click', () => {
     return;
   }
 
-  const duration =
-    selectedPeriod === 'week' ? '1 Week' : '1 Month';
+const duration =
+  selectedPeriod === 'week' ? '1 Week' : '1 Month';
 
   const price =
     selectedPeriod === 'week'
