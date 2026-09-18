@@ -193,6 +193,70 @@
         grid-template-columns: repeat(2, 1fr);
       }
     }
+.manage-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 5, 20, 0.88);
+  backdrop-filter: blur(8px);
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.manage-modal.active {
+  display: flex;
+}
+
+.manage-modal-card {
+  width: 100%;
+  max-width: 430px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #020817;
+  border: 1px solid #173d7c;
+  border-radius: 18px;
+  padding: 24px 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.manage-modal-card h2 {
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+
+.manage-modal-card label {
+  display: block;
+  margin: 14px 0 7px;
+  color: #8ea0c5;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.manage-modal-card input,
+.manage-modal-card select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #173d7c;
+  border-radius: 10px;
+  background: #06112b;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.save-game {
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #168cff, #0754d9);
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+    
   </style>
 </head>
 
@@ -313,6 +377,38 @@
     </div>
 
   </main>
+  <div id="manageModal" class="manage-modal">
+  <div class="manage-modal-card">
+
+    <button id="closeManageModal" class="manage-close" type="button">×</button>
+
+    <p class="eyebrow">GAME MANAGEMENT</p>
+    <h2 id="manageGameName">Manage Game</h2>
+
+    <label>Game Status</label>
+    <select id="manageStatus">
+      <option value="available">Available</option>
+      <option value="currently-rented">Currently Rented</option>
+    </select>
+
+    <label>Weekly Price</label>
+    <input id="manageWeekly" type="number" placeholder="Weekly price">
+
+    <label>Monthly Price</label>
+    <input id="manageMonthly" type="number" placeholder="Monthly price">
+
+    <label>🏆 Trophy Available Date</label>
+    <input id="manageTrophyDate" type="date">
+
+    <label>🎮 Non-Trophy Available Date</label>
+    <input id="manageNonTrophyDate" type="date">
+
+    <button id="saveGameChanges" class="save-game" type="button">
+      Save Changes
+    </button>
+
+  </div>
+  </div>
 
 </body>
 </html>
