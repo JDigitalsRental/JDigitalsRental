@@ -458,11 +458,11 @@ const trophyMatch = detailsText.match(/Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/
 const nonTrophyMatch = detailsText.match(/Non-Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/);
 
 manageTrophyDate.value = trophyMatch
-  formatDateForInput(trophyMatch[1])
+ ? formatDateForInput(trophyMatch[1])
   : '';
 
 manageNonTrophyDate.value = nonTrophyMatch
-  formatDateForInput(nonTrophyMatch[1])
+ ? formatDateForInput(nonTrophyMatch[1])
   : '';
       manageModal.classList.add('active');
     });
