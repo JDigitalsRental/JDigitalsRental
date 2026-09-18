@@ -868,8 +868,8 @@ footer {
   margin-top: 18px;
   padding: 14px 16px;
   border: 0;
-  background: linear-gradient(135deg, #168cff, #0754d9);
-color: white;
+  background: linear-gradient(135deg, #168cff, #0754d9) !important;
+color: white !important;
   
   border-radius: 10px;
   font-size: 14px;
