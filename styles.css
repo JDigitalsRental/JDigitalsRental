@@ -588,3 +588,19 @@ footer {
     margin-top: 20px;
   }
 }
+
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(22, 140, 255, 0.45));
+}
+
+@media (max-width: 520px) {
+  .brand-logo {
+    width: 42px;
+    height: 42px;
+  }
+}
