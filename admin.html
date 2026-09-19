@@ -401,7 +401,9 @@ justify-content: space-between;
     <button id="saveGameChanges" class="save-game" type="button">
       Save Changes
     </button>
-
+<button id="deleteGame" class="delete-game" type="button">
+  🗑️ Delete Game
+</button>
   </div>
   </div>
 <script>
@@ -417,6 +419,7 @@ const closeAddGameModal = document.getElementById('closeAddGameModal');
   const manageTrophyDate = document.getElementById('manageTrophyDate');
   const manageNonTrophyDate = document.getElementById('manageNonTrophyDate');
   const saveGameChanges = document.getElementById('saveGameChanges');
+  const deleteGame = document.getElementById('deleteGame');
   const saveNewGame = document.getElementById('saveNewGame');
 const newGameTitle = document.getElementById('newGameTitle');
 const newGameGenre = document.getElementById('newGameGenre');
@@ -588,7 +591,38 @@ await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games',
 
   alert('Game updated successfully! 🎮');
 });
-  
+
+  deleteGame.addEventListener('click', async () => {
+  const gameId = manageModal.dataset.gameId;
+  if (!gameId) return;
+
+  const gameName = manageTitle.textContent;
+
+  const confirmed = confirm(
+    `Are you sure you want to delete "${gameName}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await window.firestoreDeleteDoc(
+      window.firestoreDoc(
+        window.firestoreDb,
+        'games',
+        gameId
+      )
+    );
+
+    manageModal.classList.remove('active');
+
+    alert('Game deleted successfully! 🗑️');
+
+    window.location.reload();
+  } catch (error) {
+    console.error('Delete error:', error);
+    alert('Unable to delete game. Please try again.');
+  }
+});
 </script>
   <script type="module">
   import { initializeApp }
@@ -605,7 +639,8 @@ await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games',
   updateDoc,
 setDoc,
     collection,
-getDocs
+getDocs,
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -727,6 +762,7 @@ document.getElementById('waitingGames').textContent = 0;
 });
     window.firestoreDb = db;
 window.firestoreDoc = doc;
+    window.firestoreDeleteDoc = deleteDoc;
 window.firestoreUpdateDoc = updateDoc;
     window.firestoreSetDoc = setDoc;
   onAuthStateChanged(auth, (user) => {
