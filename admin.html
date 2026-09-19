@@ -466,6 +466,9 @@ justify-content: space-between;
   </div>
 <script>
   const manageModal = document.querySelector('.manage-modal');
+  const addGameModal = document.getElementById('addGameModal');
+const addGameButton = document.getElementById('addGameButton');
+const closeAddGameModal = document.getElementById('closeAddGameModal');
   const manageButtons = document.querySelectorAll('.manage');
   const manageTitle = document.getElementById('manageGameName');
   const manageStatus = document.getElementById('manageStatus');
@@ -497,6 +500,19 @@ function formatDateForInput(dateText) {
 
   return `${year}-${month}-${day}`;
 }
+  addGameButton.addEventListener('click', () => {
+  addGameModal.classList.add('active');
+});
+
+closeAddGameModal.addEventListener('click', () => {
+  addGameModal.classList.remove('active');
+});
+
+addGameModal.addEventListener('click', event => {
+  if (event.target === addGameModal) {
+    addGameModal.classList.remove('active');
+  }
+});
   manageButtons.forEach(button => {
     button.addEventListener('click', () => {
       const card = button.closest('.game-card');
