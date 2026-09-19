@@ -331,10 +331,14 @@ Please let me know when a slot becomes available. Thank you!`;
   );
 });
 
-window.addEventListener('upcomingGamesLoaded', () => {
-  renderUpcomingGames();
-});
+function checkUpcomingGames() {
+  if (window.upcomingGames) {
+    renderUpcomingGames();
+  } else {
+    setTimeout(checkUpcomingGames, 300);
+  }
+}
 
-if (window.upcomingGames) {
-  renderUpcomingGames();
-}              
+window.addEventListener('upcomingGamesLoaded', renderUpcomingGames);
+
+checkUpcomingGames();     
