@@ -486,7 +486,7 @@ manageNonTrophyDate.value = nonTrophyMatch
     }
   });
 
-  saveGameChanges.addEventListener('click', () => {
+  saveGameChanges.addEventListener('click', async () => {
   const card = [...document.querySelectorAll('.game-card')]
     .find(card => card.querySelector('h3').textContent === manageTitle.textContent);
 
@@ -516,7 +516,23 @@ manageNonTrophyDate.value = nonTrophyMatch
 
   const trophyDate = formatDate(manageTrophyDate.value);
   const nonTrophyDate = formatDate(manageNonTrophyDate.value);
+const gameDocIds = {
+  'Final Fantasy VII Rebirth': 'final-fantasy-vii-rebirth',
+  'The Witcher 3: Wild Hunt – Remastered': 'the-witcher-3-remastered',
+  'Marvel’s Wolverine': 'marvel-wolverine',
+  'Onimusha: Way of the Sword': 'onimusha-way-of-the-sword'
+};
 
+const gameId = gameDocIds[manageTitle.textContent];
+    if (!gameId) return;
+
+await updateDoc(doc(db, 'games', gameId), {
+  status: status,
+  weekly: Number(weekly),
+  monthly: Number(monthly),
+  trophyDate: status === 'currently-rented' ? trophyDate : 'Available Now',
+  nonTrophyDate: status === 'currently-rented' ? nonTrophyDate : 'Available Now'
+});
   const statusElement = card.querySelector('.status');
   const detailsElement = card.querySelector('.details');
 
@@ -611,6 +627,11 @@ document.querySelectorAll('.game-card').forEach(card => {
     onAuthStateChanged,
     signOut
   } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+  import {
+  getFirestore,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",
@@ -623,7 +644,7 @@ document.querySelectorAll('.game-card').forEach(card => {
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-
+const db = getFirestore(app);
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       window.location.href = "admin-login.html";
