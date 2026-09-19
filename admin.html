@@ -553,70 +553,12 @@ await updateDoc(doc(db, 'games', gameId), {
       `Weekly: ₱${weekly}<br>` +
       `Monthly: ₱${monthly}`;
   }
-const savedGames = JSON.parse(localStorage.getItem('jdigitalsGames') || '{}');
 
-savedGames[manageTitle.textContent] = {
-  status: status,
-  weekly: weekly,
-  monthly: monthly,
-  trophyDate: manageTrophyDate.value,
-  nonTrophyDate: manageNonTrophyDate.value
-};
-
-localStorage.setItem('jdigitalsGames', JSON.stringify(savedGames));
   manageModal.classList.remove('active');
 
   alert('Game updated successfully! 🎮');
 });
-  const savedGameData = JSON.parse(
-  localStorage.getItem('jdigitalsGames') || '{}'
-);
-
-document.querySelectorAll('.game-card').forEach(card => {
-  const gameName = card.querySelector('h3').textContent;
-  const saved = savedGameData[gameName];
-
-  if (!saved) return;
-
-  const statusElement = card.querySelector('.status');
-  const detailsElement = card.querySelector('.details');
-
-  const displayDate = value => {
-    if (!value) return '';
-
-    const [year, month, day] = value.split('-');
-
-    const date = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day)
-    );
-
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  if (saved.status === 'currently-rented') {
-    statusElement.textContent = '● CURRENTLY RENTED';
-    statusElement.className = 'status rented';
-
-    detailsElement.innerHTML =
-      `Weekly: ₱${saved.weekly}<br>` +
-      `Monthly: ₱${saved.monthly}<br>` +
-      `🏆 Trophy: ${displayDate(saved.trophyDate)}<br>` +
-      `🎮 Non-Trophy: ${displayDate(saved.nonTrophyDate)}`;
-  } else {
-    statusElement.textContent = '● AVAILABLE';
-    statusElement.className = 'status available';
-
-    detailsElement.innerHTML =
-      `Weekly: ₱${saved.weekly}<br>` +
-      `Monthly: ₱${saved.monthly}`;
-  }
-});
+  
 </script>
   <script type="module">
   import { initializeApp }
