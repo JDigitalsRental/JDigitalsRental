@@ -111,13 +111,15 @@
   
   
   <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
-  // Your web app's Firebase configuration
+  import {
+    getFirestore,
+    collection,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",
     authDomain: "jdigitalrental.firebaseapp.com",
@@ -127,43 +129,105 @@
     appId: "1:611741872259:web:01b3c2bec73d078999ebb6"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    onSnapshot(collection(db, "games"), (querySnapshot) => {
-  const firestoreGames = [];
-  const upcomingGames = [];
+  const db = getFirestore(app);
 
-  querySnapshot.forEach((doc) => {
-    const data = doc.data();
+  onSnapshot(
+    collection(db, "games"),
 
-    const gameData = {
-      id: doc.id,
-      ...data,
-      name: data.name || data.title || 'Untitled Game',
-      genre: data.genre || 'Other',
-      type: data.type || (data.genre ? data.genre.toLowerCase() : 'other'),
-      meta: data.meta || 'PS5 • Digital rental',
-      image: data.image || '',
-      status: data.status || 'available',
-      weekly: Number(data.weekly) || 0,
-      monthly: Number(data.monthly) || 0,
-      availableDate: data.availableDate || ''
-    };
+    (querySnapshot) => {
+      const firestoreGames = [];
+      const upcomingGames = [];
 
-    if (data.status === 'upcoming') {
-      upcomingGames.push(gameData);
-    } else {
-      firestoreGames.push(gameData);
+      querySnapshot.forEach((gameDoc) => {
+        const data = gameDoc.data();
+
+        const gameData = {
+          id: gameDoc.id,
+          ...data,
+
+          name:
+            data.name ||
+            data.title ||
+            "Untitled Game",
+
+          genre:
+            data.genre ||
+            "Other",
+
+          type:
+            data.type ||
+            (data.genre
+              ? data.genre.toLowerCase()
+              : "other"),
+
+          meta:
+            data.meta ||
+            "PS5 • Digital rental",
+
+          image:
+            data.image ||
+            "",
+
+          status:
+            data.status ||
+            "available",
+
+          weekly:
+            Number(data.weekly) || 0,
+
+          monthly:
+            Number(data.monthly) || 0,
+
+          trophyDate:
+            data.trophyDate ||
+            "Available Now",
+
+          nonTrophyDate:
+            data.nonTrophyDate ||
+            "Available Now",
+
+          availableDate:
+            data.availableDate ||
+            ""
+        };
+
+        if (gameData.status === "upcoming") {
+          upcomingGames.push(gameData);
+        } else {
+          firestoreGames.push(gameData);
+        }
+      });
+
+      window.firestoreGames = firestoreGames;
+      window.upcomingGames = upcomingGames;
+
+      console.log(
+        "Rental games loaded:",
+        firestoreGames
+      );
+
+      console.log(
+        "Upcoming games loaded:",
+        upcomingGames
+      );
+
+      window.dispatchEvent(
+        new Event("firestoreGamesLoaded")
+      );
+
+      window.dispatchEvent(
+        new Event("upcomingGamesLoaded")
+      );
+    },
+
+    (error) => {
+      console.error(
+        "Firestore loading error:",
+        error
+      );
     }
-  });
-
-  window.firestoreGames = firestoreGames;
-  window.upcomingGames = upcomingGames;
-
-  window.dispatchEvent(new Event("firestoreGamesLoaded"));
-  window.dispatchEvent(new Event("upcomingGamesLoaded"));
-});
+  );
   </script>
   <script src="app.js?v=12"></script>
 </body></html>
