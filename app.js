@@ -230,4 +230,111 @@ window.addEventListener("firestoreGamesLoaded", () => {
   games = window.firestoreGames;
   render();
 });
-                        
+          // ===============================
+// UPCOMING GAMES
+// ===============================
+
+function renderUpcomingGames() {
+  const upcomingContainer = document.getElementById('upcomingGames');
+
+  if (!upcomingContainer) return;
+
+  const upcomingGames = window.upcomingGames || [];
+
+  upcomingContainer.innerHTML = '';
+
+  if (upcomingGames.length === 0) {
+    upcomingContainer.innerHTML = `
+      <p class="empty-upcoming">
+        No upcoming games at the moment. 🎮
+      </p>
+    `;
+    return;
+  }
+
+  upcomingGames.forEach(game => {
+    const card = document.createElement('article');
+    card.className = 'game-card upcoming-game-card';
+
+    const availableDate = game.availableDate
+      ? game.availableDate
+      : 'Date to be announced';
+
+    card.innerHTML = `
+      <div class="cover">
+        <img
+          src="${game.image}"
+          alt="${game.name}"
+          loading="lazy"
+        >
+        <span class="badge upcoming-badge">
+          COMING SOON
+        </span>
+      </div>
+
+      <div class="game-info">
+        <p class="game-meta">
+          ${game.meta || 'PS5 • Digital rental'}
+        </p>
+
+        <h3>${game.name}</h3>
+
+        <p class="upcoming-date">
+          📅 Available for Rent:<br>
+          <strong>${availableDate}</strong>
+        </p>
+
+        <button
+          class="reserve-slot-button"
+          type="button"
+          data-game="${game.name}"
+          data-date="${availableDate}"
+        >
+          📝 Reserve Slot / Join Waiting List
+        </button>
+      </div>
+    `;
+
+    upcomingContainer.appendChild(card);
+  });
+}
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('.reserve-slot-button');
+
+  if (!button) return;
+
+  const gameName = button.dataset.game;
+  const availableDate = button.dataset.date;
+
+  const message =
+`Hi JDigitalsRental! 🎮
+
+I would like to reserve a slot / join the waiting list.
+
+Game: ${gameName}
+Available Date: ${availableDate}
+
+Please let me know when a slot becomes available. Thank you!`;
+
+  navigator.clipboard.writeText(message).catch(() => {});
+
+  alert(
+    'Your waiting list request has been copied! 🎮\n\n' +
+    'Continue to Facebook and send us the message.'
+  );
+
+  window.open(
+    'https://www.facebook.com/share/1DajrF4mTy/',
+    '_blank',
+    'noopener,noreferrer'
+  );
+});
+
+window.addEventListener('upcomingGamesLoaded', () => {
+  renderUpcomingGames();
+});
+
+if (window.upcomingGames) {
+  renderUpcomingGames();
+}              
