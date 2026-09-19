@@ -96,7 +96,19 @@
   const firestoreGames = [];
 
   querySnapshot.forEach((doc) => {
-    firestoreGames.push(doc.data());
+    const data = doc.data();
+
+firestoreGames.push({
+  ...data,
+  name: data.name || data.title || 'Untitled Game',
+  genre: data.genre || 'Other',
+  type: data.type || (data.genre ? data.genre.toLowerCase() : 'other'),
+  meta: data.meta || 'PS5 • Digital rental',
+  image: data.image || '',
+  status: data.status || 'available',
+  weekly: Number(data.weekly) || 0,
+  monthly: Number(data.monthly) || 0
+});
   });
 
   window.firestoreGames = firestoreGames;
