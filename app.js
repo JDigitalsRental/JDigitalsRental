@@ -261,37 +261,43 @@ function renderUpcomingGames() {
       : 'Date to be announced';
 
     card.innerHTML = `
-      <div class="cover">
+      <div class="cover-wrap">
         <img
+          class="cover"
           src="${game.image}"
           alt="${game.name}"
           loading="lazy"
         >
-        <span class="badge upcoming-badge">
-          COMING SOON
-        </span>
+        <span class="badge upcoming-badge">COMING SOON</span>
       </div>
 
       <div class="game-info">
-        <p class="game-meta">
-          ${game.meta || 'PS5 • Digital rental'}
-        </p>
-
         <h3>${game.name}</h3>
 
-        <p class="upcoming-date">
-          📅 Available for Rent:<br>
-          <strong>${availableDate}</strong>
-        </p>
+        <div class="meta">
+          ${game.meta || 'PS5 • Digital rental'}
+        </div>
 
-        <button
-          class="reserve-slot-button"
-          type="button"
-          data-game="${game.name}"
-          data-date="${availableDate}"
-        >
-          📝 Reserve Slot / Join Waiting List
-        </button>
+        <div class="availability upcoming-availability">
+          <strong>📅 AVAILABLE FOR RENT</strong>
+          <div>${availableDate}</div>
+        </div>
+
+        <div class="game-bottom">
+          <div class="price">
+            <span>WEEKLY: ₱${game.weekly}</span>
+            <span>MONTHLY: ₱${game.monthly}</span>
+          </div>
+
+          <button
+            class="reserve-slot-button"
+            type="button"
+            data-game="${game.name}"
+            data-date="${availableDate}"
+          >
+            📝 Reserve Slot / Join Waiting List
+          </button>
+        </div>
       </div>
     `;
 
