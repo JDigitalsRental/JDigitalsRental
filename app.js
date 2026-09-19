@@ -223,9 +223,8 @@ rentalModal.addEventListener('click', e => {
     rentalModal.classList.remove('active');
   }
 });
-if (window.firestoreGames) {
+window.addEventListener("firestoreGamesLoaded", () => {
   games = window.firestoreGames;
   render();
-}
-
+});
                         
