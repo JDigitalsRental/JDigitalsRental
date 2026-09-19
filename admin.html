@@ -391,6 +391,47 @@ justify-content: space-between;
     </div>
 
   </main>
+  <div id="addGameModal" class="manage-modal">
+  <div class="manage-modal-card">
+
+    <button id="closeAddGameModal" class="manage-close" type="button">×</button>
+
+    <p class="eyebrow">NEW GAME</p>
+    <h2>➕ Add New Game</h2>
+
+    <label>Game Title</label>
+    <input id="newGameTitle" type="text" placeholder="Game title">
+
+    <label>Genre</label>
+    <input id="newGameGenre" type="text" placeholder="Example: Action">
+
+    <label>Weekly Price</label>
+    <input id="newGameWeekly" type="number" placeholder="Weekly price">
+
+    <label>Monthly Price</label>
+    <input id="newGameMonthly" type="number" placeholder="Monthly price">
+
+    <label>Game Status</label>
+    <select id="newGameStatus">
+      <option value="available">Available</option>
+      <option value="currently-rented">Currently Rented</option>
+    </select>
+
+    <label>🏆 Trophy Available Date</label>
+    <input id="newGameTrophyDate" type="date">
+
+    <label>🎮 Non-Trophy Available Date</label>
+    <input id="newGameNonTrophyDate" type="date">
+
+    <label>Game Image</label>
+    <input id="newGameImage" type="text" placeholder="Example: assets/game-name.jpg">
+
+    <button id="saveNewGame" class="save-game" type="button">
+      ➕ Add Game
+    </button>
+
+  </div>
+  </div>
   <div id="manageModal" class="manage-modal">
   <div class="manage-modal-card">
 
