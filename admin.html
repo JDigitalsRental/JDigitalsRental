@@ -25,8 +25,19 @@
       padding: 22px 18px;
       border-bottom: 1px solid #17356b;
       background: rgba(2, 8, 23, 0.92);
+      display: flex;
+align-items: center;
+justify-content: space-between;
     }
-
+.logout-button {
+  border: 1px solid #168cff;
+  border-radius: 9px;
+  padding: 9px 14px;
+  background: rgba(22, 140, 255, 0.12);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
     .brand {
       display: flex;
       align-items: center;
@@ -273,6 +284,7 @@
         <p>Management Dashboard</p>
       </div>
     </div>
+    <button id="logoutButton" class="logout-button">Logout</button>
   </header>
 
   <main class="container">
