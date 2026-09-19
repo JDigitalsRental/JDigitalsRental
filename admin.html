@@ -465,7 +465,7 @@ justify-content: space-between;
   </div>
   </div>
 <script>
-  const manageModal = document.querySelector('.manage-modal');
+  const manageModal = document.getElementById('manageModal');
   const addGameModal = document.getElementById('addGameModal');
 const addGameButton = document.getElementById('addGameButton');
 const closeAddGameModal = document.getElementById('closeAddGameModal');
@@ -477,6 +477,15 @@ const closeAddGameModal = document.getElementById('closeAddGameModal');
   const manageTrophyDate = document.getElementById('manageTrophyDate');
   const manageNonTrophyDate = document.getElementById('manageNonTrophyDate');
   const saveGameChanges = document.getElementById('saveGameChanges');
+  const saveNewGame = document.getElementById('saveNewGame');
+const newGameTitle = document.getElementById('newGameTitle');
+const newGameGenre = document.getElementById('newGameGenre');
+const newGameWeekly = document.getElementById('newGameWeekly');
+const newGameMonthly = document.getElementById('newGameMonthly');
+const newGameStatus = document.getElementById('newGameStatus');
+const newGameTrophyDate = document.getElementById('newGameTrophyDate');
+const newGameNonTrophyDate = document.getElementById('newGameNonTrophyDate');
+const newGameImage = document.getElementById('newGameImage');
 function formatDateForInput(dateText) {
   const months = {
     January: '01',
@@ -544,7 +553,61 @@ manageNonTrophyDate.value = nonTrophyMatch
       manageModal.classList.remove('active');
     }
   });
+saveNewGame.addEventListener('click', async () => {
+  const title = newGameTitle.value.trim();
+  const genre = newGameGenre.value.trim();
+  const weekly = Number(newGameWeekly.value);
+  const monthly = Number(newGameMonthly.value);
+  const status = newGameStatus.value;
+  const image = newGameImage.value.trim();
 
+  if (!title || !genre || !weekly || !monthly || !image) {
+    alert('Please complete all required fields.');
+    return;
+  }
+
+  const gameId = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  const formatDate = value => {
+    if (!value) return '';
+    const [year, month, day] = value.split('-');
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const trophyDate = formatDate(newGameTrophyDate.value);
+  const nonTrophyDate = formatDate(newGameNonTrophyDate.value);
+
+  await window.firestoreSetDoc(
+    window.firestoreDoc(window.firestoreDb, 'games', gameId),
+    {
+      title: title,
+      genre: genre,
+      type: genre.toLowerCase(),
+      weekly: weekly,
+      monthly: monthly,
+      status: status,
+      image: image,
+      trophyDate: status === 'currently-rented'
+        ? trophyDate
+        : 'Available Now',
+      nonTrophyDate: status === 'currently-rented'
+        ? nonTrophyDate
+        : 'Available Now'
+    }
+  );
+
+  addGameModal.classList.remove('active');
+  alert('New game added successfully! 🎮');
+});
   saveGameChanges.addEventListener('click', async () => {
   const card = [...document.querySelectorAll('.game-card')]
     .find(card => card.querySelector('h3').textContent === manageTitle.textContent);
@@ -631,7 +694,8 @@ await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games',
   import {
   getFirestore,
   doc,
-  updateDoc
+  updateDoc,
+setDoc
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -649,6 +713,7 @@ const db = getFirestore(app);
     window.firestoreDb = db;
 window.firestoreDoc = doc;
 window.firestoreUpdateDoc = updateDoc;
+    window.firestoreSetDoc = setDoc;
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       window.location.href = "admin-login.html";
