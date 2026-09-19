@@ -1,4 +1,3 @@
-
 let games = [
   {
     name: 'Final Fantasy VII Rebirth',
@@ -48,47 +47,76 @@ let games = [
 
 const grid = document.querySelector('#gameGrid');
 const search = document.querySelector('#search');
+
 let filter = 'all';
+let selectedGame = null;
+let selectedPeriod = null;
+let selectedAccount = null;
 
 function render() {
-  const q = search.value.toLowerCase();
+  if (!grid) return;
+
+  const q = search ? search.value.toLowerCase() : '';
+
   grid.innerHTML = '';
-const gameCount = document.querySelector('#gameCount');
-if (gameCount) {
-  gameCount.textContent = `${games.length.toString().padStart(2, '0')} TITLES`;
-}
+
+  const gameCount = document.querySelector('#gameCount');
+
+  if (gameCount) {
+    gameCount.textContent =
+      `${games.length.toString().padStart(2, '0')} TITLES`;
+  }
+
   games
     .filter(g =>
       (filter === 'all' || g.type === filter) &&
-      g.name.toLowerCase().includes(q)
+      (g.name || '').toLowerCase().includes(q)
     )
     .forEach(g => {
       const card = document.createElement('article');
       card.className = 'game-card';
 
-      const availability = g.status === 'currently-rented'
-        ? `
-          <div class="availability rented">
-            <strong>🔴 CURRENTLY RENTED</strong>
-            <div>🏆 Trophy: Available on ${g.trophyDate}</div>
-            <div>🎮 Non-Trophy: Available on ${g.nonTrophyDate}</div>
-          </div>
-        `
-        : `
-          <div class="availability available">
-            <strong>🟢 AVAILABLE FOR RENT</strong>
-          </div>
-        `;
+      const availability =
+        g.status === 'currently-rented'
+          ? `
+            <div class="availability rented">
+              <strong>🔴 CURRENTLY RENTED</strong>
+              <div>
+                🏆 Trophy: Available on
+                ${g.trophyDate || 'Date to be announced'}
+              </div>
+              <div>
+                🎮 Non-Trophy: Available on
+                ${g.nonTrophyDate || 'Date to be announced'}
+              </div>
+            </div>
+          `
+          : `
+            <div class="availability available">
+              <strong>🟢 AVAILABLE FOR RENT</strong>
+            </div>
+          `;
 
       card.innerHTML = `
         <div class="cover-wrap">
-          <img class="cover" src="${g.image}" alt="${g.name}" loading="lazy">
-          <span class="tag">${g.genre.toUpperCase()}</span>
+          <img
+            class="cover"
+            src="${g.image}"
+            alt="${g.name}"
+            loading="lazy"
+          >
+          <span class="tag">
+            ${(g.genre || 'GAME').toUpperCase()}
+          </span>
         </div>
 
         <div class="game-info">
           <h3>${g.name}</h3>
-          <div class="meta">${g.meta}</div>
+
+          <div class="meta">
+            ${g.meta || 'PS5 • Digital rental'}
+          </div>
+
           ${availability}
 
           <div class="game-bottom">
@@ -96,24 +124,37 @@ if (gameCount) {
               <span>WEEKLY: ₱${g.weekly}</span>
               <span>MONTHLY: ₱${g.monthly}</span>
             </div>
-            <button class="rent" type="button">Rent Now ↗</button>
+
+            <button class="rent" type="button">
+              ${
+                g.status === 'currently-rented'
+                  ? 'Join Waiting List ↗'
+                  : 'Rent Now ↗'
+              }
+            </button>
           </div>
         </div>
       `;
 
-      card.querySelector('.rent').addEventListener('click', () => {
-  openRentalModal(g);
-});
+      const rentButton = card.querySelector('.rent');
+
+      if (rentButton) {
+        rentButton.addEventListener('click', () => {
+          openRentalModal(g);
+        });
+      }
 
       grid.appendChild(card);
     });
 }
 
+/* FILTERS */
+
 document.querySelectorAll('.filter').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter').forEach(b =>
-      b.classList.remove('active')
-    );
+    document.querySelectorAll('.filter').forEach(b => {
+      b.classList.remove('active');
+    });
 
     btn.classList.add('active');
     filter = btn.dataset.filter;
@@ -121,18 +162,34 @@ document.querySelectorAll('.filter').forEach(btn => {
   });
 });
 
-search.addEventListener('input', render);
+if (search) {
+  search.addEventListener('input', render);
+}
 
-let selectedGame = null;
-let selectedPeriod = null;
-let selectedAccount = null;
+/* RENTAL MODAL */
 
-const rentalModal = document.getElementById('rentalModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalPrice = document.getElementById('modalPrice');
-const continueRental = document.getElementById('continueRental');
+const rentalModal =
+  document.getElementById('rentalModal');
+
+const modalTitle =
+  document.getElementById('modalTitle');
+
+const modalPrice =
+  document.getElementById('modalPrice');
+
+const continueRental =
+  document.getElementById('continueRental');
 
 function openRentalModal(g) {
+  if (
+    !rentalModal ||
+    !modalTitle ||
+    !modalPrice ||
+    !continueRental
+  ) {
+    return;
+  }
+
   selectedGame = g;
   selectedPeriod = null;
   selectedAccount = null;
@@ -144,8 +201,11 @@ function openRentalModal(g) {
 
   modalPrice.textContent = '₱0';
 
-  document.querySelectorAll('.period-option, .account-option')
-    .forEach(btn => btn.classList.remove('active'));
+  document
+    .querySelectorAll('.period-option, .account-option')
+    .forEach(btn => {
+      btn.classList.remove('active');
+    });
 
   continueRental.textContent =
     g.status === 'currently-rented'
@@ -157,8 +217,12 @@ function openRentalModal(g) {
 
 document.querySelectorAll('.period-option').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (!selectedGame) return;
+
     document.querySelectorAll('.period-option')
-      .forEach(b => b.classList.remove('active'));
+      .forEach(b => {
+        b.classList.remove('active');
+      });
 
     btn.classList.add('active');
     selectedPeriod = btn.dataset.period;
@@ -168,78 +232,115 @@ document.querySelectorAll('.period-option').forEach(btn => {
         ? selectedGame.weekly
         : selectedGame.monthly;
 
-    modalPrice.textContent = `₱${price}`;
+    if (modalPrice) {
+      modalPrice.textContent = `₱${price}`;
+    }
   });
 });
 
 document.querySelectorAll('.account-option').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.account-option')
-      .forEach(b => b.classList.remove('active'));
+      .forEach(b => {
+        b.classList.remove('active');
+      });
 
     btn.classList.add('active');
     selectedAccount = btn.dataset.account;
   });
 });
 
-continueRental.addEventListener('click', () => {
-  if (!selectedGame || !selectedPeriod || !selectedAccount) {
-    alert('Please choose rental period and account type.');
-    return;
+if (continueRental) {
+  continueRental.addEventListener('click', () => {
+    if (
+      !selectedGame ||
+      !selectedPeriod ||
+      !selectedAccount
+    ) {
+      alert(
+        'Please choose rental period and account type.'
+      );
+      return;
+    }
+
+    const duration =
+      selectedPeriod === 'week'
+        ? '1 Week'
+        : '1 Month';
+
+    const price =
+      selectedPeriod === 'week'
+        ? selectedGame.weekly
+        : selectedGame.monthly;
+
+    const accountType =
+      selectedAccount === 'trophy'
+        ? 'Trophy'
+        : 'Non-Trophy';
+
+    const message =
+      `${
+        selectedGame.status === 'currently-rented'
+          ? 'I want to join the waiting list for:'
+          : 'I want to rent:'
+      } ${selectedGame.name}\n` +
+      `For how long: ${duration}\n` +
+      `Trophy or Non-Trophy: ${accountType}\n` +
+      `Price: ₱${price}`;
+
+    navigator.clipboard
+      .writeText(message)
+      .catch(() => {});
+
+    alert(
+      message +
+      '\n\nYour rental details have been copied. Paste them in Messenger. 😊'
+    );
+
+    window.open(
+      'https://www.facebook.com/share/1DajrF4mTy/',
+      '_blank',
+      'noopener,noreferrer'
+    );
+  });
+}
+
+if (rentalModal) {
+  rentalModal.addEventListener('click', e => {
+    if (e.target === rentalModal) {
+      rentalModal.classList.remove('active');
+    }
+  });
+}
+
+/* FIRESTORE RENTAL GAMES */
+
+function loadFirestoreGames() {
+  if (
+    Array.isArray(window.firestoreGames)
+  ) {
+    games = window.firestoreGames;
+    render();
   }
+}
 
-const duration =
-  selectedPeriod === 'week' ? '1 Week' : '1 Month';
+window.addEventListener(
+  'firestoreGamesLoaded',
+  loadFirestoreGames
+);
 
-  const price =
-    selectedPeriod === 'week'
-      ? selectedGame.weekly
-      : selectedGame.monthly;
-
-  const accountType =
-    selectedAccount === 'trophy' ? 'Trophy' : 'Non-Trophy';
-
-  const message =
-    `${selectedGame.status === 'currently-rented'
-      ? 'I want to join the waiting list for:'
-      : 'I want to rent:'} ${selectedGame.name}\n` +
-    `For how long: ${duration}\n` +
-    `Trophy or Non-Trophy: ${accountType}\n` +
-    `Price: ₱${price}`;
-
-  navigator.clipboard.writeText(message).catch(() => {});
-
-  alert(
-    message +
-    '\n\nYour rental details have been copied. Paste them in Messenger. 😊'
-  );
-
-  window.open(
-    'https://www.facebook.com/share/1DajrF4mTy/',
-    '_blank',
-    'noopener,noreferrer'
-  );
-});
-
-rentalModal.addEventListener('click', e => {
-  if (e.target === rentalModal) {
-    rentalModal.classList.remove('active');
-  }
-});
-window.addEventListener("firestoreGamesLoaded", () => {
-  games = window.firestoreGames;
-  render();
-});
-          // ===============================
-// UPCOMING GAMES
-// ===============================
+/* UPCOMING GAMES */
 
 function renderUpcomingGames() {
-  const upcomingContainer = document.getElementById('upcomingGames');
+  const upcomingContainer =
+    document.getElementById('upcomingGames');
 
   if (!upcomingContainer) return;
 
-  const upcomingGames = window.upcomingGames || [];
+  const upcomingGames =
+    Array.isArray(window.upcomingGames)
+      ? window.upcomingGames
+      : [];
 
   upcomingContainer.innerHTML = '';
 
@@ -253,12 +354,15 @@ function renderUpcomingGames() {
   }
 
   upcomingGames.forEach(game => {
-    const card = document.createElement('article');
-    card.className = 'game-card upcoming-game-card';
+    const card =
+      document.createElement('article');
 
-    const availableDate = game.availableDate
-      ? game.availableDate
-      : 'Date to be announced';
+    card.className =
+      'game-card upcoming-game-card';
+
+    const availableDate =
+      game.availableDate ||
+      'Date to be announced';
 
     card.innerHTML = `
       <div class="cover-wrap">
@@ -268,7 +372,10 @@ function renderUpcomingGames() {
           alt="${game.name}"
           loading="lazy"
         >
-        <span class="badge upcoming-badge">COMING SOON</span>
+
+        <span class="badge upcoming-badge">
+          COMING SOON
+        </span>
       </div>
 
       <div class="game-info">
@@ -279,14 +386,22 @@ function renderUpcomingGames() {
         </div>
 
         <div class="availability upcoming-availability">
-          <strong>📅 AVAILABLE FOR RENT</strong>
+          <strong>
+            📅 AVAILABLE FOR RENT
+          </strong>
+
           <div>${availableDate}</div>
         </div>
 
         <div class="game-bottom">
           <div class="price">
-            <span>WEEKLY: ₱${game.weekly}</span>
-            <span>MONTHLY: ₱${game.monthly}</span>
+            <span>
+              WEEKLY: ₱${game.weekly}
+            </span>
+
+            <span>
+              MONTHLY: ₱${game.monthly}
+            </span>
           </div>
 
           <button
@@ -305,13 +420,24 @@ function renderUpcomingGames() {
   });
 }
 
+window.addEventListener(
+  'upcomingGamesLoaded',
+  renderUpcomingGames
+);
+
+/* UPCOMING WAITING LIST BUTTON */
+
 document.addEventListener('click', event => {
-  const button = event.target.closest('.reserve-slot-button');
+  const button =
+    event.target.closest('.reserve-slot-button');
 
   if (!button) return;
 
-  const gameName = button.dataset.game;
-  const availableDate = button.dataset.date;
+  const gameName =
+    button.dataset.game;
+
+  const availableDate =
+    button.dataset.date;
 
   const message =
 `Hi JDigitalsRental! 🎮
@@ -323,7 +449,9 @@ Available Date: ${availableDate}
 
 Please let me know when a slot becomes available. Thank you!`;
 
-  navigator.clipboard.writeText(message).catch(() => {});
+  navigator.clipboard
+    .writeText(message)
+    .catch(() => {});
 
   alert(
     'Your waiting list request has been copied! 🎮\n\n' +
@@ -337,14 +465,18 @@ Please let me know when a slot becomes available. Thank you!`;
   );
 });
 
-function checkUpcomingGames() {
-  if (window.upcomingGames) {
-    renderUpcomingGames();
-  } else {
-    setTimeout(checkUpcomingGames, 300);
-  }
+/*
+  IMPORTANT:
+  Render immediately so the website never stays blank
+  while Firebase is loading.
+*/
+
+render();
+
+if (window.firestoreGames) {
+  loadFirestoreGames();
 }
 
-window.addEventListener('upcomingGamesLoaded', renderUpcomingGames);
-
-checkUpcomingGames();     
+if (window.upcomingGames) {
+  renderUpcomingGames();
+      }
