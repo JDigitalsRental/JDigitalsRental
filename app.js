@@ -1,5 +1,5 @@
 
-const games = [
+let games = [
   {
     name: 'Final Fantasy VII Rebirth',
     genre: 'RPG',
@@ -119,7 +119,7 @@ document.querySelectorAll('.filter').forEach(btn => {
 });
 
 search.addEventListener('input', render);
-render();
+
 let selectedGame = null;
 let selectedPeriod = null;
 let selectedAccount = null;
@@ -223,3 +223,9 @@ rentalModal.addEventListener('click', e => {
     rentalModal.classList.remove('active');
   }
 });
+if (window.firestoreGames) {
+  games = window.firestoreGames;
+  render();
+}
+
+                        
