@@ -892,3 +892,61 @@ color: white !important;
     font-size: 19px;
   }
 }
+/* =========================================
+   UPCOMING GAMES - SAME SIZE AS GAME CARDS
+   ========================================= */
+
+#upcomingGames {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 22px;
+}
+
+#upcomingGames .upcoming-game-card {
+  width: 100%;
+  overflow: hidden;
+}
+
+#upcomingGames .cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+
+#upcomingGames .cover img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+#upcomingGames .game-info {
+  padding: 18px;
+}
+
+#upcomingGames .upcoming-date {
+  margin: 14px 0;
+  line-height: 1.5;
+}
+
+#upcomingGames .reserve-slot-button {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  #upcomingGames {
+    grid-template-columns: 1fr;
+  }
+
+  #upcomingGames .cover {
+    aspect-ratio: 16 / 10;
+  }
+}
