@@ -296,25 +296,25 @@ justify-content: space-between;
     </p>
 
     <section class="stats">
-      <div class="stat">
-        <span>TOTAL GAMES</span>
-        <strong>4</strong>
-      </div>
+  <div class="stat">
+    <span>TOTAL GAMES</span>
+    <strong id="totalGames">0</strong>
+  </div>
 
-      <div class="stat">
-        <span>AVAILABLE</span>
-        <strong>2</strong>
-      </div>
+  <div class="stat">
+    <span>AVAILABLE</span>
+    <strong id="availableGames">0</strong>
+  </div>
 
-      <div class="stat">
-        <span>RENTED</span>
-        <strong>2</strong>
-      </div>
+  <div class="stat">
+    <span>RENTED</span>
+    <strong id="rentedGames">0</strong>
+  </div>
 
-      <div class="stat">
-        <span>WAITING LIST</span>
-        <strong>0</strong>
-      </div>
+  <div class="stat">
+    <span>WAITING LIST</span>
+    <strong id="waitingGames">0</strong>
+  </div>
     </section>
 
     <h2 class="section-title">🎮 Game Management</h2>
@@ -623,7 +623,26 @@ const db = getFirestore(app);
     async function loadAdminGames() {
   const snapshot = await getDocs(collection(db, 'games'));
   const gameGrid = document.querySelector('.game-grid');
+let totalGames = 0;
+let availableGames = 0;
+let rentedGames = 0;
 
+snapshot.forEach(gameDoc => {
+  const game = gameDoc.data();
+
+  totalGames++;
+
+  if (game.status === 'currently-rented') {
+    rentedGames++;
+  } else {
+    availableGames++;
+  }
+});
+
+document.getElementById('totalGames').textContent = totalGames;
+document.getElementById('availableGames').textContent = availableGames;
+document.getElementById('rentedGames').textContent = rentedGames;
+document.getElementById('waitingGames').textContent = 0;
   gameGrid.innerHTML = '';
 
   snapshot.forEach(gameDoc => {
