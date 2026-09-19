@@ -526,7 +526,7 @@ const gameDocIds = {
 const gameId = gameDocIds[manageTitle.textContent];
     if (!gameId) return;
 
-await updateDoc(doc(db, 'games', gameId), {
+await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games', gameId), {
   status: status,
   weekly: Number(weekly),
   monthly: Number(monthly),
@@ -587,6 +587,9 @@ await updateDoc(doc(db, 'games', gameId), {
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 const db = getFirestore(app);
+    window.firestoreDb = db;
+window.firestoreDoc = doc;
+window.firestoreUpdateDoc = updateDoc;
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       window.location.href = "admin-login.html";
