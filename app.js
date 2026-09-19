@@ -53,7 +53,10 @@ let filter = 'all';
 function render() {
   const q = search.value.toLowerCase();
   grid.innerHTML = '';
-
+const gameCount = document.querySelector('#gameCount');
+if (gameCount) {
+  gameCount.textContent = `${games.length.toString().padStart(2, '0')} TITLES`;
+}
   games
     .filter(g =>
       (filter === 'all' || g.type === filter) &&
