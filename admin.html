@@ -553,15 +553,8 @@ saveNewGame.addEventListener('click', async () => {
 
   const trophyDate = formatDate(manageTrophyDate.value);
   const nonTrophyDate = formatDate(manageNonTrophyDate.value);
-const gameDocIds = {
-  'Final Fantasy VII Rebirth': 'final-fantasy-vii-rebirth',
-  'The Witcher 3: Wild Hunt – Remastered': 'the-witcher-3-remastered',
-  'Marvel’s Wolverine': 'marvel-wolverine',
-  'Onimusha: Way of the Sword': 'onimusha-way-of-the-sword'
-};
-
-const gameId = gameDocIds[manageTitle.textContent];
-    if (!gameId) return;
+const gameId = manageModal.dataset.gameId;
+if (!gameId) return;
 
 await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games', gameId), {
   status: status,
@@ -668,7 +661,51 @@ const db = getFirestore(app);
     `;
   });
     }
-    
+    document.querySelector('.game-grid').addEventListener('click', (event) => {
+  const button = event.target.closest('.manage');
+
+  if (!button) return;
+
+  const card = button.closest('.game-card');
+
+  if (!card) return;
+
+  const title = card.querySelector('h3').textContent.trim();
+  const details = card.querySelector('.details').textContent;
+
+  const weeklyMatch = details.match(/Weekly:\s*₱(\d+)/);
+  const monthlyMatch = details.match(/Monthly:\s*₱(\d+)/);
+
+  manageTitle.textContent = title;
+  manageWeekly.value = weeklyMatch ? weeklyMatch[1] : '';
+  manageMonthly.value = monthlyMatch ? monthlyMatch[1] : '';
+
+  const statusElement = card.querySelector('.status');
+  const isRented = statusElement.classList.contains('rented');
+
+  manageStatus.value = isRented
+    ? 'currently-rented'
+    : 'available';
+
+  if (isRented) {
+    const trophyMatch = details.match(/Trophy:\s*([^\n]+)/);
+    const nonTrophyMatch = details.match(/Non-Trophy:\s*([^\n]+)/);
+
+    manageTrophyDate.value = trophyMatch
+      ? formatDateForInput(trophyMatch[1].trim())
+      : '';
+
+    manageNonTrophyDate.value = nonTrophyMatch
+      ? formatDateForInput(nonTrophyMatch[1].trim())
+      : '';
+  } else {
+    manageTrophyDate.value = '';
+    manageNonTrophyDate.value = '';
+  }
+
+  manageModal.dataset.gameId = card.dataset.id;
+  manageModal.classList.add('active');
+});
     window.firestoreDb = db;
 window.firestoreDoc = doc;
 window.firestoreUpdateDoc = updateDoc;
