@@ -75,6 +75,7 @@
   <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -90,6 +91,14 @@
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const querySnapshot = await getDocs(collection(db, "games"));
+    const firestoreGames = [];
+    querySnapshot.forEach((doc) => {
+        firestoreGames.push(doc.data());
+      });
+    window.firestoreGames = firestoreGames;
+    window.dispatchEvent(new Event("firestoreGamesLoaded"));
   </script>
   <script src="app.js?v=10"></script>
 </body></html>
