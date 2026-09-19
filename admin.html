@@ -352,10 +352,14 @@ justify-content: space-between;
     <input id="newGameMonthly" type="number" placeholder="Monthly price">
 
     <label>Game Status</label>
-    <select id="newGameStatus">
-      <option value="available">Available</option>
-      <option value="currently-rented">Currently Rented</option>
-    </select>
+<select id="newGameStatus">
+  <option value="available">Available</option>
+  <option value="currently-rented">Currently Rented</option>
+  <option value="upcoming">Upcoming Game</option>
+</select>
+
+<label>📅 Upcoming Game Available Date</label>
+<input id="newGameAvailableDate" type="date">
 
     <label>🏆 Trophy Available Date</label>
     <input id="newGameTrophyDate" type="date">
@@ -426,6 +430,7 @@ const newGameGenre = document.getElementById('newGameGenre');
 const newGameWeekly = document.getElementById('newGameWeekly');
 const newGameMonthly = document.getElementById('newGameMonthly');
 const newGameStatus = document.getElementById('newGameStatus');
+const newGameAvailableDate = document.getElementById('newGameAvailableDate');
 const newGameTrophyDate = document.getElementById('newGameTrophyDate');
 const newGameNonTrophyDate = document.getElementById('newGameNonTrophyDate');
 const newGameImage = document.getElementById('newGameImage');
@@ -484,6 +489,11 @@ saveNewGame.addEventListener('click', async () => {
     return;
   }
 
+  if (status === 'upcoming' && !newGameAvailableDate.value) {
+    alert('Please select the Upcoming Game Available Date.');
+    return;
+  }
+
   const gameId = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -491,8 +501,14 @@ saveNewGame.addEventListener('click', async () => {
 
   const formatDate = value => {
     if (!value) return '';
+
     const [year, month, day] = value.split('-');
-    const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+    const date = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day)
+    );
 
     return date.toLocaleDateString('en-US', {
       month: 'long',
@@ -503,9 +519,14 @@ saveNewGame.addEventListener('click', async () => {
 
   const trophyDate = formatDate(newGameTrophyDate.value);
   const nonTrophyDate = formatDate(newGameNonTrophyDate.value);
+  const availableDate = formatDate(newGameAvailableDate.value);
 
   await window.firestoreSetDoc(
-    window.firestoreDoc(window.firestoreDb, 'games', gameId),
+    window.firestoreDoc(
+      window.firestoreDb,
+      'games',
+      gameId
+    ),
     {
       title: title,
       genre: genre,
@@ -514,17 +535,33 @@ saveNewGame.addEventListener('click', async () => {
       monthly: monthly,
       status: status,
       image: image,
-      trophyDate: status === 'currently-rented'
-        ? trophyDate
-        : 'Available Now',
-      nonTrophyDate: status === 'currently-rented'
-        ? nonTrophyDate
-        : 'Available Now'
+
+      availableDate:
+        status === 'upcoming'
+          ? availableDate
+          : '',
+
+      trophyDate:
+        status === 'currently-rented'
+          ? trophyDate
+          : 'Available Now',
+
+      nonTrophyDate:
+        status === 'currently-rented'
+          ? nonTrophyDate
+          : 'Available Now'
     }
   );
 
   addGameModal.classList.remove('active');
-  alert('New game added successfully! 🎮');
+
+  alert(
+    status === 'upcoming'
+      ? 'Upcoming game added successfully! 🎮📅'
+      : 'New game added successfully! 🎮'
+  );
+
+  window.location.reload();
 });
   saveGameChanges.addEventListener('click', async () => {
   const card = [...document.querySelectorAll('.game-card')]
