@@ -323,66 +323,6 @@ justify-content: space-between;
 </button>
     <section class="game-grid">
 
-      <article class="game-card">
-        <div class="game-top">
-          <h3>Final Fantasy VII Rebirth</h3>
-          <span class="status available">● AVAILABLE</span>
-        </div>
-
-        <div class="details">
-          Weekly: ₱250<br>
-          Monthly: ₱500
-        </div>
-
-        <button class="manage">Manage Game</button>
-      </article>
-
-      <article class="game-card">
-        <div class="game-top">
-          <h3>The Witcher 3: Wild Hunt – Remastered</h3>
-          <span class="status available">● AVAILABLE</span>
-        </div>
-
-        <div class="details">
-          Weekly: ₱250<br>
-          Monthly: ₱500
-        </div>
-
-        <button class="manage">Manage Game</button>
-      </article>
-
-      <article class="game-card">
-        <div class="game-top">
-          <h3>Marvel’s Wolverine</h3>
-          <span class="status rented">● CURRENTLY RENTED</span>
-        </div>
-
-        <div class="details">
-          Weekly: ₱350<br>
-          Monthly: ₱700<br>
-          🏆 Trophy: September 23, 2026<br>
-          🎮 Non-Trophy: September 23, 2026
-        </div>
-
-        <button class="manage">Manage Game</button>
-      </article>
-
-      <article class="game-card">
-        <div class="game-top">
-          <h3>Onimusha: Way of the Sword</h3>
-          <span class="status rented">● CURRENTLY RENTED</span>
-        </div>
-
-        <div class="details">
-          Weekly: ₱350<br>
-          Monthly: ₱700<br>
-          🏆 Trophy: September 25, 2026<br>
-          🎮 Non-Trophy: September 20, 2026
-        </div>
-
-        <button class="manage">Manage Game</button>
-      </article>
-
     </section>
 
     <div class="note">
@@ -469,7 +409,7 @@ justify-content: space-between;
   const addGameModal = document.getElementById('addGameModal');
 const addGameButton = document.getElementById('addGameButton');
 const closeAddGameModal = document.getElementById('closeAddGameModal');
-  const manageButtons = document.querySelectorAll('.manage');
+  
   const manageTitle = document.getElementById('manageGameName');
   const manageStatus = document.getElementById('manageStatus');
   const manageWeekly = document.getElementById('manageWeekly');
@@ -522,32 +462,7 @@ addGameModal.addEventListener('click', event => {
     addGameModal.classList.remove('active');
   }
 });
-  manageButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const card = button.closest('.game-card');
-
-      manageTitle.textContent =
-        card.querySelector('h3').textContent;
-
-      manageWeekly.value = card.querySelector('.details').textContent.match(/Weekly:\s*₱(\d+)/)?.[1] || '';
-manageMonthly.value = card.querySelector('.details').textContent.match(/Monthly:\s*₱(\d+)/)?.[1] || '';
-     manageStatus.value = card.querySelector('.status').classList.contains('rented') ? 'currently-rented' : 'available';
-      const detailsText = card.querySelector('.details').textContent;
-
-const trophyMatch = detailsText.match(/Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/);
-const nonTrophyMatch = detailsText.match(/Non-Trophy:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/);
-
-manageTrophyDate.value = trophyMatch
- ? formatDateForInput(trophyMatch[1])
-  : '';
-
-manageNonTrophyDate.value = nonTrophyMatch
- ? formatDateForInput(nonTrophyMatch[1])
-  : '';
-      manageModal.classList.add('active');
-    });
-  });
-
+  
   manageModal.addEventListener('click', event => {
     if (event.target === manageModal) {
       manageModal.classList.remove('active');
@@ -695,7 +610,9 @@ await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games',
   getFirestore,
   doc,
   updateDoc,
-setDoc
+setDoc,
+    collection,
+getDocs
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -710,15 +627,60 @@ setDoc
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 const db = getFirestore(app);
+    async function loadAdminGames() {
+  const snapshot = await getDocs(collection(db, 'games'));
+  const gameGrid = document.querySelector('.game-grid');
+
+  gameGrid.innerHTML = '';
+
+  snapshot.forEach(gameDoc => {
+    const game = gameDoc.data();
+
+    const statusClass =
+      game.status === 'currently-rented' ? 'rented' : 'available';
+
+    const statusText =
+      game.status === 'currently-rented'
+        ? '● CURRENTLY RENTED'
+        : '● AVAILABLE';
+
+    const datesHtml =
+      game.status === 'currently-rented'
+        ? `<br>🏆 Trophy: ${game.trophyDate}<br>🎮 Non-Trophy: ${game.nonTrophyDate}`
+        : '';
+
+    gameGrid.innerHTML += `
+      <article class="game-card" data-id="${gameDoc.id}">
+        <div class="game-top">
+          <h3>${game.name || game.title || 'Untitled Game'}</h3>
+          <span class="status ${statusClass}">${statusText}</span>
+        </div>
+
+        <div class="details">
+          Weekly: ₱${game.weekly}<br>
+          Monthly: ₱${game.monthly}${datesHtml}
+        </div>
+
+        <button class="manage" type="button">
+          Manage Game
+        </button>
+      </article>
+    `;
+  });
+    }
+    
     window.firestoreDb = db;
 window.firestoreDoc = doc;
 window.firestoreUpdateDoc = updateDoc;
     window.firestoreSetDoc = setDoc;
   onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      window.location.href = "admin-login.html";
-    }
-  });
+  if (!user) {
+    window.location.href = "admin-login.html";
+    return;
+  }
+
+  loadAdminGames();
+});
 
   const logoutButton = document.getElementById("logoutButton");
 
