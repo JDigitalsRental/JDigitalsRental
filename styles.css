@@ -1629,3 +1629,45 @@ color: white !important;
 
   overflow: hidden !important;
 }
+/* MOBILE PRICE LABEL FINAL FIX */
+
+#upcomingGames .price {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+}
+
+#upcomingGames .price span {
+  padding: 7px 1px !important;
+  font-size: 0 !important;
+  overflow: visible !important;
+}
+
+#upcomingGames .price span::before,
+#upcomingGames .price span::after {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+#upcomingGames .price span:first-child::before {
+  content: "WEEKLY";
+  font-size: 6px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.2px !important;
+}
+
+#upcomingGames .price span:last-child::before {
+  content: "MONTHLY";
+  font-size: 6px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.3px !important;
+}
+
+#upcomingGames .price span:first-child::after {
+  content: attr(data-weekly);
+}
+
+#upcomingGames .price span:last-child::after {
+  content: attr(data-monthly);
+}
