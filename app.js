@@ -76,26 +76,34 @@ function render() {
       const card = document.createElement('article');
       card.className = 'game-card';
 
-      const availability =
-        g.status === 'currently-rented'
-          ? `
-            <div class="availability rented">
-              <strong>🔴 CURRENTLY RENTED</strong>
-              <div>
-                🏆 Trophy: Available on
-                ${g.trophyDate || 'Date to be announced'}
-              </div>
-              <div>
-                🎮 Non-Trophy: Available on
-                ${g.nonTrophyDate || 'Date to be announced'}
-              </div>
-            </div>
-          `
-          : `
-            <div class="availability available">
-              <strong>🟢 AVAILABLE FOR RENT</strong>
-            </div>
-          `;
+      const formatShortDate = (dateValue) => {
+  if (!dateValue || dateValue === 'Available Now') return '';
+
+  const date = new Date(dateValue);
+
+  if (isNaN(date.getTime())) return dateValue;
+
+  return date.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: '2-digit'
+  });
+};
+
+const availability =
+  g.status === 'currently-rented'
+    ? `
+      <div class="availability rented">
+        <strong>🔴 CURRENTLY RENTED</strong>
+        <div>🏆 Trophy: ${formatShortDate(g.trophyDate)}</div>
+        <div>🎮 Non-Trophy: ${formatShortDate(g.nonTrophyDate)}</div>
+      </div>
+    `
+    : `
+      <div class="availability available">
+        <strong>🟢 AVAILABLE</strong>
+      </div>
+    `;
 
       card.innerHTML = `
         <div class="cover-wrap">
