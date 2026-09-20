@@ -950,3 +950,57 @@ color: white !important;
     aspect-ratio: 16 / 10;
   }
 }
+/* =====================================
+   MOBILE GAME CARD — COMPACT SIZE
+   ===================================== */
+
+@media (max-width: 768px) {
+
+  /* Game cards */
+  .game-card {
+    max-width: 100%;
+  }
+
+  /* Regular + Upcoming game cover */
+  .game-card .cover-wrap {
+    height: 220px;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .game-card .cover-wrap .cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  /* Make card information more compact */
+  .game-card .game-info {
+    padding: 12px;
+  }
+
+  .game-card .game-info h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
+  }
+
+  .game-card .meta {
+    margin-bottom: 8px;
+  }
+
+  .game-card .availability {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .game-card .game-bottom {
+    margin-top: 10px;
+  }
+
+  /* Upcoming cards use same compact size */
+  .upcoming-game-card .cover-wrap {
+    height: 220px;
+  }
+}
