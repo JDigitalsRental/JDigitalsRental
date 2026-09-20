@@ -488,3 +488,49 @@ if (window.firestoreGames) {
 if (window.upcomingGames) {
   renderUpcomingGames();
       }
+
+/* AUTO SLIDE UPCOMING GAMES */
+
+let upcomingSlideTimer = null;
+
+function startUpcomingAutoSlide() {
+  const slider = document.getElementById('upcomingGames');
+
+  if (!slider) return;
+
+  if (upcomingSlideTimer) {
+    clearInterval(upcomingSlideTimer);
+  }
+
+  let currentIndex = 0;
+
+  upcomingSlideTimer = setInterval(() => {
+    const cards = slider.querySelectorAll('.upcoming-game-card');
+
+    if (cards.length <= 3) return;
+
+    currentIndex++;
+
+    if (currentIndex >= cards.length) {
+      currentIndex = 0;
+    }
+
+    const card = cards[currentIndex];
+
+    slider.scrollTo({
+      left: card.offsetLeft - slider.offsetLeft,
+      behavior: 'smooth'
+    });
+  }, 3500);
+}
+
+window.addEventListener(
+  'upcomingGamesLoaded',
+  () => {
+    setTimeout(startUpcomingAutoSlide, 300);
+  }
+);
+
+if (window.upcomingGames) {
+  setTimeout(startUpcomingAutoSlide, 300);
+}
