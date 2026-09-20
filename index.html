@@ -75,26 +75,55 @@
 
     <div class="modal-eyebrow">JDIGITALSRENTAL</div>
     <h2 id="modalTitle">Rent Game</h2>
-    
 
-    <p class="modal-label">Choose rental period</p>
+    <p class="modal-label">Choose Rental Period</p>
+
     <div class="modal-options">
       <button type="button" class="period-option" data-period="week">
-        1 Week
+        📅 1 Week
       </button>
+
       <button type="button" class="period-option" data-period="monthly">
-        1 Month
+        📅 1 Month
       </button>
     </div>
 
-    <p class="modal-label">Choose account type</p>
-    <div class="modal-options">
-      <button type="button" class="account-option" data-account="trophy">
-        🏆 Trophy
+    <p class="modal-label">Choose Account Type</p>
+
+    <div class="upcoming-account-cards">
+
+      <button
+        type="button"
+        class="account-option upcoming-account-option trophy-card"
+        data-account="trophy"
+      >
+        <span class="account-card-icon">🏆</span>
+
+        <span class="account-card-content">
+          <strong>Trophy</strong>
+          <small>KEEP YOUR PROGRESS</small>
+          <span>✓ Earn trophies</span>
+          <span>✓ Save your game progress</span>
+          <span>✓ For trophy hunters</span>
+        </span>
       </button>
-      <button type="button" class="account-option" data-account="non-trophy">
-        🎮 Non-Trophy
+
+      <button
+        type="button"
+        class="account-option upcoming-account-option non-trophy-card"
+        data-account="non-trophy"
+      >
+        <span class="account-card-icon">🎮</span>
+
+        <span class="account-card-content">
+          <strong>Non-Trophy</strong>
+          <small>JUST PLAY</small>
+          <span>✓ Play without trophies</span>
+          <span>✓ Same great experience</span>
+          <span>✓ Perfect for casual play</span>
+        </span>
       </button>
+
     </div>
 
     <div class="modal-price">
@@ -102,8 +131,12 @@
       <strong id="modalPrice">₱0</strong>
     </div>
 
-    <button id="continueRental" class="modal-continue" type="button">
-      Continue to Facebook
+    <button
+      id="continueRental"
+      class="modal-continue"
+      type="button"
+    >
+      📝 Continue to Facebook
     </button>
 
   </div>
