@@ -1876,3 +1876,109 @@ color: white !important;
     font-size: 8px;
   }
 }
+/* PREMIUM UPCOMING RENTAL PERIOD */
+
+.upcoming-period-options {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  margin-top: 10px !important;
+}
+
+.upcoming-period-option {
+  position: relative !important;
+  min-height: 76px !important;
+  padding: 12px 36px 12px 12px !important;
+  border: 2px solid #168cff !important;
+  border-radius: 16px !important;
+  background: linear-gradient(
+    135deg,
+    rgba(7, 55, 120, 0.65),
+    rgba(3, 17, 48, 0.95)
+  ) !important;
+  color: #ffffff !important;
+  font-size: 0 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  transition: 0.25s ease !important;
+}
+
+.upcoming-period-option::before {
+  display: block !important;
+  font-size: 25px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  color: #ffffff !important;
+}
+
+.upcoming-period-option::after {
+  position: absolute !important;
+  right: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 17px !important;
+  height: 17px !important;
+  border: 3px solid #28a8ff !important;
+  border-radius: 50% !important;
+  content: "" !important;
+  box-sizing: border-box !important;
+}
+
+.upcoming-period-option[data-period="week"]::before {
+  content: "📅  1 Week" !important;
+}
+
+.upcoming-period-option[data-period="month"]::before {
+  content: "📅  1 Month" !important;
+}
+
+.upcoming-period-option[data-period="week"] {
+  box-shadow: inset 0 0 20px rgba(25, 145, 255, 0.08) !important;
+}
+
+.upcoming-period-option[data-period="month"] {
+  box-shadow: inset 0 0 20px rgba(25, 145, 255, 0.08) !important;
+}
+
+.upcoming-period-option[data-period="week"] span,
+.upcoming-period-option[data-period="month"] span {
+  display: none !important;
+}
+
+.upcoming-period-option.active {
+  border-color: #ffd447 !important;
+  background: linear-gradient(
+    135deg,
+    rgba(115, 73, 0, 0.92),
+    rgba(43, 28, 0, 0.96)
+  ) !important;
+  box-shadow:
+    0 0 10px rgba(255, 210, 55, 0.9),
+    0 0 25px rgba(255, 180, 0, 0.45),
+    inset 0 0 22px rgba(255, 190, 0, 0.18) !important;
+}
+
+.upcoming-period-option.active::after {
+  border-color: #ffd447 !important;
+  background: #ffd447 !important;
+  box-shadow:
+    inset 0 0 0 4px #513500,
+    0 0 12px rgba(255, 210, 55, 0.9) !important;
+}
+
+@media (max-width: 480px) {
+  .upcoming-period-option {
+    min-height: 70px !important;
+    padding: 10px 32px 10px 10px !important;
+  }
+
+  .upcoming-period-option::before {
+    font-size: 18px !important;
+  }
+
+  .upcoming-period-option::after {
+    right: 10px !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
