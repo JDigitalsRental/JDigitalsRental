@@ -1599,3 +1599,33 @@ color: white !important;
   justify-content: center !important;
   text-align: center !important;
 }
+/* PREMIUM UPCOMING PRICE LABELS - DYNAMIC */
+
+#upcomingGames .price {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+  width: 100% !important;
+}
+
+#upcomingGames .price span {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+
+  padding: 7px 2px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  white-space: pre-line !important;
+  text-align: center !important;
+
+  font-size: 8px !important;
+  line-height: 1.35 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+
+  overflow: hidden !important;
+}
