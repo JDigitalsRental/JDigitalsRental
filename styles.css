@@ -1137,3 +1137,24 @@ color: white !important;
     line-height: 1.1;
   }
 }
+/* Extra compact PS5 game cards */
+@media (max-width: 600px) {
+  #gameGrid .game-card {
+    align-self: start;
+    height: auto;
+    min-height: 0;
+  }
+
+  #gameGrid .game-info {
+    padding-bottom: 8px;
+  }
+
+  #gameGrid .availability {
+    height: auto;
+    min-height: 0;
+  }
+
+  #gameGrid .game-bottom {
+    margin-bottom: 0;
+  }
+}
