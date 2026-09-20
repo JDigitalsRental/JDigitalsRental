@@ -453,6 +453,7 @@ const continueUpcomingReservation =
 let selectedUpcomingGame = '';
 let selectedUpcomingDate = '';
 let selectedUpcomingAccount = '';
+let selectedUpcomingPeriod = '';
 
 /* OPEN RESERVATION MODAL */
 
@@ -469,6 +470,7 @@ document.addEventListener('click', event => {
     button.dataset.date || '';
 
   selectedUpcomingAccount = '';
+selectedUpcomingPeriod = '';
 
   if (upcomingReservationGame) {
     upcomingReservationGame.textContent =
@@ -484,7 +486,28 @@ document.addEventListener('click', event => {
     .forEach(btn => {
       btn.classList.remove('active');
     });
+document
+  .querySelectorAll('.upcoming-period-option')
+  .forEach(btn => {
+    btn.classList.remove('active');
+  });
 
+document
+  .querySelectorAll('.upcoming-period-option')
+  .forEach(btn => {
+    btn.addEventListener('click', () => {
+      document
+        .querySelectorAll('.upcoming-period-option')
+        .forEach(b => {
+          b.classList.remove('active');
+        });
+
+      btn.classList.add('active');
+
+      selectedUpcomingPeriod =
+        btn.dataset.period;
+    });
+  });
   if (upcomingReservationModal) {
     upcomingReservationModal.classList.add('active');
   }
@@ -546,31 +569,44 @@ if (continueUpcomingReservation) {
     .trim() || '';
 
       if (!customerName) {
-        alert(
-          'Please enter your First and Last Name.'
-        );
-        return;
-      }
+  alert(
+    'Please enter your First and Last Name.'
+  );
+  return;
+}
 
-      if (!selectedUpcomingAccount) {
-        alert(
-          'Please choose Trophy or Non-Trophy.'
-        );
-        return;
-      }
+if (!selectedUpcomingPeriod) {
+  alert(
+    'Please choose 1 Week or 1 Month.'
+  );
+  return;
+}
 
-      const accountType =
-        selectedUpcomingAccount === 'trophy'
-          ? 'Trophy'
-          : 'Non-Trophy';
+if (!selectedUpcomingAccount) {
+  alert(
+    'Please choose Trophy or Non-Trophy.'
+  );
+  return;
+}
 
-      const message =
+const rentalPeriod =
+  selectedUpcomingPeriod === 'week'
+    ? '1 Week'
+    : '1 Month';
+
+const accountType =
+  selectedUpcomingAccount === 'trophy'
+    ? 'Trophy'
+    : 'Non-Trophy';
+
+const message =
 `Hi JDigitalsRental! 🎮
 
 I would like to reserve a slot / join the waiting list.
 
 First and Last Name: ${customerName}
 Game: ${selectedUpcomingGame}
+Rental Period: ${rentalPeriod}
 Account Type: ${accountType}
 Available Date: ${selectedUpcomingDate}
 
