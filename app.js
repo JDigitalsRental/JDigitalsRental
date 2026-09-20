@@ -433,7 +433,28 @@ window.addEventListener(
   renderUpcomingGames
 );
 
-/* UPCOMING WAITING LIST BUTTON */
+/* UPCOMING GAME RESERVATION */
+
+const upcomingReservationModal =
+  document.getElementById('upcomingReservationModal');
+
+const closeUpcomingReservationModal =
+  document.getElementById('closeUpcomingReservationModal');
+
+const upcomingReservationGame =
+  document.getElementById('upcomingReservationGame');
+
+const upcomingReservationCustomerName =
+  document.getElementById('upcomingReservationCustomerName');
+
+const continueUpcomingReservation =
+  document.getElementById('continueUpcomingReservation');
+
+let selectedUpcomingGame = '';
+let selectedUpcomingDate = '';
+let selectedUpcomingAccount = '';
+
+/* OPEN RESERVATION MODAL */
 
 document.addEventListener('click', event => {
   const button =
@@ -441,38 +462,140 @@ document.addEventListener('click', event => {
 
   if (!button) return;
 
-  const gameName =
-    button.dataset.game;
+  selectedUpcomingGame =
+    button.dataset.game || '';
 
-  const availableDate =
-    button.dataset.date;
+  selectedUpcomingDate =
+    button.dataset.date || '';
 
-  const message =
+  selectedUpcomingAccount = '';
+
+  if (upcomingReservationGame) {
+    upcomingReservationGame.textContent =
+      selectedUpcomingGame;
+  }
+
+  if (upcomingReservationCustomerName) {
+    upcomingReservationCustomerName.value = '';
+  }
+
+  document
+    .querySelectorAll('.upcoming-account-option')
+    .forEach(btn => {
+      btn.classList.remove('active');
+    });
+
+  if (upcomingReservationModal) {
+    upcomingReservationModal.classList.add('active');
+  }
+});
+
+/* TROPHY / NON-TROPHY SELECTION */
+
+document
+  .querySelectorAll('.upcoming-account-option')
+  .forEach(btn => {
+    btn.addEventListener('click', () => {
+      document
+        .querySelectorAll('.upcoming-account-option')
+        .forEach(b => {
+          b.classList.remove('active');
+        });
+
+      btn.classList.add('active');
+
+      selectedUpcomingAccount =
+        btn.dataset.account;
+    });
+  });
+
+/* CLOSE BUTTON */
+
+if (closeUpcomingReservationModal) {
+  closeUpcomingReservationModal.addEventListener(
+    'click',
+    () => {
+      upcomingReservationModal.classList.remove('active');
+    }
+  );
+}
+
+/* CLOSE WHEN CLICKING OUTSIDE */
+
+if (upcomingReservationModal) {
+  upcomingReservationModal.addEventListener(
+    'click',
+    event => {
+      if (event.target === upcomingReservationModal) {
+        upcomingReservationModal.classList.remove('active');
+      }
+    }
+  );
+}
+
+/* CONTINUE TO FACEBOOK */
+
+if (continueUpcomingReservation) {
+  continueUpcomingReservation.addEventListener(
+    'click',
+    () => {
+      const customerName =
+        upcomingReservationCustomerName
+          ? upcomingReservationCustomerName.value.trim()
+          : '';
+
+      if (!customerName) {
+        alert(
+          'Please enter your First and Last Name.'
+        );
+        return;
+      }
+
+      if (!selectedUpcomingAccount) {
+        alert(
+          'Please choose Trophy or Non-Trophy.'
+        );
+        return;
+      }
+
+      const accountType =
+        selectedUpcomingAccount === 'trophy'
+          ? 'Trophy'
+          : 'Non-Trophy';
+
+      const message =
 `Hi JDigitalsRental! 🎮
 
 I would like to reserve a slot / join the waiting list.
 
-Game: ${gameName}
-Available Date: ${availableDate}
+First and Last Name: ${customerName}
+Game: ${selectedUpcomingGame}
+Account Type: ${accountType}
+Available Date: ${selectedUpcomingDate}
 
-Please let me know when a slot becomes available. Thank you!`;
+📌 I understand that my First and Last Name should match the name shown on my Facebook account so JDigitalsRental can easily find and contact me when it is my turn to rent.
 
-  navigator.clipboard
-    .writeText(message)
-    .catch(() => {});
+Thank you!`;
 
-  alert(
-    'Your waiting list request has been copied! 🎮\n\n' +
-    'Continue to Facebook and send us the message.'
+      navigator.clipboard
+        .writeText(message)
+        .catch(() => {});
+
+      alert(
+        'Your reservation details have been copied! 🎮\n\n' +
+        'Continue to Facebook and paste the message in Messenger.'
+      );
+
+      window.open(
+        'https://www.facebook.com/share/1DajrF4mTy/',
+        '_blank',
+        'noopener,noreferrer'
+      );
+
+      upcomingReservationModal.classList.remove('active');
+    }
   );
-
-  window.open(
-    'https://www.facebook.com/share/1DajrF4mTy/',
-    '_blank',
-    'noopener,noreferrer'
-  );
-});
-
+}
 /*
   IMPORTANT:
   Render immediately so the website never stays blank
