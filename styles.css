@@ -1679,4 +1679,15 @@ color: white !important;
   content: none !important;
   display: none !important;
 }
+/* FINAL UPCOMING PRICE FIX */
 
+#upcomingGames .price span {
+  font-size: 8px !important;
+  color: #62c7ff !important;
+}
+
+#upcomingGames .price span::before,
+#upcomingGames .price span::after {
+  content: none !important;
+  display: none !important;
+}
