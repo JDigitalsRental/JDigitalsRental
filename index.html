@@ -288,7 +288,8 @@
   gameId,
   gameName,
   customerName,
-  accountType
+  accountType,
+  rentalPeriod
 }) {
   try {
     await addDoc(collection(db, "waitingList"), {
@@ -296,6 +297,7 @@
       gameName: gameName || "Unknown Game",
       customerName: customerName || "",
       accountType: accountType || "",
+      rentalPeriod: rentalPeriod || "",
       status: "waiting",
       createdAt: serverTimestamp()
     });
