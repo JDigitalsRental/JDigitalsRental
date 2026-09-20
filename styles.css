@@ -1358,3 +1358,217 @@ color: white !important;
 #upcomingGames .reserve-slot-button:active {
   transform: scale(0.97) !important;
 }
+/* =========================================
+   PREMIUM UPCOMING GAME CARDS
+   ========================================= */
+
+#upcomingGames .upcoming-game-card {
+  position: relative !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(65, 169, 255, 0.35) !important;
+  border-radius: 14px !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 29, 51, 0.98),
+      rgba(4, 18, 34, 0.98)
+    ) !important;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+
+/* GAME IMAGE */
+
+#upcomingGames .cover-wrap {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 13px 13px 0 0 !important;
+}
+
+#upcomingGames .cover {
+  display: block !important;
+  width: 100% !important;
+  object-fit: cover !important;
+}
+
+/* PREMIUM COMING SOON BANNER */
+
+#upcomingGames .upcoming-badge {
+  position: absolute !important;
+  left: 7px !important;
+  right: 7px !important;
+  bottom: 7px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: auto !important;
+  min-height: 27px !important;
+  padding: 4px 5px !important;
+
+  border: 1px solid rgba(91, 192, 255, 0.75) !important;
+  border-radius: 7px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(0, 151, 255, 0.95),
+      rgba(0, 79, 190, 0.95)
+    ) !important;
+
+  color: #ffffff !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px !important;
+  text-align: center !important;
+
+  box-shadow:
+    0 4px 15px rgba(0, 140, 255, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.25) !important;
+}
+
+/* GAME INFORMATION */
+
+#upcomingGames .game-info {
+  padding: 9px !important;
+}
+
+#upcomingGames .game-info h3 {
+  margin-bottom: 3px !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+#upcomingGames .meta {
+  color: rgba(215, 231, 248, 0.58) !important;
+}
+
+/* AVAILABLE DATE BOX */
+
+#upcomingGames .upcoming-availability {
+  margin-top: 8px !important;
+  padding: 7px !important;
+
+  border: 1px solid rgba(62, 165, 255, 0.25) !important;
+  border-radius: 8px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(15, 54, 88, 0.72),
+      rgba(7, 31, 55, 0.72)
+    ) !important;
+
+  color: #dcecff !important;
+}
+
+#upcomingGames .upcoming-availability strong {
+  display: block !important;
+  margin-bottom: 3px !important;
+
+  color: #67c7ff !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.25px !important;
+}
+
+/* PRICE + RESERVE AREA */
+
+#upcomingGames .game-bottom {
+  margin-top: 8px !important;
+  padding: 7px !important;
+
+  display: block !important;
+
+  border: 1px solid rgba(61, 166, 255, 0.28) !important;
+  border-radius: 11px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(11, 47, 79, 0.92),
+      rgba(5, 27, 49, 0.92)
+    ) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 5px 14px rgba(0,0,0,0.18) !important;
+}
+
+/* WEEKLY + MONTHLY SIDE BY SIDE */
+
+#upcomingGames .price {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 5px !important;
+  margin-bottom: 7px !important;
+}
+
+#upcomingGames .price span {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  min-width: 0 !important;
+  min-height: 35px !important;
+  padding: 4px 2px !important;
+
+  border: 1px solid rgba(72, 178, 255, 0.28) !important;
+  border-radius: 8px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 64, 102, 0.9),
+      rgba(8, 39, 70, 0.9)
+    ) !important;
+
+  color: #62c7ff !important;
+  font-size: 8px !important;
+  line-height: 1.15 !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+}
+
+/* PREMIUM RESERVE BUTTON */
+
+#upcomingGames .reserve-slot-button {
+  width: 100% !important;
+  min-height: 37px !important;
+  margin: 0 !important;
+  padding: 6px 4px !important;
+
+  border: 1px solid rgba(115, 211, 255, 0.75) !important;
+  border-radius: 9px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #21a8ff 0%,
+      #087de9 52%,
+      #0758c7 100%
+    ) !important;
+
+  color: #ffffff !important;
+  font-size: 8px !important;
+  line-height: 1.15 !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35) !important;
+
+  box-shadow:
+    0 5px 15px rgba(0, 119, 255, 0.32),
+    inset 0 1px 0 rgba(255,255,255,0.30) !important;
+
+  cursor: pointer !important;
+}
+
+#upcomingGames .reserve-slot-button:active {
+  transform: scale(0.97) !important;
+  box-shadow:
+    0 2px 7px rgba(0, 119, 255, 0.25),
+    inset 0 1px 4px rgba(0,0,0,0.18) !important;
+}
