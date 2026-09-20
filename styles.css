@@ -1004,3 +1004,89 @@ color: white !important;
     height: 220px;
   }
 }
+/* =========================================
+   PS5 GAME LIBRARY - 3 GAMES PER ROW MOBILE
+   ========================================= */
+
+@media (max-width: 600px) {
+
+  #gameGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #gameGrid .game-card {
+    min-width: 0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  #gameGrid .cover-wrap {
+    height: 145px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #gameGrid .cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  #gameGrid .tag {
+    font-size: 7px;
+    padding: 3px 5px;
+  }
+
+  #gameGrid .game-info {
+    padding: 7px;
+  }
+
+  #gameGrid .game-info h3 {
+    font-size: 11px;
+    line-height: 1.2;
+    margin: 0 0 4px;
+  }
+
+  #gameGrid .meta {
+    font-size: 7px;
+    line-height: 1.2;
+    margin-bottom: 5px;
+  }
+
+  #gameGrid .availability {
+    padding: 5px;
+    margin: 5px 0;
+    font-size: 7px;
+    line-height: 1.3;
+    border-radius: 6px;
+  }
+
+  #gameGrid .availability strong {
+    font-size: 7px;
+  }
+
+  #gameGrid .game-bottom {
+    display: block;
+    margin-top: 6px;
+  }
+
+  #gameGrid .price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 8px;
+    line-height: 1.2;
+  }
+
+  #gameGrid .rent {
+    width: 100%;
+    margin-top: 6px;
+    min-height: 28px;
+    padding: 5px 3px;
+    font-size: 8px;
+    border-radius: 6px;
+  }
+}
