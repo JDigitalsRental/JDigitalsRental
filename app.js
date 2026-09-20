@@ -403,12 +403,12 @@ function renderUpcomingGames() {
 
         <div class="game-bottom">
           <div class="price">
-  <span data-weekly="₱${game.weekly}">
-    WEEKLY
+  <span>
+    WEEKLY<br>₱${game.weekly}
   </span>
 
-  <span data-monthly="₱${game.monthly}">
-    MONTHLY
+  <span>
+    MONTHLY<br>₱${game.monthly}
   </span>
 </div>
 
