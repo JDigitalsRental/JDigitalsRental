@@ -929,10 +929,28 @@ async function loadWaitingList() {
               font-size:13px;
               line-height:1.8;
             ">
-              🎮 Game: ${reservation.gameName || 'Unknown Game'}<br>
-              🏆 Account: ${reservation.accountType || 'Not selected'}<br>
-              📅 Rental Period: ${reservation.rentalPeriod || 'Not available'}<br>
-              🕒 Reserved: ${reservationDate}
+🎮 Game: ${reservation.gameName || 'Unknown Game'}<br>
+🏆 Account: ${reservation.accountType || 'Not selected'}<br>
+📅 Rental Period: ${reservation.rentalPeriod || 'Not available'}<br>
+🕒 Reserved: ${reservationDate}<br><br>
+
+<button
+  type="button"
+  data-reservation-id="${reservation.id}"
+  class="delete-waiting-reservation"
+  style="
+    width:100%;
+    padding:10px;
+    border:1px solid #ff4d4d;
+    border-radius:8px;
+    background:rgba(255,77,77,.12);
+    color:#ff6b6b;
+    font-weight:800;
+    cursor:pointer;
+  "
+>
+  🗑️ Delete Reservation
+</button>
             </div>
           </div>
         `;
@@ -945,7 +963,44 @@ async function loadWaitingList() {
       '<p style="color:#ff8d8d;">Unable to load reservations.</p>';
   }
 }
+waitingListContainer.addEventListener('click', async (event) => {
+  const deleteButton = event.target.closest('.delete-waiting-reservation');
 
+  if (!deleteButton) return;
+
+  const reservationId = deleteButton.dataset.reservationId;
+
+  if (!reservationId) return;
+
+  const confirmed = confirm(
+    'Delete this reservation from the Waiting List? 🗑️'
+  );
+
+  if (!confirmed) return;
+
+  try {
+    deleteButton.disabled = true;
+    deleteButton.textContent = 'Deleting...';
+
+    await deleteDoc(
+      doc(db, 'waitingList', reservationId)
+    );
+
+    alert('Reservation deleted successfully! 🗑️');
+
+    await loadWaitingList();
+
+  } catch (error) {
+    console.error('Delete reservation error:', error);
+
+    alert(
+      'Unable to delete reservation. Please try again.'
+    );
+
+    deleteButton.disabled = false;
+    deleteButton.textContent = '🗑️ Delete Reservation';
+  }
+});
 waitingListCard.addEventListener('click', async () => {
   waitingListModal.classList.add('active');
   await loadWaitingList();
