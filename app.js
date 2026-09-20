@@ -333,6 +333,18 @@ Thank you!`;
   });
 }
 
+const closeRentalModal =
+  document.getElementById('closeRentalModal');
+
+const rentalCustomerName =
+  document.getElementById('rentalCustomerName');
+
+if (closeRentalModal) {
+  closeRentalModal.addEventListener('click', () => {
+    rentalModal.classList.remove('active');
+  });
+}
+
 if (rentalModal) {
   rentalModal.addEventListener('click', e => {
     if (e.target === rentalModal) {
