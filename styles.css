@@ -1233,3 +1233,57 @@ color: white !important;
     line-height: 1.1 !important;
   }
 }
+/* UPCOMING GAMES - 3 CARDS + AUTO SLIDER */
+
+#upcomingGames {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  overflow-x: hidden !important;
+  scroll-behavior: smooth;
+  width: 100%;
+}
+
+#upcomingGames .upcoming-game-card {
+  flex: 0 0 calc((100% - 20px) / 3) !important;
+  width: calc((100% - 20px) / 3) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+#upcomingGames .cover-wrap {
+  width: 100% !important;
+}
+
+#upcomingGames .cover {
+  width: 100% !important;
+  height: 150px !important;
+  object-fit: cover !important;
+}
+
+#upcomingGames .game-info {
+  padding: 8px !important;
+}
+
+#upcomingGames .game-info h3 {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+#upcomingGames .meta,
+#upcomingGames .availability {
+  font-size: 8px !important;
+}
+
+#upcomingGames .price {
+  font-size: 9px !important;
+}
+
+#upcomingGames .reserve-slot-button {
+  width: 100% !important;
+  min-height: 32px !important;
+  padding: 4px !important;
+  font-size: 8px !important;
+  line-height: 1.1 !important;
+}
