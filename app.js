@@ -262,6 +262,17 @@ if (continueRental) {
   continueRental.addEventListener('click', () => {
     if (!selectedGame) return;
 
+    const customerName =
+      document
+        .getElementById('rentalCustomerName')
+        ?.value
+        .trim() || '';
+
+    if (!customerName) {
+      alert('Please enter your First and Last Name.');
+      return;
+    }
+
     if (!selectedPeriod) {
       alert('Please choose 1 Week or 1 Month.');
       return;
@@ -295,10 +306,13 @@ if (continueRental) {
 
 I would like to join the waiting list.
 
+First and Last Name: ${customerName}
 Game: ${selectedGame.name}
 Rental Period: ${duration}
 Account Type: ${accountType}
 Price: ₱${price}
+
+📌 My name matches the name shown on my Facebook account.
 
 Please let me know when a slot becomes available.
 
@@ -307,10 +321,13 @@ Thank you!`
 
 I would like to rent this game.
 
+First and Last Name: ${customerName}
 Game: ${selectedGame.name}
 Rental Period: ${duration}
 Account Type: ${accountType}
 Price: ₱${price}
+
+📌 My name matches the name shown on my Facebook account.
 
 Thank you!`;
 
