@@ -311,9 +311,9 @@ justify-content: space-between;
     <strong id="rentedGames">0</strong>
   </div>
 
-  <div class="stat">
-    <span>WAITING LIST</span>
-    <strong id="waitingGames">0</strong>
+  <div class="stat" id="waitingListCard" style="cursor:pointer;">
+  <span>WAITING LIST</span>
+  <strong id="waitingGames">0</strong>
   </div>
     </section>
 
@@ -331,6 +331,27 @@ justify-content: space-between;
     </div>
 
   </main>
+  <!-- WAITING LIST MODAL -->
+<div id="waitingListModal" class="manage-modal">
+  <div class="manage-modal-card">
+
+    <button
+      id="closeWaitingListModal"
+      class="manage-close"
+      type="button"
+    >×</button>
+
+    <p class="eyebrow">RESERVATIONS</p>
+    <h2>📋 Waiting List</h2>
+
+    <div id="waitingListContainer">
+      <p style="color:#8ea0c5;">
+        Loading reservations...
+      </p>
+    </div>
+
+  </div>
+</div>
   <div id="addGameModal" class="manage-modal">
   <div class="manage-modal-card">
 
@@ -819,6 +840,126 @@ window.firestoreUpdateDoc = updateDoc;
     await signOut(auth);
     window.location.href = "admin-login.html";
   });
+    /* WAITING LIST MANAGEMENT */
+
+const waitingListCard =
+  document.getElementById('waitingListCard');
+
+const waitingListModal =
+  document.getElementById('waitingListModal');
+
+const closeWaitingListModal =
+  document.getElementById('closeWaitingListModal');
+
+const waitingListContainer =
+  document.getElementById('waitingListContainer');
+
+async function loadWaitingList() {
+  waitingListContainer.innerHTML =
+    '<p style="color:#8ea0c5;">Loading reservations...</p>';
+
+  try {
+    const waitingSnapshot =
+      await getDocs(collection(db, 'waitingList'));
+
+    if (waitingSnapshot.empty) {
+      waitingListContainer.innerHTML =
+        '<p style="color:#8ea0c5;">No reservations yet. 🎮</p>';
+      return;
+    }
+
+    const reservations = [];
+
+    waitingSnapshot.forEach(reservationDoc => {
+      reservations.push({
+        id: reservationDoc.id,
+        ...reservationDoc.data()
+      });
+    });
+
+    reservations.sort((a, b) => {
+      const aTime = a.createdAt?.seconds || 0;
+      const bTime = b.createdAt?.seconds || 0;
+      return aTime - bTime;
+    });
+
+    waitingListContainer.innerHTML =
+      reservations.map((reservation, index) => {
+
+        let reservationDate = 'Not available';
+
+        if (reservation.createdAt?.toDate) {
+          reservationDate =
+            reservation.createdAt.toDate().toLocaleString(
+              'en-PH',
+              {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              }
+            );
+        }
+
+        return `
+          <div style="
+            background:#06112b;
+            border:1px solid #173d7c;
+            border-radius:12px;
+            padding:15px;
+            margin-bottom:12px;
+          ">
+            <div style="
+              color:#39a9ff;
+              font-size:11px;
+              font-weight:800;
+              margin-bottom:8px;
+            ">
+              WAITING #${index + 1}
+            </div>
+
+            <strong style="
+              display:block;
+              font-size:17px;
+              margin-bottom:10px;
+            ">
+              ${reservation.customerName || 'Unknown Customer'}
+            </strong>
+
+            <div style="
+              color:#9aacca;
+              font-size:13px;
+              line-height:1.8;
+            ">
+              🎮 Game: ${reservation.gameName || 'Unknown Game'}<br>
+              🏆 Account: ${reservation.accountType || 'Not selected'}<br>
+              📅 Rental Period: ${reservation.rentalPeriod || 'Not available'}<br>
+              🕒 Reserved: ${reservationDate}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+  } catch (error) {
+    console.error('Waiting list error:', error);
+
+    waitingListContainer.innerHTML =
+      '<p style="color:#ff8d8d;">Unable to load reservations.</p>';
+  }
+}
+
+waitingListCard.addEventListener('click', async () => {
+  waitingListModal.classList.add('active');
+  await loadWaitingList();
+});
+
+closeWaitingListModal.addEventListener('click', () => {
+  waitingListModal.classList.remove('active');
+});
+
+waitingListModal.addEventListener('click', event => {
+  if (event.target === waitingListModal) {
+    waitingListModal.classList.remove('active');
+  }
+});
   </script>
 </body>
 </html>
