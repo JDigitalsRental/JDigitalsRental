@@ -1691,3 +1691,188 @@ color: white !important;
   content: none !important;
   display: none !important;
 }
+/* PREMIUM TROPHY & NON-TROPHY CARDS */
+
+.upcoming-account-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.upcoming-account-option {
+  position: relative;
+  min-width: 0;
+  min-height: 155px;
+  padding: 14px 10px;
+  border-radius: 16px;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.upcoming-account-option:active {
+  transform: scale(0.97);
+}
+
+.account-card-icon {
+  display: block;
+  font-size: 38px;
+  line-height: 1;
+  margin-bottom: 9px;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.account-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.account-card-content strong {
+  display: block;
+  font-size: 17px;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.account-card-content small {
+  display: inline-block;
+  margin: 2px 0 5px;
+  padding: 3px 7px;
+  border-radius: 20px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+}
+
+.account-card-content > span {
+  display: block;
+  width: 100%;
+  font-size: 9px;
+  line-height: 1.35;
+  text-align: left;
+  color: #c9d3e3;
+}
+
+/* TROPHY — GOLD */
+
+.trophy-card {
+  color: #ffd35a;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255, 190, 45, 0.22),
+      transparent 48%
+    ),
+    linear-gradient(
+      145deg,
+      #17130a,
+      #080b13
+    );
+  border: 1.5px solid rgba(255, 196, 61, 0.65);
+  box-shadow:
+    inset 0 0 20px rgba(255, 190, 45, 0.07),
+    0 0 12px rgba(255, 190, 45, 0.10);
+}
+
+.trophy-card small {
+  color: #ffd35a;
+  border: 1px solid rgba(255, 211, 90, 0.65);
+  background: rgba(255, 190, 45, 0.08);
+}
+
+.trophy-card .account-card-content > span::first-letter {
+  color: #ffd35a;
+}
+
+.trophy-card.active {
+  border-color: #ffd35a !important;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255, 190, 45, 0.36),
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      #241b08,
+      #080b13
+    ) !important;
+  box-shadow:
+    0 0 10px rgba(255, 200, 70, 0.75),
+    0 0 25px rgba(255, 180, 30, 0.35),
+    inset 0 0 22px rgba(255, 190, 45, 0.12) !important;
+}
+
+/* NON-TROPHY — PLAYSTATION BLUE */
+
+.non-trophy-card {
+  color: #42a5ff;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(20, 130, 255, 0.25),
+      transparent 48%
+    ),
+    linear-gradient(
+      145deg,
+      #07162b,
+      #070b15
+    );
+  border: 1.5px solid rgba(40, 145, 255, 0.7);
+  box-shadow:
+    inset 0 0 20px rgba(20, 130, 255, 0.08),
+    0 0 12px rgba(20, 130, 255, 0.12);
+}
+
+.non-trophy-card small {
+  color: #52b8ff;
+  border: 1px solid rgba(60, 165, 255, 0.65);
+  background: rgba(20, 130, 255, 0.10);
+}
+
+.non-trophy-card.active {
+  border-color: #42a5ff !important;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(20, 130, 255, 0.42),
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      #08254d,
+      #070b15
+    ) !important;
+  box-shadow:
+    0 0 10px rgba(45, 155, 255, 0.8),
+    0 0 25px rgba(20, 120, 255, 0.4),
+    inset 0 0 22px rgba(40, 150, 255, 0.14) !important;
+}
+
+/* MOBILE FIT */
+
+@media (max-width: 480px) {
+  .upcoming-account-option {
+    min-height: 145px;
+    padding: 12px 8px;
+  }
+
+  .account-card-icon {
+    font-size: 32px;
+  }
+
+  .account-card-content strong {
+    font-size: 15px;
+  }
+
+  .account-card-content > span {
+    font-size: 8px;
+  }
+}
