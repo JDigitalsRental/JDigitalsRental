@@ -619,12 +619,14 @@ const accountType =
     ? 'Trophy'
     : 'Non-Trophy';
       if (window.saveWaitingList) {
-  const saved = await window.saveWaitingList({
-    gameId: selectedUpcomingGame,
-    gameName: selectedUpcomingGame,
-    customerName: customerName,
-    accountType: accountType
-  });
+  
+    const saved = await window.saveWaitingList({
+  gameId: selectedUpcomingGame,
+  gameName: selectedUpcomingGame,
+  customerName: customerName,
+  accountType: accountType,
+  rentalPeriod: rentalPeriod
+});
 
   if (!saved) {
     alert('Unable to save your reservation. Please try again.');
