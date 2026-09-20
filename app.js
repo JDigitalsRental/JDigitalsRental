@@ -581,7 +581,7 @@ if (upcomingReservationModal) {
 if (continueUpcomingReservation) {
   continueUpcomingReservation.addEventListener(
     'click',
-    () => {
+    async () => {
       const customerName =
   document
     .getElementById('upcomingReservationCustomerName')
@@ -618,7 +618,19 @@ const accountType =
   selectedUpcomingAccount === 'trophy'
     ? 'Trophy'
     : 'Non-Trophy';
+      if (window.saveWaitingList) {
+  const saved = await window.saveWaitingList({
+    gameId: selectedUpcomingGame,
+    gameName: selectedUpcomingGame,
+    customerName: customerName,
+    accountType: accountType
+  });
 
+  if (!saved) {
+    alert('Unable to save your reservation. Please try again.');
+    return;
+  }
+      }
 const message =
 `Hi JDigitalsRental! 🎮
 
