@@ -266,11 +266,12 @@
     from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
   import {
-    getFirestore,
-    collection,
-    onSnapshot
-  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-
+  getFirestore,
+  collection,
+  onSnapshot,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
   const firebaseConfig = {
     apiKey: "AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",
     authDomain: "jdigitalrental.firebaseapp.com",
@@ -282,6 +283,29 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
+    window.saveWaitingList = async function ({
+  gameId,
+  gameName,
+  customerName,
+  accountType
+}) {
+  try {
+    await addDoc(collection(db, "waitingList"), {
+      gameId: gameId || "",
+      gameName: gameName || "Unknown Game",
+      customerName: customerName || "",
+      accountType: accountType || "",
+      status: "waiting",
+      createdAt: serverTimestamp()
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Waiting list save error:", error);
+    return false;
+  }
+};
 
   onSnapshot(
     collection(db, "games"),
