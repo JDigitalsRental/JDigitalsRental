@@ -677,7 +677,9 @@ await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games',
 setDoc,
     collection,
 getDocs,
-    deleteDoc
+query,
+orderBy,
+deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -714,7 +716,7 @@ snapshot.forEach(gameDoc => {
 document.getElementById('totalGames').textContent = totalGames;
 document.getElementById('availableGames').textContent = availableGames;
 document.getElementById('rentedGames').textContent = rentedGames;
-document.getElementById('waitingGames').textContent = 0;
+document.getElementById('waitingGames').textContent = (await getDocs(collection(db, 'waitingList'))).size;
   gameGrid.innerHTML = '';
 
   snapshot.forEach(gameDoc => {
