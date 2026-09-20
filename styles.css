@@ -1090,3 +1090,50 @@ color: white !important;
     border-radius: 6px;
   }
 }
+/* Compact game card details on mobile */
+@media (max-width: 600px) {
+
+  #gameGrid .game-info {
+    padding: 6px;
+  }
+
+  #gameGrid .game-info h3 {
+    font-size: 10px;
+    line-height: 1.15;
+    margin-bottom: 3px;
+  }
+
+  #gameGrid .meta {
+    font-size: 6px;
+    margin-bottom: 4px;
+  }
+
+  #gameGrid .availability {
+    padding: 4px;
+    margin: 4px 0;
+    font-size: 6px;
+    line-height: 1.2;
+  }
+
+  #gameGrid .availability strong {
+    font-size: 6px;
+  }
+
+  #gameGrid .game-bottom {
+    margin-top: 4px;
+  }
+
+  #gameGrid .price {
+    gap: 0;
+    font-size: 7px;
+    line-height: 1.1;
+  }
+
+  #gameGrid .rent {
+    min-height: 24px;
+    margin-top: 4px;
+    padding: 3px 2px;
+    font-size: 7px;
+    line-height: 1.1;
+  }
+}
