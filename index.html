@@ -108,7 +108,87 @@
 
   </div>
 </div>
-  
+  <!-- UPCOMING GAME RESERVATION MODAL -->
+<div id="upcomingReservationModal" class="rental-modal">
+  <div class="rental-modal-card">
+
+    <button
+      id="closeUpcomingReservationModal"
+      class="modal-close"
+      type="button"
+    >×</button>
+
+    <div class="modal-eyebrow">JDIGITALSRENTAL</div>
+
+    <h2>Reserve Slot</h2>
+
+    <h3 id="upcomingReservationGame">
+      Upcoming Game
+    </h3>
+
+    <p class="modal-label">First and Last Name</p>
+
+    <input
+      id="reservationCustomerName"
+      type="text"
+      placeholder="Enter your first and last name"
+      autocomplete="name"
+      style="width:100%;"
+    >
+
+    <p style="
+      margin:8px 0 18px;
+      font-size:11px;
+      line-height:1.5;
+      color:#9baec5;
+    ">
+      📌 Please use the same First and Last Name
+      shown on your Facebook account so we can
+      easily find and contact you when it's your
+      turn to rent.
+    </p>
+
+    <p class="modal-label">Choose Account Type</p>
+
+    <div class="modal-options">
+      <button
+        type="button"
+        class="upcoming-account-option"
+        data-account="trophy"
+      >
+        🏆 Trophy
+      </button>
+
+      <button
+        type="button"
+        class="upcoming-account-option"
+        data-account="non-trophy"
+      >
+        🎮 Non-Trophy
+      </button>
+    </div>
+
+    <button
+      id="continueUpcomingReservation"
+      class="modal-continue"
+      type="button"
+      style="
+        width:100%;
+        margin-top:20px;
+        padding:14px 16px;
+        border:0;
+        border-radius:10px;
+        background:linear-gradient(135deg,#168cff,#0754d9);
+        color:white;
+        font-weight:800;
+        cursor:pointer;
+      "
+    >
+      📝 Continue to Facebook
+    </button>
+
+  </div>
+</div>
   
   <script type="module">
   import { initializeApp }
