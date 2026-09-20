@@ -540,9 +540,10 @@ if (continueUpcomingReservation) {
     'click',
     () => {
       const customerName =
-        upcomingReservationCustomerName
-          ? upcomingReservationCustomerName.value.trim()
-          : '';
+  document
+    .getElementById('upcomingReservationCustomerName')
+    ?.value
+    .trim() || '';
 
       if (!customerName) {
         alert(
