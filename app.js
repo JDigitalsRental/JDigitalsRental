@@ -260,14 +260,15 @@ document.querySelectorAll('.account-option').forEach(btn => {
 
 if (continueRental) {
   continueRental.addEventListener('click', () => {
-    if (
-      !selectedGame ||
-      !selectedPeriod ||
-      !selectedAccount
-    ) {
-      alert(
-        'Please choose rental period and account type.'
-      );
+    if (!selectedGame) return;
+
+    if (!selectedPeriod) {
+      alert('Please choose 1 Week or 1 Month.');
+      return;
+    }
+
+    if (!selectedAccount) {
+      alert('Please choose Trophy or Non-Trophy.');
       return;
     }
 
@@ -286,23 +287,40 @@ if (continueRental) {
         ? 'Trophy'
         : 'Non-Trophy';
 
-    const message =
-      `${
-        selectedGame.status === 'currently-rented'
-          ? 'I want to join the waiting list for:'
-          : 'I want to rent:'
-      } ${selectedGame.name}\n` +
-      `For how long: ${duration}\n` +
-      `Trophy or Non-Trophy: ${accountType}\n` +
-      `Price: ₱${price}`;
+    const isWaitingList =
+      selectedGame.status === 'currently-rented';
+
+    const message = isWaitingList
+      ? `Hi JDigitalsRental! 🎮
+
+I would like to join the waiting list.
+
+Game: ${selectedGame.name}
+Rental Period: ${duration}
+Account Type: ${accountType}
+Price: ₱${price}
+
+Please let me know when a slot becomes available.
+
+Thank you!`
+      : `Hi JDigitalsRental! 🎮
+
+I would like to rent this game.
+
+Game: ${selectedGame.name}
+Rental Period: ${duration}
+Account Type: ${accountType}
+Price: ₱${price}
+
+Thank you!`;
 
     navigator.clipboard
       .writeText(message)
       .catch(() => {});
 
     alert(
-      message +
-      '\n\nYour rental details have been copied. Paste them in Messenger. 😊'
+      'Your rental details have been copied! 🎮\n\n' +
+      'Continue to Facebook and paste the message in Messenger.'
     );
 
     window.open(
@@ -310,6 +328,8 @@ if (continueRental) {
       '_blank',
       'noopener,noreferrer'
     );
+
+    rentalModal.classList.remove('active');
   });
 }
 
