@@ -534,3 +534,46 @@ window.addEventListener(
 if (window.upcomingGames) {
   setTimeout(startUpcomingAutoSlide, 300);
 }
+/* SORT UPCOMING GAMES BY AVAILABLE DATE */
+
+function sortUpcomingGamesByDate() {
+  if (!Array.isArray(window.upcomingGames)) return;
+
+  window.upcomingGames.sort((a, b) => {
+    const dateA = new Date(a.availableDate);
+    const dateB = new Date(b.availableDate);
+
+    const timeA = isNaN(dateA.getTime())
+      ? Infinity
+      : dateA.getTime();
+
+    const timeB = isNaN(dateB.getTime())
+      ? Infinity
+      : dateB.getTime();
+
+    return timeA - timeB;
+  });
+
+  renderUpcomingGames();
+}
+
+window.addEventListener(
+  'upcomingGamesLoaded',
+  () => {
+    sortUpcomingGamesByDate();
+
+    const slider =
+      document.getElementById('upcomingGames');
+
+    if (slider) {
+      slider.scrollTo({
+        left: 0,
+        behavior: 'auto'
+      });
+    }
+  }
+);
+
+if (window.upcomingGames) {
+  sortUpcomingGamesByDate();
+}
