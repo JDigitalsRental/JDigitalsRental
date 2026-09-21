@@ -64,7 +64,7 @@ function render() {
 
   if (gameCount) {
     gameCount.textContent =
-      `${games.length.toString().padStart(2, '0')} TITLES`;
+      `${games.length.toString().padStart(2, '0')}`;
   }
 
   games
@@ -77,33 +77,77 @@ function render() {
       card.className = 'game-card';
 
       const formatShortDate = (dateValue) => {
-  if (!dateValue || dateValue === 'Available Now') return '';
+        if (!dateValue || dateValue === 'Available Now') {
+          return 'Available Now';
+        }
 
-  const date = new Date(dateValue);
+        const date = new Date(dateValue);
 
-  if (isNaN(date.getTime())) return dateValue;
+        if (isNaN(date.getTime())) return dateValue;
 
-  return date.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: '2-digit'
-  });
-};
+        return date.toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: '2-digit'
+        });
+      };
 
-const availability =
-  g.status === 'currently-rented'
-    ? `
-      <div class="availability rented">
-        <strong>🔴 CURRENTLY RENTED</strong>
-        <div>🏆 Trophy: ${formatShortDate(g.trophyDate)}</div>
-        <div>🎮 Non-Trophy: ${formatShortDate(g.nonTrophyDate)}</div>
-      </div>
-    `
-    : `
-      <div class="availability available">
-        <strong>🟢 AVAILABLE</strong>
-      </div>
-    `;
+      const availability =
+        g.status === 'currently-rented'
+          ? `
+            <div class="availability rented">
+              <strong>🔴 CURRENTLY RENTED</strong>
+              <div>🏆 Trophy: ${formatShortDate(g.trophyDate)}</div>
+              <div>🎮 Non-Trophy: ${formatShortDate(g.nonTrophyDate)}</div>
+            </div>
+          `
+          : `
+            <div class="availability available">
+              <strong>🟢 AVAILABLE</strong>
+            </div>
+          `;
+
+      // LIVE WAITING LIST COUNTERS
+      const counts =
+        window.waitingListCounts?.[g.name] || {
+          trophy: 0,
+          nonTrophy: 0
+        };
+
+      const waitingCounters = `
+        <div style="
+          margin-top:10px;
+          padding:9px 10px;
+          border:1px solid rgba(57,169,255,.28);
+          border-radius:9px;
+          background:rgba(57,169,255,.06);
+          font-size:12px;
+          line-height:1.5;
+          text-align:center;
+        ">
+          <div style="
+            color:#8ea0c5;
+            font-size:10px;
+            font-weight:800;
+            letter-spacing:.8px;
+            margin-bottom:3px;
+          ">
+            WAITING LIST
+          </div>
+
+          <span style="color:#f7b84b;font-weight:800;">
+            🏆 Trophy: ${counts.trophy}
+          </span>
+
+          <span style="color:#718198;margin:0 6px;">
+            •
+          </span>
+
+          <span style="color:#79c8ff;font-weight:800;">
+            🎮 Non-Trophy: ${counts.nonTrophy}
+          </span>
+        </div>
+      `;
 
       card.innerHTML = `
         <div class="cover-wrap">
@@ -126,6 +170,8 @@ const availability =
           </div>
 
           ${availability}
+
+          ${waitingCounters}
 
           <div class="game-bottom">
             <div class="price">
@@ -155,6 +201,12 @@ const availability =
       grid.appendChild(card);
     });
 }
+
+// AUTO REFRESH GAME CARDS WHEN WAITING LIST CHANGES
+window.addEventListener(
+  'waitingListCountsLoaded',
+  render
+);
 
 /* FILTERS */
 
