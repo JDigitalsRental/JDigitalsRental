@@ -423,6 +423,62 @@
       );
     }
   );
+    // PUBLIC LIVE WAITING LIST COUNTERS
+window.waitingListCounts = {};
+
+onSnapshot(
+  collection(db, "waitingList"),
+
+  (querySnapshot) => {
+    const counts = {};
+
+    querySnapshot.forEach((reservationDoc) => {
+      const data = reservationDoc.data();
+
+      const gameName =
+        data.gameName ||
+        data.gameId ||
+        "Unknown Game";
+
+      if (!counts[gameName]) {
+        counts[gameName] = {
+          trophy: 0,
+          nonTrophy: 0
+        };
+      }
+
+      const accountType =
+        String(data.accountType || "")
+          .toLowerCase()
+          .replace(/\s/g, "")
+          .replace(/-/g, "");
+
+      if (accountType.includes("non")) {
+        counts[gameName].nonTrophy++;
+      } else {
+        counts[gameName].trophy++;
+      }
+    });
+
+    window.waitingListCounts = counts;
+
+    console.log(
+      "Waiting list counts loaded:",
+      counts
+    );
+
+    window.dispatchEvent(
+      new Event("waitingListCountsLoaded")
+    );
+  },
+
+  (error) => {
+    console.error(
+      "Waiting list counter error:",
+      error
+    );
+  }
+);
   </script>
   <script src="app.js?v=14"></script>
 </body></html>
