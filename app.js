@@ -259,7 +259,7 @@ document.querySelectorAll('.account-option').forEach(btn => {
 });
 
 if (continueRental) {
-  continueRental.addEventListener('click', () => {
+  continueRental.addEventListener('click', async () => {
     if (!selectedGame) return;
 
     const customerName =
@@ -301,6 +301,31 @@ if (continueRental) {
     const isWaitingList =
       selectedGame.status === 'currently-rented';
 
+    // SAVE GAMES LIBRARY WAITING LIST TO FIRESTORE
+    if (isWaitingList) {
+      if (!window.saveWaitingList) {
+        alert(
+          'Unable to save your waiting list request. Please try again.'
+        );
+        return;
+      }
+
+      const saved = await window.saveWaitingList({
+        gameId: selectedGame.id || selectedGame.name,
+        gameName: selectedGame.name,
+        customerName: customerName,
+        accountType: accountType,
+        rentalPeriod: duration
+      });
+
+      if (!saved) {
+        alert(
+          'Unable to save your waiting list request. Please try again.'
+        );
+        return;
+      }
+    }
+
     const message = isWaitingList
       ? `Hi JDigitalsRental! 🎮
 
@@ -336,8 +361,9 @@ Thank you!`;
       .catch(() => {});
 
     alert(
-      'Your rental details have been copied! 🎮\n\n' +
-      'Continue to Facebook and paste the message in Messenger.'
+      isWaitingList
+        ? 'You have been added to the waiting list! 🎮\n\nContinue to Facebook and paste the message in Messenger.'
+        : 'Your rental details have been copied! 🎮\n\nContinue to Facebook and paste the message in Messenger.'
     );
 
     window.open(
