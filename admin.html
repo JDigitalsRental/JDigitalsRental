@@ -877,84 +877,276 @@ async function loadWaitingList() {
       });
     });
 
+    // Oldest reservation first
     reservations.sort((a, b) => {
       const aTime = a.createdAt?.seconds || 0;
       const bTime = b.createdAt?.seconds || 0;
       return aTime - bTime;
     });
 
-    waitingListContainer.innerHTML =
-      reservations.map((reservation, index) => {
+    // GROUP RESERVATIONS BY GAME
+    const games = {};
 
-        let reservationDate = 'Not available';
+    reservations.forEach(reservation => {
+      const gameName =
+        reservation.gameName ||
+        reservation.gameId ||
+        'Unknown Game';
 
-        if (reservation.createdAt?.toDate) {
-          reservationDate =
-            reservation.createdAt.toDate().toLocaleString(
-              'en-PH',
-              {
-                dateStyle: 'medium',
-                timeStyle: 'short'
-              }
-            );
-        }
+      if (!games[gameName]) {
+        games[gameName] = {
+          trophy: [],
+          nonTrophy: []
+        };
+      }
 
-        return `
+      const accountType =
+        String(reservation.accountType || '')
+          .toLowerCase()
+          .replace(/\s/g, '')
+          .replace(/-/g, '');
+
+      if (accountType.includes('non')) {
+        games[gameName].nonTrophy.push(reservation);
+      } else {
+        games[gameName].trophy.push(reservation);
+      }
+    });
+
+    const createReservationCard = (reservation, number) => {
+      let reservationDate = 'Not available';
+
+      if (reservation.createdAt?.toDate) {
+        reservationDate =
+          reservation.createdAt.toDate().toLocaleString(
+            'en-PH',
+            {
+              dateStyle: 'medium',
+              timeStyle: 'short'
+            }
+          );
+      }
+
+      return `
+        <div style="
+          background:#06112b;
+          border:1px solid #173d7c;
+          border-radius:10px;
+          padding:10px;
+          margin-bottom:10px;
+        ">
           <div style="
-            background:#06112b;
-            border:1px solid #173d7c;
-            border-radius:12px;
-            padding:15px;
-            margin-bottom:12px;
+            color:#39a9ff;
+            font-size:10px;
+            font-weight:800;
+            margin-bottom:6px;
           ">
-            <div style="
-              color:#39a9ff;
-              font-size:11px;
-              font-weight:800;
-              margin-bottom:8px;
-            ">
-              WAITING #${index + 1}
-            </div>
-
-            <strong style="
-              display:block;
-              font-size:17px;
-              margin-bottom:10px;
-            ">
-              ${reservation.customerName || 'Unknown Customer'}
-            </strong>
-
-            <div style="
-              color:#9aacca;
-              font-size:13px;
-              line-height:1.8;
-            ">
-🎮 Game: ${reservation.gameName || 'Unknown Game'}<br>
-🏆 Account: ${reservation.accountType || 'Not selected'}<br>
-📅 Rental Period: ${reservation.rentalPeriod || 'Not available'}<br>
-🕒 Reserved: ${reservationDate}<br><br>
-
-<button
-  type="button"
-  data-reservation-id="${reservation.id}"
-  class="delete-waiting-reservation"
-  style="
-    width:100%;
-    padding:10px;
-    border:1px solid #ff4d4d;
-    border-radius:8px;
-    background:rgba(255,77,77,.12);
-    color:#ff6b6b;
-    font-weight:800;
-    cursor:pointer;
-  "
->
-  🗑️ Delete Reservation
-</button>
-            </div>
+            WAITING #${number}
           </div>
-        `;
-      }).join('');
+
+          <strong style="
+            display:block;
+            font-size:14px;
+            margin-bottom:7px;
+            word-break:break-word;
+          ">
+            ${reservation.customerName || 'Unknown Customer'}
+          </strong>
+
+          <div style="
+            color:#9aacca;
+            font-size:11px;
+            line-height:1.6;
+          ">
+            📅 ${reservation.rentalPeriod || 'Not available'}<br>
+            🕒 ${reservationDate}
+          </div>
+
+          <button
+            type="button"
+            data-reservation-id="${reservation.id}"
+            class="delete-waiting-reservation"
+            style="
+              width:100%;
+              margin-top:8px;
+              padding:8px 4px;
+              border:1px solid #ff4d4d;
+              border-radius:7px;
+              background:rgba(255,77,77,.12);
+              color:#ff6b6b;
+              font-size:10px;
+              font-weight:800;
+              cursor:pointer;
+            "
+          >
+            🗑 Delete
+          </button>
+        </div>
+      `;
+    };
+
+    waitingListContainer.innerHTML =
+      Object.entries(games)
+        .map(([gameName, lists], gameIndex) => {
+          const total =
+            lists.trophy.length +
+            lists.nonTrophy.length;
+
+          const trophyCards =
+            lists.trophy.length
+              ? lists.trophy
+                  .map((reservation, index) =>
+                    createReservationCard(
+                      reservation,
+                      index + 1
+                    )
+                  )
+                  .join('')
+              : `
+                <p style="
+                  color:#657895;
+                  font-size:11px;
+                  text-align:center;
+                ">
+                  No Trophy reservations
+                </p>
+              `;
+
+          const nonTrophyCards =
+            lists.nonTrophy.length
+              ? lists.nonTrophy
+                  .map((reservation, index) =>
+                    createReservationCard(
+                      reservation,
+                      index + 1
+                    )
+                  )
+                  .join('')
+              : `
+                <p style="
+                  color:#657895;
+                  font-size:11px;
+                  text-align:center;
+                ">
+                  No Non-Trophy reservations
+                </p>
+              `;
+
+          return `
+            <div
+              class="waiting-game-group"
+              style="
+                margin-bottom:12px;
+                border:1px solid #173d7c;
+                border-radius:12px;
+                overflow:hidden;
+                background:#06112b;
+              "
+            >
+              <button
+                type="button"
+                class="waiting-game-toggle"
+                data-waiting-game="${gameIndex}"
+                style="
+                  width:100%;
+                  padding:14px;
+                  border:0;
+                  background:#081630;
+                  color:#ffffff;
+                  text-align:left;
+                  cursor:pointer;
+                  font-weight:800;
+                  font-size:14px;
+                "
+              >
+                🎮 ${gameName}
+                <span style="
+                  display:block;
+                  color:#39a9ff;
+                  font-size:11px;
+                  margin-top:5px;
+                ">
+                  ${total} Waiting • Tap to view
+                </span>
+              </button>
+
+              <div
+                data-waiting-panel="${gameIndex}"
+                style="
+                  display:none;
+                  padding:10px;
+                "
+              >
+                <div style="
+                  display:grid;
+                  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+                  gap:8px;
+                  align-items:start;
+                ">
+
+                  <!-- LEFT: TROPHY -->
+                  <div style="min-width:0;">
+                    <div style="
+                      text-align:center;
+                      color:#ffd76a;
+                      font-size:11px;
+                      font-weight:900;
+                      margin-bottom:9px;
+                    ">
+                      🏆 TROPHY
+                      <br>
+                      (${lists.trophy.length})
+                    </div>
+
+                    ${trophyCards}
+                  </div>
+
+                  <!-- RIGHT: NON-TROPHY -->
+                  <div style="min-width:0;">
+                    <div style="
+                      text-align:center;
+                      color:#7fc8ff;
+                      font-size:11px;
+                      font-weight:900;
+                      margin-bottom:9px;
+                    ">
+                      🎮 NON-TROPHY
+                      <br>
+                      (${lists.nonTrophy.length})
+                    </div>
+
+                    ${nonTrophyCards}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+    // CLICK GAME TO OPEN / CLOSE
+    waitingListContainer
+      .querySelectorAll('.waiting-game-toggle')
+      .forEach(button => {
+        button.addEventListener('click', () => {
+          const gameIndex =
+            button.dataset.waitingGame;
+
+          const panel =
+            waitingListContainer.querySelector(
+              `[data-waiting-panel="${gameIndex}"]`
+            );
+
+          if (!panel) return;
+
+          const isOpen =
+            panel.style.display !== 'none';
+
+          panel.style.display =
+            isOpen ? 'none' : 'block';
+        });
+      });
 
   } catch (error) {
     console.error('Waiting list error:', error);
