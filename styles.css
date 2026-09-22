@@ -2007,3 +2007,27 @@ color: white !important;
     line-height: 1.35 !important;
   }
 }
+/* GAME LIBRARY - SMALL WAITING LIST LIKE UPCOMING */
+
+@media (max-width: 600px) {
+
+  #gameGrid .game-info > div[style*="margin-top:10px"] {
+    margin-top: 6px !important;
+    padding: 6px 4px !important;
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+    border-radius: 7px !important;
+  }
+
+  #gameGrid .game-info > div[style*="margin-top:10px"] > div {
+    font-size: 8px !important;
+    letter-spacing: 0.4px !important;
+    margin-bottom: 2px !important;
+  }
+
+  #gameGrid .game-info > div[style*="margin-top:10px"] span {
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+  }
+
+}
