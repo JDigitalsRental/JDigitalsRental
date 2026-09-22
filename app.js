@@ -477,6 +477,9 @@ function renderUpcomingGames() {
       ? window.upcomingGames
       : [];
 
+  const waitingCounts =
+    window.waitingListCounts || {};
+
   upcomingContainer.innerHTML = '';
 
   if (upcomingGames.length === 0) {
@@ -498,6 +501,12 @@ function renderUpcomingGames() {
     const availableDate =
       game.availableDate ||
       'Date to be announced';
+
+    const gameWaiting =
+      waitingCounts[game.name] || {
+        trophy: 0,
+        nonTrophy: 0
+      };
 
     card.innerHTML = `
       <div class="cover-wrap">
@@ -524,20 +533,29 @@ function renderUpcomingGames() {
           <strong>
             📅 AVAILABLE FOR RENT
           </strong>
-
           <div>${availableDate}</div>
+        </div>
+
+        <div class="availability waiting-list-count">
+          <strong>WAITING LIST</strong>
+          <div>
+            🏆 Trophy: ${gameWaiting.trophy}
+          </div>
+          <div>
+            🎮 Non-Trophy: ${gameWaiting.nonTrophy}
+          </div>
         </div>
 
         <div class="game-bottom">
           <div class="price">
-  <span>
-    WEEKLY<br>₱${game.weekly}
-  </span>
+            <span>
+              WEEKLY<br>₱${game.weekly}
+            </span>
 
-  <span>
-    MONTHLY<br>₱${game.monthly}
-  </span>
-</div>
+            <span>
+              MONTHLY<br>₱${game.monthly}
+            </span>
+          </div>
 
           <button
             class="reserve-slot-button"
