@@ -2031,3 +2031,29 @@ color: white !important;
   }
 
 }
+/* GAME LIBRARY - COMPACT CURRENTLY RENTED BOX */
+
+@media (max-width: 600px) {
+
+  #gameGrid .availability.rented {
+    padding: 6px 5px !important;
+    margin: 6px 0 !important;
+    min-height: 0 !important;
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+    border-radius: 7px !important;
+  }
+
+  #gameGrid .availability.rented strong {
+    display: block !important;
+    font-size: 7px !important;
+    line-height: 1.25 !important;
+    margin-bottom: 3px !important;
+  }
+
+  #gameGrid .availability.rented div {
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+  }
+
+}
