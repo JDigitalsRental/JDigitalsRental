@@ -1982,3 +1982,28 @@ color: white !important;
     height: 16px !important;
   }
 }
+/* =========================================
+   GAME LIBRARY - COMPACT WAITING LIST MOBILE
+   Same size style as Upcoming Games
+========================================= */
+
+@media (max-width: 600px) {
+
+  #gameGrid .waiting-list-count {
+    padding: 8px 5px !important;
+    margin: 6px 0 !important;
+    min-height: 0 !important;
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+  }
+
+  #gameGrid .waiting-list-count strong {
+    font-size: 8px !important;
+    line-height: 1.25 !important;
+  }
+
+  #gameGrid .waiting-list-count div {
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+  }
+}
