@@ -115,39 +115,44 @@ function render() {
         };
 
       const waitingCounters = `
-        <div style="
-          margin-top:10px;
-          padding:9px 10px;
-          border:1px solid rgba(57,169,255,.28);
-          border-radius:9px;
-          background:rgba(57,169,255,.06);
-          font-size:12px;
-          line-height:1.5;
-          text-align:center;
-        ">
-          <div style="
-            color:#8ea0c5;
-            font-size:10px;
-            font-weight:800;
-            letter-spacing:.8px;
-            margin-bottom:3px;
-          ">
-            WAITING LIST
-          </div>
+  <div style="
+    margin-top:6px;
+    padding:6px 4px;
+    border:1px solid rgba(57,169,255,.28);
+    border-radius:7px;
+    background:rgba(57,169,255,.06);
+    font-size:8px;
+    line-height:1.35;
+    text-align:center;
+  ">
+    <div style="
+      color:#8ea0c5;
+      font-size:8px;
+      font-weight:800;
+      letter-spacing:.4px;
+      margin-bottom:3px;
+    ">
+      WAITING LIST
+    </div>
 
-          <span style="color:#f7b84b;font-weight:800;">
-            🏆 Trophy: ${counts.trophy}
-          </span>
+    <div style="
+      color:#f7b84b;
+      font-size:8px;
+      font-weight:800;
+      margin-bottom:2px;
+    ">
+      🏆 Trophy: ${counts.trophy}
+    </div>
 
-          <span style="color:#718198;margin:0 6px;">
-            •
-          </span>
-
-          <span style="color:#79c8ff;font-weight:800;">
-            🎮 Non-Trophy: ${counts.nonTrophy}
-          </span>
-        </div>
-      `;
+    <div style="
+      color:#79c8ff;
+      font-size:8px;
+      font-weight:800;
+    ">
+      🎮 Non-Trophy: ${counts.nonTrophy}
+    </div>
+  </div>
+`;
 
       card.innerHTML = `
         <div class="cover-wrap">
