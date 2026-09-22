@@ -578,6 +578,11 @@ window.addEventListener(
   renderUpcomingGames
 );
 
+window.addEventListener(
+  'waitingListCountsLoaded',
+  renderUpcomingGames
+);
+
 /* UPCOMING GAME RESERVATION */
 
 const upcomingReservationModal =
