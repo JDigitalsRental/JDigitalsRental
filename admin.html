@@ -781,21 +781,28 @@ document.getElementById('waitingGames').textContent = (await getDocs(collection(
   if (!button) return;
 
   const card = button.closest('.game-card');
-
   if (!card) return;
 
-  const title = card.querySelector('h3').textContent.trim();
-  const details = card.querySelector('.details').textContent;
+  const gameId = card.getAttribute('data-id');
+  if (!gameId) {
+    alert('Unable to find this game ID. Please refresh the page and try again.');
+    return;
+  }
 
-  const weeklyMatch = details.match(/Weekly:\s*₱(\d+)/);
-  const monthlyMatch = details.match(/Monthly:\s*₱(\d+)/);
+  const title = card.querySelector('h3')?.textContent.trim() || '';
+  const details = card.querySelector('.details')?.textContent || '';
+
+  const weeklyMatch = details.match(/Weekly:\s*₱?(\d+)/);
+  const monthlyMatch = details.match(/Monthly:\s*₱?(\d+)/);
 
   manageTitle.textContent = title;
   manageWeekly.value = weeklyMatch ? weeklyMatch[1] : '';
   manageMonthly.value = monthlyMatch ? monthlyMatch[1] : '';
 
   const statusElement = card.querySelector('.status');
-  const isRented = statusElement.classList.contains('rented');
+  const isRented =
+    statusElement?.classList.contains('rented') ||
+    statusElement?.textContent.includes('CURRENTLY RENTED');
 
   manageStatus.value = isRented
     ? 'currently-rented'
@@ -805,19 +812,21 @@ document.getElementById('waitingGames').textContent = (await getDocs(collection(
     const trophyMatch = details.match(/Trophy:\s*([^\n]+)/);
     const nonTrophyMatch = details.match(/Non-Trophy:\s*([^\n]+)/);
 
-    manageTrophyDate.value = trophyMatch
-      ? formatDateForInput(trophyMatch[1].trim())
-      : '';
+    manageTrophyDate.value =
+      trophyMatch && trophyMatch[1].trim()
+        ? formatDateForInput(trophyMatch[1].trim())
+        : '';
 
-    manageNonTrophyDate.value = nonTrophyMatch
-      ? formatDateForInput(nonTrophyMatch[1].trim())
-      : '';
+    manageNonTrophyDate.value =
+      nonTrophyMatch && nonTrophyMatch[1].trim()
+        ? formatDateForInput(nonTrophyMatch[1].trim())
+        : '';
   } else {
     manageTrophyDate.value = '';
     manageNonTrophyDate.value = '';
   }
 
-  manageModal.dataset.gameId = card.dataset.id;
+  manageModal.dataset.gameId = gameId;
   manageModal.classList.add('active');
 });
     window.firestoreDb = db;
