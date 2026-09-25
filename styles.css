@@ -2072,3 +2072,600 @@ color: white !important;
   }
 
 }
+/* =========================================================
+   JDIGITALSRENTAL — PREMIUM CUSTOMER WEBSITE REDESIGN
+   ========================================================= */
+
+/* PREMIUM PAGE BACKGROUND */
+body {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 7, 20, 0.42),
+      rgba(2, 8, 22, 0.62)
+    ),
+    url("assets/premium-bg.png") center top / cover fixed no-repeat !important;
+  color: #f5f9ff !important;
+  min-height: 100vh;
+}
+
+/* SOFT PREMIUM GLOW OVER PAGE */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(0, 119, 255, 0.16),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 85% 45%,
+      rgba(76, 91, 255, 0.12),
+      transparent 34%
+    );
+}
+
+/* PREMIUM HEADER */
+.topbar {
+  min-height: 74px !important;
+  height: auto !important;
+  padding: 10px 5% !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 10, 27, 0.94),
+      rgba(3, 9, 23, 0.88)
+    ) !important;
+  border-bottom:
+    1px solid rgba(78, 169, 255, 0.25) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.32),
+    0 1px 0 rgba(255,255,255,0.03) !important;
+}
+
+/* LOGO / BRAND */
+.brand {
+  gap: 10px !important;
+}
+
+.brand img {
+  filter:
+    drop-shadow(0 0 10px rgba(0, 126, 255, 0.38))
+    drop-shadow(0 0 24px rgba(0, 89, 255, 0.18));
+}
+
+.brand,
+.brand span {
+  font-weight: 900 !important;
+  letter-spacing: -0.4px;
+}
+
+/* HERO PREMIUM GLASS */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom:
+    1px solid rgba(61, 154, 255, 0.14);
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  right: -140px;
+  top: -130px;
+  background:
+    rgba(0, 119, 255, 0.12);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ALL MAIN SECTIONS */
+.section {
+  position: relative;
+}
+
+.section-inner {
+  position: relative;
+}
+
+/* PREMIUM SECTION HEADINGS */
+.section-heading {
+  margin-bottom: 22px !important;
+}
+
+.section-heading h2 {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.5px !important;
+  text-shadow:
+    0 3px 18px rgba(0,0,0,0.45);
+}
+
+.eyebrow {
+  color: #56b7ff !important;
+  font-weight: 900 !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase;
+}
+
+.section-subtitle,
+.meta {
+  color: #9eafc5 !important;
+}
+
+/* =========================================================
+   PREMIUM UPCOMING GAMES SLIDER
+   ========================================================= */
+
+#upcomingGames {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-behavior: smooth !important;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  padding: 8px 2px 18px !important;
+}
+
+#upcomingGames::-webkit-scrollbar {
+  display: none;
+}
+
+#upcomingGames .upcoming-game-card {
+  position: relative !important;
+  scroll-snap-align: start;
+  overflow: hidden !important;
+
+  border:
+    1px solid rgba(62, 159, 255, 0.32) !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(9, 29, 54, 0.94),
+      rgba(3, 14, 31, 0.97)
+    ) !important;
+
+  box-shadow:
+    0 16px 40px rgba(0,0,0,0.38),
+    0 0 25px rgba(0,119,255,0.07),
+    inset 0 1px 0 rgba(255,255,255,0.055) !important;
+
+  border-radius: 16px !important;
+}
+
+#upcomingGames .upcoming-game-card::before {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: -1px;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(80, 185, 255, 0.85),
+      transparent
+    );
+  z-index: 4;
+}
+
+#upcomingGames .cover-wrap {
+  overflow: hidden !important;
+  position: relative;
+}
+
+#upcomingGames .cover {
+  transition:
+    transform 0.4s ease,
+    filter 0.4s ease !important;
+}
+
+#upcomingGames .upcoming-game-card:hover .cover {
+  transform: scale(1.035);
+}
+
+/* COMING SOON BADGE */
+#upcomingGames .upcoming-badge {
+  background:
+    linear-gradient(
+      135deg,
+      #087cff,
+      #174bd9
+    ) !important;
+
+  color: white !important;
+
+  border:
+    1px solid rgba(114, 200, 255, 0.45) !important;
+
+  box-shadow:
+    0 7px 18px rgba(0, 104, 255, 0.28),
+    inset 0 1px 0 rgba(255,255,255,0.22) !important;
+}
+
+/* UPCOMING AVAILABILITY BOX */
+#upcomingGames .availability {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(8, 38, 72, 0.88),
+      rgba(5, 25, 51, 0.92)
+    ) !important;
+
+  border:
+    1px solid rgba(47, 143, 255, 0.25) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035) !important;
+
+  border-radius: 12px !important;
+}
+
+#upcomingGames .availability strong {
+  color: #59baff !important;
+}
+
+/* PREMIUM PRICE BOXES */
+#upcomingGames .price span {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(9, 43, 80, 0.86),
+      rgba(4, 24, 49, 0.9)
+    ) !important;
+
+  border:
+    1px solid rgba(51, 151, 255, 0.24) !important;
+
+  border-radius: 11px !important;
+
+  color: #5dc0ff !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035) !important;
+}
+
+/* PREMIUM RESERVE BUTTON */
+#upcomingGames .reserve-slot-button {
+  background:
+    linear-gradient(
+      135deg,
+      #087cff,
+      #173ed2
+    ) !important;
+
+  border:
+    1px solid rgba(116, 202, 255, 0.48) !important;
+
+  border-radius: 11px !important;
+
+  color: #ffffff !important;
+
+  box-shadow:
+    0 8px 20px rgba(0, 94, 255, 0.3),
+    inset 0 1px 0 rgba(255,255,255,0.22) !important;
+
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease !important;
+}
+
+#upcomingGames .reserve-slot-button:active {
+  transform: scale(0.96) !important;
+  filter: brightness(1.12);
+}
+
+/* =========================================================
+   PREMIUM PS5 GAME LIBRARY
+   ========================================================= */
+
+#gameGrid .game-card {
+  position: relative;
+  overflow: hidden !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(9, 28, 51, 0.95),
+      rgba(3, 14, 30, 0.98)
+    ) !important;
+
+  border:
+    1px solid rgba(62, 159, 255, 0.27) !important;
+
+  box-shadow:
+    0 14px 34px rgba(0,0,0,0.36),
+    0 0 22px rgba(0,119,255,0.055),
+    inset 0 1px 0 rgba(255,255,255,0.045) !important;
+
+  border-radius: 15px !important;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease !important;
+}
+
+#gameGrid .game-card::before {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 0;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(77, 181, 255, 0.7),
+      transparent
+    );
+  z-index: 3;
+}
+
+#gameGrid .game-card:active {
+  transform: scale(0.985);
+}
+
+/* GAME COVER */
+#gameGrid .cover-wrap {
+  overflow: hidden !important;
+}
+
+#gameGrid .cover {
+  transition:
+    transform 0.4s ease,
+    filter 0.4s ease !important;
+}
+
+/* GAME TITLES */
+#gameGrid h3 {
+  color: #ffffff !important;
+  font-weight: 850 !important;
+}
+
+/* AVAILABLE / RENTED BOX */
+#gameGrid .availability {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(8, 38, 71, 0.86),
+      rgba(4, 23, 46, 0.92)
+    ) !important;
+
+  border:
+    1px solid rgba(48, 145, 255, 0.22) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03) !important;
+}
+
+/* LIBRARY PRICE */
+#gameGrid .price span {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(9, 42, 78, 0.88),
+      rgba(4, 23, 47, 0.94)
+    ) !important;
+
+  border:
+    1px solid rgba(49, 148, 255, 0.22) !important;
+
+  color: #5ebfff !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.035) !important;
+}
+
+/* RENT BUTTONS */
+#gameGrid button,
+#gameGrid .rent-btn,
+#gameGrid .rent-button {
+  background:
+    linear-gradient(
+      135deg,
+      #087cff,
+      #173fd2
+    ) !important;
+
+  border:
+    1px solid rgba(115, 201, 255, 0.44) !important;
+
+  color: #ffffff !important;
+
+  box-shadow:
+    0 7px 18px rgba(0, 91, 255, 0.27),
+    inset 0 1px 0 rgba(255,255,255,0.2) !important;
+
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease !important;
+}
+
+#gameGrid button:active {
+  transform: scale(0.96);
+  filter: brightness(1.12);
+}
+
+/* =========================================================
+   ABOUT / HOW IT WORKS / RULES / FAQ
+   ========================================================= */
+
+#about .section-inner,
+#how .section-inner,
+#rules .section-inner,
+#faq .section-inner {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(7, 25, 47, 0.70),
+      rgba(3, 14, 30, 0.78)
+    );
+
+  border:
+    1px solid rgba(67, 158, 255, 0.16);
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 16px 45px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.035);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* =========================================================
+   PREMIUM MODALS
+   ========================================================= */
+
+.rental-modal {
+  backdrop-filter: blur(9px) !important;
+  -webkit-backdrop-filter: blur(9px) !important;
+}
+
+.rental-modal-card {
+  background:
+    linear-gradient(
+      160deg,
+      rgba(8, 29, 54, 0.98),
+      rgba(3, 14, 30, 0.99)
+    ) !important;
+
+  border:
+    1px solid rgba(69, 169, 255, 0.34) !important;
+
+  box-shadow:
+    0 24px 70px rgba(0,0,0,0.58),
+    0 0 35px rgba(0,119,255,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+
+  border-radius: 20px !important;
+}
+
+/* INPUTS */
+.rental-modal-card input,
+.rental-modal-card select {
+  background:
+    rgba(3, 16, 34, 0.9) !important;
+
+  color: #ffffff !important;
+
+  border:
+    1px solid rgba(70, 158, 255, 0.3) !important;
+
+  border-radius: 11px !important;
+
+  outline: none !important;
+}
+
+.rental-modal-card input:focus,
+.rental-modal-card select:focus {
+  border-color:
+    rgba(72, 180, 255, 0.8) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 119, 255, 0.11) !important;
+}
+
+/* FOOTER */
+footer {
+  background:
+    rgba(2, 8, 20, 0.82) !important;
+
+  border-top:
+    1px solid rgba(63, 154, 255, 0.17) !important;
+
+  backdrop-filter: blur(12px);
+}
+
+/* =========================================================
+   MOBILE PREMIUM TUNING
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  body {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(2, 7, 19, 0.34),
+        rgba(2, 8, 21, 0.56)
+      ),
+      url("assets/premium-bg.png")
+      center top / cover fixed no-repeat !important;
+  }
+
+  .topbar {
+    min-height: 70px !important;
+    padding:
+      8px 4% !important;
+  }
+
+  .section-heading {
+    margin-bottom:
+      15px !important;
+  }
+
+  /* KEEP 3 UPCOMING CARDS VISIBLE */
+  #upcomingGames {
+    gap: 8px !important;
+    padding-bottom:
+      15px !important;
+  }
+
+  #upcomingGames .upcoming-game-card {
+    flex:
+      0 0 calc((100% - 16px) / 3) !important;
+
+    width:
+      calc((100% - 16px) / 3) !important;
+
+    min-width: 0 !important;
+
+    border-radius:
+      13px !important;
+  }
+
+  /* KEEP 3 LIBRARY CARDS PER ROW */
+  #gameGrid {
+    gap: 8px !important;
+  }
+
+  #gameGrid .game-card {
+    border-radius:
+      12px !important;
+  }
+
+  /* PREMIUM SECTIONS */
+  #about .section-inner,
+  #how .section-inner,
+  #rules .section-inner,
+  #faq .section-inner {
+    border-radius:
+      15px;
+  }
+}
+
+/* END — JDIGITALSRENTAL PREMIUM REDESIGN */
