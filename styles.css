@@ -2808,3 +2808,20 @@ footer {
 }
 
 /* END — MOBILE CARD POLISH */
+
+/* BALANCED SECTION ALIGNMENT */
+
+@media (max-width: 600px) {
+
+  #upcoming .section-inner,
+  #games .section-inner {
+    width: calc(100% - 32px) !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+}
+
+/* END — BALANCED SECTION ALIGNMENT */
