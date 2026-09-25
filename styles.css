@@ -20,13 +20,15 @@ html {
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 85% 5%, #073b78 0, transparent 30%),
-    radial-gradient(circle at 10% 45%, #111b43 0, transparent 25%),
-    var(--bg);
   color: var(--text);
   font-family: Inter, Arial, sans-serif;
   line-height: 1.5;
+
+  background:
+    linear-gradient(rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.88)),
+    url("assets/premium-bg.png") center top / cover no-repeat fixed;
+
+  min-height: 100vh;
 }
 
 a {
