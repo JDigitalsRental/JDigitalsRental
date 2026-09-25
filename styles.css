@@ -1241,9 +1241,22 @@ color: white !important;
   display: flex !important;
   flex-wrap: nowrap !important;
   gap: 10px !important;
-  overflow-x: hidden !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
   scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
   width: 100%;
+  scrollbar-width: none;
+}
+
+#upcomingGames::-webkit-scrollbar {
+  display: none;
+}
+
+#upcomingGames .upcoming-game-card {
+  scroll-snap-align: start;
 }
 
 #upcomingGames .upcoming-game-card {
