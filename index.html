@@ -5,11 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JDigitalsRental | PS5 Game Rentals</title>
-<meta name="description" content="Affordable PS5 game rentals from JDigitalsRental.">
-<link rel="stylesheet" href="styles.css?v=11">
+<meta name="description" content="Affordable PS5 digital game rentals. Weekly and monthly plans from JDigitalsRental.">
+<link rel="stylesheet" href="styles.css?v=16">
 
 <style>
-/* FACEBOOK REMINDER POPUP */
 #facebookReminder {
   position:fixed;
   inset:0;
@@ -21,9 +20,7 @@
   padding:18px;
   backdrop-filter:blur(8px);
 }
-#facebookReminder.active {
-  display:flex;
-}
+#facebookReminder.active {display:flex}
 .fb-reminder-card {
   position:relative;
   width:100%;
@@ -38,20 +35,9 @@
   text-align:center;
   color:#fff;
 }
-.fb-reminder-icon {
-  font-size:46px;
-  margin-bottom:10px;
-}
-.fb-reminder-card h2 {
-  color:#fff;
-  font-size:25px;
-  margin:0 0 12px;
-}
-.fb-reminder-card p {
-  color:#c1d2ea;
-  font-size:14px;
-  line-height:1.65;
-}
+.fb-reminder-icon {font-size:46px;margin-bottom:10px}
+.fb-reminder-card h2 {color:#fff;font-size:25px;margin:0 0 12px}
+.fb-reminder-card p {color:#c1d2ea;font-size:14px;line-height:1.65}
 .fb-reminder-note {
   background:rgba(255,186,55,.09);
   border:1px solid rgba(255,186,55,.35);
@@ -115,6 +101,7 @@
     <a href="#how">How it works</a>
     <a href="#rules">Rules</a>
     <a href="#faq">FAQ</a>
+    <a href="#reviews">Reviews</a>
   </nav>
   <a class="mini-cta" href="#games">Browse games ↗</a>
 </header>
@@ -125,7 +112,10 @@
   <div class="hero-copy">
     <p class="eyebrow">DIGITAL PS5 GAME RENTALS</p>
     <h1>Play more.<br><span>Spend less.</span></h1>
-    <p class="hero-text">Premium PS5 adventures without the premium price. Choose your game, message us, and start playing.</p>
+    <p class="hero-text">
+      Premium PS5 adventures without the premium price.
+      Choose your game, message us, and start playing.
+    </p>
     <div class="hero-actions">
       <a class="btn primary" href="#games">Explore games <span>↗</span></a>
       <a class="text-link" href="#how">How it works ↓</a>
@@ -136,6 +126,7 @@
       <span>✦ Friendly support</span>
     </div>
   </div>
+
   <div class="hero-art">
     <div class="orb orb-one"></div>
     <div class="orb orb-two"></div>
@@ -150,8 +141,17 @@
 <section class="section" id="about">
   <div class="section-inner">
     <span class="eyebrow">ABOUT US</span>
-    <p>JDigitalsRental was created for gamers who want to enjoy their favorite PS5 games without spending too much. We offer affordable weekly and monthly digital game rentals for your gaming needs.</p>
-    <p>Our goal is to make PS5 gaming more affordable, convenient, and accessible to everyone. Happy gaming! 🎮😁</p>
+    <p>
+      JDigitalsRental was created for gamers who want to enjoy
+      their favorite PS5 games without spending too much.
+      We offer affordable weekly and monthly digital game rentals
+      for your gaming needs.
+    </p>
+    <p>
+      Our goal is to make PS5 gaming more affordable,
+      convenient, and accessible to everyone.
+      Happy gaming! 🎮😁
+    </p>
   </div>
 </section>
 
@@ -161,9 +161,16 @@
       <div>
         <p class="eyebrow">COMING SOON</p>
         <h2>🎮 Upcoming Games</h2>
-        <p class="section-subtitle">Reserve your slot early for our upcoming PS5 games.</p>
+        <p class="section-subtitle">
+          Reserve your slot early for our upcoming PS5 games.
+        </p>
       </div>
     </div>
+
+    <p class="mega-hint">
+      ⏳ Live countdowns appear on games with valid future release dates.
+    </p>
+
     <div id="upcomingGames" class="games-grid"></div>
   </div>
 </section>
@@ -174,9 +181,76 @@
       <div>
         <p class="eyebrow">GAME LIBRARY</p>
         <h2>🎮 PS5 Games</h2>
-        <p class="section-subtitle">Choose a game and select your rental option.</p>
+        <p class="section-subtitle">
+          Choose a game and select your rental option.
+        </p>
       </div>
     </div>
+
+    <!-- SEARCH AND SMART AVAILABILITY FILTER -->
+    <div class="mega-toolbar">
+      <label class="mega-search-label" for="search">
+        🔎 Find your next game
+      </label>
+
+      <input
+        id="search"
+        type="search"
+        placeholder="Search PS5 games..."
+        autocomplete="off"
+      >
+
+      <div
+        class="mega-filters"
+        id="availabilityFilters"
+        aria-label="Filter games by availability"
+      >
+        <button
+          type="button"
+          class="mega-filter active"
+          data-availability="all"
+        >All Games</button>
+
+        <button
+          type="button"
+          class="mega-filter"
+          data-availability="available"
+        >🟢 Available Now</button>
+
+        <button
+          type="button"
+          class="mega-filter"
+          data-availability="trophy"
+        >🏆 Trophy Available</button>
+
+        <button
+          type="button"
+          class="mega-filter"
+          data-availability="nonTrophy"
+        >🎮 Non-Trophy Available</button>
+
+        <button
+          type="button"
+          class="mega-filter"
+          data-availability="favorites"
+        >❤️ My Favorites</button>
+      </div>
+
+      <p
+        id="libraryResultCount"
+        class="mega-count"
+        aria-live="polite"
+      ></p>
+    </div>
+
+    <!-- FEATURED / MOST REQUESTED -->
+    <div
+      id="featuredGames"
+      class="mega-featured"
+      aria-live="polite"
+    ></div>
+
+    <!-- FIREBASE GAME LIBRARY -->
     <div id="gameGrid" class="games-grid"></div>
   </div>
 </section>
@@ -188,10 +262,31 @@
       <h2>Rent in 3 easy steps.</h2>
     </div>
   </div>
+
   <div class="steps">
-    <article><b>01</b><h3>Choose a game</h3><p>Browse the available titles and pick your next adventure.</p></article>
-    <article><b>02</b><h3>Message us</h3><p>Click <strong>Rent Now</strong> and send us a message through Facebook Messenger to reserve.</p></article>
-    <article><b>03</b><h3>Start playing</h3><p>Choose your rental plan, follow our setup instructions, and enjoy your rental period.</p></article>
+    <article>
+      <b>01</b>
+      <h3>Choose a game</h3>
+      <p>Browse the available titles and pick your next adventure.</p>
+    </article>
+
+    <article>
+      <b>02</b>
+      <h3>Message us</h3>
+      <p>
+        Click <strong>Rent Now</strong> and send us a message
+        through Facebook Messenger to reserve.
+      </p>
+    </article>
+
+    <article>
+      <b>03</b>
+      <h3>Start playing</h3>
+      <p>
+        Choose your rental plan, follow our setup instructions,
+        and enjoy your rental period.
+      </p>
+    </article>
   </div>
 </section>
 
@@ -202,10 +297,34 @@
       <h2>Rental rules.</h2>
     </div>
   </div>
+
   <div class="steps">
-    <article><b>01</b><h3>Account use</h3><p>Please use the provided PS5 account only for the rented game. Do not delete the account from your console.</p></article>
-    <article><b>02</b><h3>Console sharing</h3><p>Follow the setup instructions carefully. Do not change account details or share the account with others.</p></article>
-    <article><b>03</b><h3>Expiry and return</h3><p>On the expiry date, follow the return instructions and send the requested screenshot. Please do not simply log out.</p></article>
+    <article>
+      <b>01</b>
+      <h3>Account use</h3>
+      <p>
+        Please use the provided PS5 account only for the rented game.
+        Do not delete the account from your console.
+      </p>
+    </article>
+
+    <article>
+      <b>02</b>
+      <h3>Console sharing</h3>
+      <p>
+        Follow the setup instructions carefully.
+        Do not change account details or share the account with others.
+      </p>
+    </article>
+
+    <article>
+      <b>03</b>
+      <h3>Expiry and return</h3>
+      <p>
+        On the expiry date, follow the return instructions and
+        send the requested screenshot. Please do not simply log out.
+      </p>
+    </article>
   </div>
 </section>
 
@@ -216,45 +335,169 @@
       <h2>Frequently asked questions.</h2>
     </div>
   </div>
-  <details><summary>What rental plans are available?</summary><p>We offer flexible weekly and monthly rentals. Message us for the current rates and availability.</p></details>
-  <details><summary>How do I reserve a game?</summary><p>Click a Rent Now button, send us a message, and tell us which title and rental plan you want.</p></details>
-  <details><summary>Can I play using my own PS5 profile?</summary><p>We will provide the correct setup instructions for your rental. Please follow them carefully.</p></details>
+
+  <details>
+    <summary>What rental plans are available?</summary>
+    <p>
+      We offer flexible weekly and monthly rentals.
+      Message us for the current rates and availability.
+    </p>
+  </details>
+
+  <details>
+    <summary>How do I reserve a game?</summary>
+    <p>
+      Click a Rent Now button, send us a message,
+      and tell us which title and rental plan you want.
+    </p>
+  </details>
+
+  <details>
+    <summary>Can I play using my own PS5 profile?</summary>
+    <p>
+      We will provide the correct setup instructions for your rental.
+      Please follow them carefully.
+    </p>
+  </details>
+</section>
+
+<!-- CUSTOMER REVIEWS -->
+<section class="section mega-community" id="reviews">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">OUR COMMUNITY</p>
+      <h2>⭐ Customer Reviews</h2>
+    </div>
+  </div>
+
+  <div class="mega-info-panel">
+    <h3>Real gamers. Real feedback.</h3>
+    <p>
+      Verified customer reviews will appear here when shared
+      with permission. We never publish made-up ratings.
+    </p>
+
+    <a
+      class="mega-outline-link"
+      href="https://www.facebook.com/share/1DajrF4mTy/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >Visit our Facebook Page ↗</a>
+  </div>
+</section>
+
+<!-- RENTAL REQUEST SUPPORT -->
+<section class="section mega-tracking" id="tracking">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">RENTAL SUPPORT</p>
+      <h2>📋 Check Your Request</h2>
+    </div>
+  </div>
+
+  <div class="mega-info-panel">
+    <p>
+      Submitted a rental or waiting-list request?
+      Your request is <strong>not confirmed</strong>
+      until you send your completed form to our Facebook Page
+      and receive confirmation from us.
+    </p>
+
+    <p>
+      For privacy, request status is handled directly through
+      Messenger. A secure online tracker is planned for
+      a future Firebase update.
+    </p>
+
+    <a
+      class="mega-outline-link"
+      href="https://www.facebook.com/share/1DajrF4mTy/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >Ask About My Request ↗</a>
+  </div>
 </section>
 
 </main>
+
+<!-- FLOATING MESSENGER BUTTON -->
+<a
+  class="mega-floating-messenger"
+  href="https://www.facebook.com/share/1DajrF4mTy/"
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Message JDigitalsRental on Facebook"
+>
+  💬 <span>Message us</span>
+</a>
 
 <footer>
   <div class="brand">
     <span class="brand-mark">J</span>
     <span>JDigitals<span class="gold">Rental</span></span>
   </div>
+
   <p>Affordable digital adventures for PS5 players.</p>
-  <p class="copyright">© 2026 JDigitalsRental. All rights reserved.</p>
+
+  <p class="copyright">
+    © 2026 JDigitalsRental. All rights reserved.
+  </p>
 </footer>
 
 <!-- RENTAL MODAL -->
 <div id="rentalModal" class="rental-modal">
   <div class="rental-modal-card">
-    <button id="closeRentalModal" class="modal-close" type="button">×</button>
+
+    <button
+      id="closeRentalModal"
+      class="modal-close"
+      type="button"
+    >×</button>
+
     <div class="modal-eyebrow">JDIGITALSRENTAL</div>
+
     <h2 id="modalTitle">Rent Game</h2>
 
     <p class="modal-label">First and Last Name</p>
-    <input id="rentalCustomerName" type="text" placeholder="Enter your first and last name" autocomplete="name" style="width:100%;">
+
+    <input
+      id="rentalCustomerName"
+      type="text"
+      placeholder="Enter your first and last name"
+      autocomplete="name"
+      style="width:100%;"
+    >
 
     <p style="margin:8px 0 18px;font-size:11px;line-height:1.5;color:#9baec5;">
-      📌 Please use the same First and Last Name shown on your Facebook account so we can easily find and contact you.
+      📌 Please use the same First and Last Name shown on your
+      Facebook account so we can easily find and contact you.
     </p>
 
     <p class="modal-label">Choose Rental Period</p>
+
     <div class="modal-options">
-      <button type="button" class="period-option" data-period="week">📅 1 Week</button>
-      <button type="button" class="period-option" data-period="monthly">📅 1 Month</button>
+      <button
+        type="button"
+        class="period-option"
+        data-period="week"
+      >📅 1 Week</button>
+
+      <button
+        type="button"
+        class="period-option"
+        data-period="monthly"
+      >📅 1 Month</button>
     </div>
 
     <p class="modal-label">Choose Account Type</p>
+
     <div class="upcoming-account-cards">
-      <button type="button" class="account-option upcoming-account-option trophy-card" data-account="trophy">
+
+      <button
+        type="button"
+        class="account-option upcoming-account-option trophy-card"
+        data-account="trophy"
+      >
         <span class="account-card-icon">🏆</span>
         <span class="account-card-content">
           <strong>Trophy</strong>
@@ -265,7 +508,11 @@
         </span>
       </button>
 
-      <button type="button" class="account-option upcoming-account-option non-trophy-card" data-account="non-trophy">
+      <button
+        type="button"
+        class="account-option upcoming-account-option non-trophy-card"
+        data-account="non-trophy"
+      >
         <span class="account-card-icon">🎮</span>
         <span class="account-card-content">
           <strong>Non-Trophy</strong>
@@ -275,6 +522,7 @@
           <span>✓ Perfect for casual play</span>
         </span>
       </button>
+
     </div>
 
     <div class="modal-price">
@@ -282,36 +530,73 @@
       <strong id="modalPrice">₱0</strong>
     </div>
 
-    <button id="continueRental" class="modal-continue" type="button">
+    <button
+      id="continueRental"
+      class="modal-continue"
+      type="button"
+    >
       📝 Continue to Facebook
     </button>
+
   </div>
 </div>
 
 <!-- UPCOMING RESERVATION MODAL -->
 <div id="upcomingReservationModal" class="rental-modal">
   <div class="rental-modal-card">
-    <button id="closeUpcomingReservationModal" class="modal-close" type="button">×</button>
+
+    <button
+      id="closeUpcomingReservationModal"
+      class="modal-close"
+      type="button"
+    >×</button>
+
     <div class="modal-eyebrow">JDIGITALSRENTAL</div>
+
     <h2>Reserve Slot</h2>
     <h3 id="upcomingReservationGame">Upcoming Game</h3>
 
     <p class="modal-label">First and Last Name</p>
-    <input id="upcomingReservationCustomerName" type="text" placeholder="Enter your first and last name" autocomplete="name" style="width:100%;">
+
+    <input
+      id="upcomingReservationCustomerName"
+      type="text"
+      placeholder="Enter your first and last name"
+      autocomplete="name"
+      style="width:100%;"
+    >
 
     <p style="margin:8px 0 18px;font-size:11px;line-height:1.5;color:#9baec5;">
-      📌 Please use the same First and Last Name shown on your Facebook account so we can easily find and contact you when it's your turn to rent.
+      📌 Please use the same First and Last Name shown on your
+      Facebook account so we can easily find and contact you
+      when it's your turn to rent.
     </p>
 
     <p class="modal-label">Choose Rental Period</p>
+
     <div class="modal-options upcoming-period-options">
-      <button type="button" class="upcoming-period-option" data-period="week">📅 1 Week</button>
-      <button type="button" class="upcoming-period-option" data-period="month">📅 1 Month</button>
+      <button
+        type="button"
+        class="upcoming-period-option"
+        data-period="week"
+      >📅 1 Week</button>
+
+      <button
+        type="button"
+        class="upcoming-period-option"
+        data-period="month"
+      >📅 1 Month</button>
     </div>
 
     <p class="modal-label">Choose Account Type</p>
+
     <div class="upcoming-account-cards">
-      <button type="button" class="upcoming-account-option trophy-card" data-account="trophy">
+
+      <button
+        type="button"
+        class="upcoming-account-option trophy-card"
+        data-account="trophy"
+      >
         <span class="account-card-icon">🏆</span>
         <span class="account-card-content">
           <strong>Trophy</strong>
@@ -321,7 +606,12 @@
           <span>✓ For trophy hunters</span>
         </span>
       </button>
-      <button type="button" class="upcoming-account-option non-trophy-card" data-account="non-trophy">
+
+      <button
+        type="button"
+        class="upcoming-account-option non-trophy-card"
+        data-account="non-trophy"
+      >
         <span class="account-card-icon">🎮</span>
         <span class="account-card-content">
           <strong>Non-Trophy</strong>
@@ -331,45 +621,88 @@
           <span>✓ Perfect for casual play</span>
         </span>
       </button>
+
     </div>
 
-    <button id="continueUpcomingReservation" class="modal-continue" type="button" style="width:100%;margin-top:20px;padding:14px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#168cff,#0754d9);color:white;font-weight:800;cursor:pointer;">
+    <button
+      id="continueUpcomingReservation"
+      class="modal-continue"
+      type="button"
+      style="width:100%;margin-top:20px;padding:14px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#168cff,#0754d9);color:white;font-weight:800;cursor:pointer;"
+    >
       📝 Continue to Facebook
     </button>
+
   </div>
 </div>
 
-<!-- NEW FACEBOOK REMINDER -->
-<div id="facebookReminder" role="dialog" aria-modal="true" aria-labelledby="facebookReminderTitle">
+<!-- FACEBOOK REMINDER -->
+<div
+  id="facebookReminder"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="facebookReminderTitle"
+>
   <div class="fb-reminder-card">
-    <button id="closeFacebookReminder" class="fb-reminder-close" type="button" aria-label="Close">×</button>
+
+    <button
+      id="closeFacebookReminder"
+      class="fb-reminder-close"
+      type="button"
+      aria-label="Close"
+    >×</button>
 
     <div class="fb-reminder-icon">🎮</div>
     <div class="modal-eyebrow">JDIGITALSRENTAL</div>
+
     <h2 id="facebookReminderTitle">One More Step!</h2>
 
     <p>Thank you for choosing JDigitalsRental!</p>
 
-    <p>Your form is ready. Please send your completed form to our official Facebook Page via Messenger to continue your rental or waiting list request.</p>
+    <p>
+      Your form is ready. Please send your completed form
+      to our official Facebook Page via Messenger to continue
+      your rental or waiting list request.
+    </p>
 
     <div class="fb-reminder-note">
       ⚠️ <strong>IMPORTANT REMINDER</strong>
       <div style="margin-top:6px;">
-        Your request is not yet confirmed. Please send your completed form to our Facebook Page so we can process it.
+        Your request is not yet confirmed.
+        Please send your completed form to our Facebook Page
+        so we can process it.
       </div>
     </div>
 
-    <p>📋 Copy your form details, then paste and send them in Messenger.</p>
+    <p>
+      📋 Copy your form details, then paste and send
+      them in Messenger.
+    </p>
 
-    <button id="copyFacebookForm" class="fb-reminder-btn fb-reminder-copy" type="button">
+    <button
+      id="copyFacebookForm"
+      class="fb-reminder-btn fb-reminder-copy"
+      type="button"
+    >
       📋 Copy Form Details
     </button>
 
-    <p id="facebookCopyStatus" class="fb-reminder-status" aria-live="polite"></p>
+    <p
+      id="facebookCopyStatus"
+      class="fb-reminder-status"
+      aria-live="polite"
+    ></p>
 
-    <a id="goToFacebookPage" class="fb-reminder-btn fb-reminder-go" href="https://www.facebook.com/share/1DajrF4mTy/" target="_blank" rel="noopener noreferrer">
+    <a
+      id="goToFacebookPage"
+      class="fb-reminder-btn fb-reminder-go"
+      href="https://www.facebook.com/share/1DajrF4mTy/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       ↗ Go to Facebook Page
     </a>
+
   </div>
 </div>
 
@@ -506,6 +839,7 @@ onSnapshot(
     window.dispatchEvent(
       new Event("firestoreGamesLoaded")
     );
+
     window.dispatchEvent(
       new Event("upcomingGamesLoaded")
     );
@@ -524,6 +858,7 @@ onSnapshot(
 
     querySnapshot.forEach((reservationDoc) => {
       const data = reservationDoc.data();
+
       const gameName =
         data.gameName || data.gameId || "Unknown Game";
 
@@ -558,6 +893,6 @@ onSnapshot(
 );
 </script>
 
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
