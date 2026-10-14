@@ -56,8 +56,6 @@ let selectedPeriod = null;
 let selectedAccount = null;
 
 // SLOT AVAILABILITY
-// Explicit slot statuses are preferred.
-// A future or past date alone does not prove availability.
 
 function slotIsRented(game, type) {
   const key = type === 'trophy' ? 'trophy' : 'nonTrophy';
@@ -161,6 +159,33 @@ function slotAvailabilityHtml(game, type, label, icon) {
       <div>${icon} ${label}: ${dateText}</div>
     </div>
   `;
+}
+
+// FACEBOOK REMINDER INTEGRATION
+
+function showRentalFacebookReminder(message) {
+  if (typeof window.showFacebookReminder === 'function') {
+    window.showFacebookReminder(message);
+    return;
+  }
+
+  // Fallback if the reminder HTML is unavailable.
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(message).catch(() => {});
+  }
+
+  alert(
+    'One More Step! 🎮\n\n' +
+    'Please send your completed form to our Facebook Page ' +
+    'via Messenger to continue your request.\n\n' +
+    'Your request is not confirmed until you send the form.'
+  );
+
+  window.open(
+    facebookUrl,
+    '_blank',
+    'noopener,noreferrer'
+  );
 }
 
 // GAME LIBRARY
@@ -410,12 +435,6 @@ document.querySelectorAll('.account-option').forEach(btn => {
   });
 });
 
-function copyRentalMessage(message) {
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(message).catch(() => {});
-  }
-}
-
 if (continueRental) {
   continueRental.addEventListener('click', async () => {
     if (!selectedGame) return;
@@ -504,20 +523,9 @@ Price: ₱${price}
 
 Thank you!`;
 
-    copyRentalMessage(message);
-
-    alert(isWaitingList
-      ? 'You have been added to the waiting list! 🎮\n\nContinue to Facebook and paste the message in Messenger.'
-      : 'Your rental details have been copied! 🎮\n\nContinue to Facebook and paste the message in Messenger.'
-    );
-
-    window.open(
-      facebookUrl,
-      '_blank',
-      'noopener,noreferrer'
-    );
-
+    // NEW REMINDER INSTEAD OF AUTOMATIC REDIRECT
     rentalModal.classList.remove('active');
+    showRentalFacebookReminder(message);
   });
 }
 
@@ -793,20 +801,9 @@ Available Date: ${selectedUpcomingDate}
 
 Thank you!`;
 
-      copyRentalMessage(message);
-
-      alert(
-        'Your reservation details have been copied! 🎮\n\n' +
-        'Continue to Facebook and paste the message in Messenger.'
-      );
-
-      window.open(
-        facebookUrl,
-        '_blank',
-        'noopener,noreferrer'
-      );
-
+      // NEW REMINDER INSTEAD OF AUTOMATIC REDIRECT
       upcomingReservationModal?.classList.remove('active');
+      showRentalFacebookReminder(message);
     }
   );
 }
