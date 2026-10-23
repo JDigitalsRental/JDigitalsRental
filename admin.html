@@ -1,386 +1,245 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JDigitalsRental Management</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JDigitalsRental Management</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background:
-        radial-gradient(circle at top right, #0b3b91 0, transparent 35%),
-        #020817;
-      color: #ffffff;
-      min-height: 100vh;
-    }
-
-    .header {
-      padding: 22px 18px;
-      border-bottom: 1px solid #17356b;
-      background: rgba(2, 8, 23, 0.92);
-      display: flex;
-align-items: center;
-justify-content: space-between;
-    }
-.logout-button {
-  border: 1px solid #168cff;
-  border-radius: 9px;
-  padding: 9px 14px;
-  background: rgba(22, 140, 255, 0.12);
-  color: #ffffff;
-  font-weight: 700;
-  cursor: pointer;
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  color:#fff;
+  background:radial-gradient(circle at top right,#0b3b91,transparent 35%),#020817;
+  min-height:100vh
 }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      object-fit: cover;
-      box-shadow: 0 0 20px rgba(22, 140, 255, 0.45);
-    }
-
-    .brand h1 {
-      font-size: 20px;
-    }
-
-    .brand h1 span {
-      color: #39a9ff;
-    }
-
-    .brand p {
-      color: #8294b8;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .container {
-      width: min(100% - 28px, 1000px);
-      margin: auto;
-      padding: 28px 0 50px;
-    }
-
-    .eyebrow {
-      color: #39a9ff;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-
-    .title {
-      font-size: 30px;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: #91a0bf;
-      line-height: 1.6;
-      margin-bottom: 26px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-
-    .stat {
-      background: rgba(9, 24, 55, 0.75);
-      border: 1px solid #173d7c;
-      border-radius: 14px;
-      padding: 18px;
-    }
-
-    .stat span {
-      color: #8294b8;
-      font-size: 12px;
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 25px;
-      margin-top: 7px;
-    }
-
-    .section-title {
-      margin-bottom: 16px;
-      font-size: 21px;
-    }
-
-    .game-grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .game-card {
-      background: linear-gradient(145deg, #081a3d, #041027);
-      border: 1px solid #173d7c;
-      border-radius: 16px;
-      padding: 18px;
-    }
-
-    .game-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: flex-start;
-      margin-bottom: 16px;
-    }
-
-    .game-card h3 {
-      font-size: 17px;
-      line-height: 1.4;
-    }
-
-    .status {
-      white-space: nowrap;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 7px 9px;
-      border-radius: 20px;
-    }
-
-    .available {
-      color: #70ffb1;
-      background: rgba(19, 157, 88, 0.15);
-      border: 1px solid #16764a;
-    }
-
-    .rented {
-      color: #ff8d8d;
-      background: rgba(210, 45, 45, 0.15);
-      border: 1px solid #842f3a;
-    }
-
-    .details {
-      color: #8ea0c5;
-      font-size: 13px;
-      line-height: 1.7;
-      margin-bottom: 16px;
-    }
-
-    .manage {
-      width: 100%;
-      border: 1px solid #168cff;
-      border-radius: 10px;
-      padding: 12px;
-      background: linear-gradient(135deg, #168cff, #0754d9);
-      color: #ffffff;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .note {
-      margin-top: 25px;
-      padding: 15px;
-      border-radius: 12px;
-      background: rgba(22, 140, 255, 0.08);
-      border: 1px solid #173d7c;
-      color: #8ea0c5;
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    @media (min-width: 700px) {
-      .stats {
-        grid-template-columns: repeat(4, 1fr);
-      }
-
-      .game-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-.manage-modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(0, 5, 20, 0.88);
-  backdrop-filter: blur(8px);
-  padding: 20px;
-  align-items: center;
-  justify-content: center;
+button,input,select{font:inherit}
+button{cursor:pointer}
+.header{
+  padding:18px;
+  border-bottom:1px solid #17356b;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px
 }
-
-.manage-modal.active {
-  display: flex;
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:45px;height:45px;border-radius:50%;object-fit:cover}
+.brand h1{font-size:18px;margin:0}
+.brand h1 span{color:#39a9ff}
+.brand p{font-size:11px;color:#8ea0c5;margin:4px 0 0}
+.logout-button{
+  padding:10px 13px;
+  border:1px solid #168cff;
+  border-radius:9px;
+  background:#102750;
+  color:white;
+  font-weight:bold
 }
-
-.manage-modal-card {
-  width: 100%;
-  max-width: 430px;
-  max-height: 90vh;
-  overflow-y: auto;
-  background: #020817;
-  border: 1px solid #173d7c;
-  border-radius: 18px;
-  padding: 24px 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+.container{max-width:1000px;margin:auto;padding:25px 14px 60px}
+.eyebrow{color:#39a9ff;font-size:12px;font-weight:800;letter-spacing:2px}
+.title{font-size:29px;margin:8px 0}
+.subtitle{color:#91a0bf;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:25px 0}
+.stat,.game-card{
+  background:linear-gradient(145deg,#081a3d,#041027);
+  border:1px solid #173d7c;
+  border-radius:15px;
+  padding:17px
 }
-
-.manage-modal-card h2 {
-  margin-bottom: 20px;
-  font-size: 22px;
+.stat span{color:#8ea0c5;font-size:11px}
+.stat strong{display:block;font-size:27px;margin-top:8px}
+.section-title{margin:24px 0 14px}
+.game-grid{display:grid;gap:14px;margin-top:15px}
+.game-top{display:flex;justify-content:space-between;gap:10px;align-items:start}
+.game-top h3{font-size:16px;margin:0}
+.status{font-size:10px;font-weight:800;padding:7px;border-radius:20px;white-space:nowrap}
+.available{color:#70ffb1;background:#103e30}
+.rented{color:#ff8d8d;background:#4a1c2a}
+.upcoming{color:#ffd76a;background:#443718}
+.details{color:#b1c2de;font-size:12px;line-height:1.9;margin:15px 0}
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.price-box{padding:10px;border:1px solid #254b83;border-radius:9px;background:#08142c}
+.price-box small{display:block;color:#91a0bf;margin-bottom:5px}
+.price-box strong{color:#fff;font-size:17px}
+.manage,.save-game{
+  width:100%;
+  border:0;
+  border-radius:10px;
+  padding:13px;
+  background:linear-gradient(135deg,#168cff,#0754d9);
+  color:white;
+  font-weight:800
 }
-
-.manage-modal-card label {
-  display: block;
-  margin: 14px 0 7px;
-  color: #8ea0c5;
-  font-size: 12px;
-  font-weight: 700;
+.manage-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,5,20,.9);
+  padding:15px;
+  align-items:center;
+  justify-content:center
 }
-
+.manage-modal.active{display:flex}
+.manage-modal-card{
+  position:relative;
+  width:100%;
+  max-width:460px;
+  max-height:92vh;
+  overflow-y:auto;
+  padding:24px 20px;
+  background:#06112b;
+  border:1px solid #24539a;
+  border-radius:18px
+}
+.manage-modal-card h2{margin:8px 0 20px}
+.manage-modal-card label{
+  display:block;
+  color:#a7b9d6;
+  font-size:12px;
+  font-weight:700;
+  margin:14px 0 6px
+}
 .manage-modal-card input,
-.manage-modal-card select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #173d7c;
-  border-radius: 10px;
-  background: #06112b;
-  color: #ffffff;
-  font-size: 14px;
+.manage-modal-card select{
+  width:100%;
+  padding:12px;
+  border:1px solid #254b83;
+  border-radius:9px;
+  background:#020817;
+  color:white
 }
-
-.save-game {
-  width: 100%;
-  margin-top: 20px;
-  padding: 13px;
-  border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #168cff, #0754d9);
-  color: #ffffff;
-  font-weight: 800;
-  cursor: pointer;
+.manage-close{
+  position:absolute;
+  right:14px;
+  top:12px;
+  border:0;
+  background:transparent;
+  color:#fff;
+  font-size:27px
 }
-    
-  </style>
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.form-heading{color:#39a9ff;font-size:14px;margin:22px 0 5px}
+.note{
+  margin-top:22px;
+  padding:14px;
+  background:#081a3d;
+  border:1px solid #173d7c;
+  border-radius:12px;
+  color:#9eb2d3;
+  font-size:12px;
+  line-height:1.6
+}
+.delete-game{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border:1px solid #ff5757;
+  border-radius:10px;
+  color:#ff8b8b;
+  background:#3d1420;
+  font-weight:bold
+}
+.waiting-group{border:1px solid #254b83;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.waiting-toggle{width:100%;padding:13px;background:#0b2145;border:0;color:white;text-align:left;font-weight:bold}
+.waiting-panel{padding:10px;display:none}
+.waiting-columns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.waiting-item{background:#020817;border:1px solid #173d7c;border-radius:9px;padding:9px;margin:7px 0;font-size:11px;overflow-wrap:anywhere}
+.waiting-item strong{display:block;font-size:12px;margin:5px 0}
+.waiting-item button{width:100%;margin-top:8px;background:#401b28;color:#ff8b8b;border:1px solid #8b354a;border-radius:7px;padding:7px}
+@media(min-width:700px){
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .game-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
 </head>
 
 <body>
 
-  <header class="header">
-    <div class="brand">
-      <img src="assets/jdigitals-logo.png"
-           alt="JDigitalsRental Logo"
-           class="logo">
-
-      <div>
-        <h1>JDigitals<span>Rental</span></h1>
-        <p>Management Dashboard</p>
-      </div>
+<header class="header">
+  <div class="brand">
+    <img class="logo" src="assets/jdigitals-logo.png" alt="Logo">
+    <div>
+      <h1>JDigitals<span>Rental</span></h1>
+      <p>Management Dashboard</p>
     </div>
-    <button id="logoutButton" class="logout-button">Logout</button>
-  </header>
-
-  <main class="container">
-
-    <p class="eyebrow">ADMIN MANAGEMENT</p>
-    <h2 class="title">Game Dashboard</h2>
-    <p class="subtitle">
-      Manage your JDigitalsRental game library and availability.
-    </p>
-
-    <section class="stats">
-  <div class="stat">
-    <span>TOTAL GAMES</span>
-    <strong id="totalGames">0</strong>
   </div>
+  <button id="logoutButton" class="logout-button">Logout</button>
+</header>
 
-  <div class="stat">
-    <span>AVAILABLE</span>
-    <strong id="availableGames">0</strong>
-  </div>
+<main class="container">
+  <p class="eyebrow">ADMIN MANAGEMENT</p>
+  <h2 class="title">Game Dashboard</h2>
+  <p class="subtitle">Manage games, slot availability, and individual Trophy / Non-Trophy prices.</p>
 
-  <div class="stat">
-    <span>RENTED</span>
-    <strong id="rentedGames">0</strong>
-  </div>
-
-  <div class="stat" id="waitingListCard" style="cursor:pointer;">
-  <span>WAITING LIST</span>
-  <strong id="waitingGames">0</strong>
-  </div>
-    </section>
-
-    <h2 class="section-title">🎮 Game Management</h2>
-<button id="addGameButton" class="manage" type="button">
-  ➕ Add New Game
-</button>
-    <section class="game-grid">
-
-    </section>
-
-    <div class="note">
-      🔒 Management controls are currently in setup mode.
-      Secure editing and saving will be added next.
+  <section class="stats">
+    <div class="stat"><span>TOTAL GAMES</span><strong id="totalGames">0</strong></div>
+    <div class="stat"><span>AVAILABLE</span><strong id="availableGames">0</strong></div>
+    <div class="stat"><span>RENTED</span><strong id="rentedGames">0</strong></div>
+    <div class="stat" id="waitingListCard" style="cursor:pointer">
+      <span>WAITING LIST</span><strong id="waitingGames">0</strong>
     </div>
+  </section>
 
-  </main>
-  <!-- WAITING LIST MODAL -->
-<div id="waitingListModal" class="manage-modal">
+  <h2 class="section-title">🎮 Game Management</h2>
+  <button id="addGameButton" class="manage">➕ Add New Game</button>
+  <section class="game-grid" id="gameGrid"></section>
+
+  <div class="note">
+    💰 Each game has four separate prices. Changes are saved in Firebase.
+    The customer website will use these prices after its app.js is updated.
+  </div>
+</main>
+
+<!-- ADD GAME -->
+<div id="addGameModal" class="manage-modal">
   <div class="manage-modal-card">
-
-    <button
-      id="closeWaitingListModal"
-      class="manage-close"
-      type="button"
-    >×</button>
-
-    <p class="eyebrow">RESERVATIONS</p>
-    <h2>📋 Waiting List</h2>
-
-    <div id="waitingListContainer">
-      <p style="color:#8ea0c5;">
-        Loading reservations...
-      </p>
-    </div>
-
-  </div>
-</div>
-  <div id="addGameModal" class="manage-modal">
-  <div class="manage-modal-card">
-
-    <button id="closeAddGameModal" class="manage-close" type="button">×</button>
-
+    <button class="manage-close" id="closeAddGameModal">×</button>
     <p class="eyebrow">NEW GAME</p>
     <h2>➕ Add New Game</h2>
 
     <label>Game Title</label>
-    <input id="newGameTitle" type="text" placeholder="Game title">
+    <input id="newGameTitle" placeholder="Game title">
 
     <label>Genre</label>
-    <input id="newGameGenre" type="text" placeholder="Example: Action">
+    <input id="newGameGenre" placeholder="Action, RPG, Adventure">
 
-    <label>Weekly Price</label>
-    <input id="newGameWeekly" type="number" placeholder="Weekly price">
+    <h3 class="form-heading">📅 Weekly Prices</h3>
+    <div class="form-grid">
+      <div>
+        <label>🏆 Trophy Weekly</label>
+        <input id="newWeeklyTrophy" type="number" min="0" value="350">
+      </div>
+      <div>
+        <label>🎮 Non-Trophy Weekly</label>
+        <input id="newWeeklyNonTrophy" type="number" min="0" value="300">
+      </div>
+    </div>
 
-    <label>Monthly Price</label>
-    <input id="newGameMonthly" type="number" placeholder="Monthly price">
+    <h3 class="form-heading">♾️ Monthly UNLI SWAP</h3>
+    <div class="form-grid">
+      <div>
+        <label>🏆 Trophy Monthly</label>
+        <input id="newMonthlyTrophy" type="number" min="0" value="800">
+      </div>
+      <div>
+        <label>🎮 Non-Trophy Monthly</label>
+        <input id="newMonthlyNonTrophy" type="number" min="0" value="700">
+      </div>
+    </div>
 
     <label>Game Status</label>
-<select id="newGameStatus">
-  <option value="available">Available</option>
-  <option value="currently-rented">Currently Rented</option>
-  <option value="upcoming">Upcoming Game</option>
-</select>
+    <select id="newGameStatus">
+      <option value="available">Available</option>
+      <option value="currently-rented">Currently Rented</option>
+      <option value="upcoming">Upcoming Game</option>
+    </select>
 
-<label>📅 Upcoming Game Available Date</label>
-<input id="newGameAvailableDate" type="date">
+    <label>📅 Upcoming Available Date</label>
+    <input id="newGameAvailableDate" type="date">
 
     <label>🏆 Trophy Available Date</label>
     <input id="newGameTrophyDate" type="date">
@@ -388,20 +247,17 @@ justify-content: space-between;
     <label>🎮 Non-Trophy Available Date</label>
     <input id="newGameNonTrophyDate" type="date">
 
-    <label>Game Image</label>
-    <input id="newGameImage" type="text" placeholder="Example: assets/game-name.jpg">
+    <label>Game Image Path</label>
+    <input id="newGameImage" placeholder="assets/game-name.jpg">
 
-    <button id="saveNewGame" class="save-game" type="button">
-      ➕ Add Game
-    </button>
+    <button id="saveNewGame" class="save-game" style="margin-top:20px">➕ Add Game</button>
+  </div>
+</div>
 
-  </div>
-  </div>
-  <div id="manageModal" class="manage-modal">
+<!-- MANAGE GAME -->
+<div id="manageModal" class="manage-modal">
   <div class="manage-modal-card">
-
-    <button id="closeManageModal" class="manage-close" type="button">×</button>
-
+    <button class="manage-close" id="closeManageModal">×</button>
     <p class="eyebrow">GAME MANAGEMENT</p>
     <h2 id="manageGameName">Manage Game</h2>
 
@@ -409,13 +265,35 @@ justify-content: space-between;
     <select id="manageStatus">
       <option value="available">Available</option>
       <option value="currently-rented">Currently Rented</option>
+      <option value="upcoming">Upcoming Game</option>
     </select>
 
-    <label>Weekly Price</label>
-    <input id="manageWeekly" type="number" placeholder="Weekly price">
+    <h3 class="form-heading">📅 Weekly Prices</h3>
+    <div class="form-grid">
+      <div>
+        <label>🏆 Trophy Weekly</label>
+        <input id="manageWeeklyTrophy" type="number" min="0">
+      </div>
+      <div>
+        <label>🎮 Non-Trophy Weekly</label>
+        <input id="manageWeeklyNonTrophy" type="number" min="0">
+      </div>
+    </div>
 
-    <label>Monthly Price</label>
-    <input id="manageMonthly" type="number" placeholder="Monthly price">
+    <h3 class="form-heading">♾️ Monthly UNLI SWAP</h3>
+    <div class="form-grid">
+      <div>
+        <label>🏆 Trophy Monthly</label>
+        <input id="manageMonthlyTrophy" type="number" min="0">
+      </div>
+      <div>
+        <label>🎮 Non-Trophy Monthly</label>
+        <input id="manageMonthlyNonTrophy" type="number" min="0">
+      </div>
+    </div>
+
+    <label>📅 Upcoming Available Date</label>
+    <input id="manageAvailableDate" type="date">
 
     <label>🏆 Trophy Available Date</label>
     <input id="manageTrophyDate" type="date">
@@ -423,799 +301,456 @@ justify-content: space-between;
     <label>🎮 Non-Trophy Available Date</label>
     <input id="manageNonTrophyDate" type="date">
 
-    <button id="saveGameChanges" class="save-game" type="button">
-      Save Changes
-    </button>
-<button id="deleteGame" class="delete-game" type="button">
-  🗑️ Delete Game
-</button>
+    <button id="saveGameChanges" class="save-game" style="margin-top:20px">💾 Save Changes</button>
+    <button id="deleteGame" class="delete-game">🗑️ Delete Game</button>
   </div>
+</div>
+
+<!-- WAITING LIST -->
+<div id="waitingListModal" class="manage-modal">
+  <div class="manage-modal-card">
+    <button class="manage-close" id="closeWaitingListModal">×</button>
+    <p class="eyebrow">RESERVATIONS</p>
+    <h2>📋 Waiting List</h2>
+    <div id="waitingListContainer">Loading...</div>
   </div>
-<script>
-  const manageModal = document.getElementById('manageModal');
-  const addGameModal = document.getElementById('addGameModal');
-const addGameButton = document.getElementById('addGameButton');
-const closeAddGameModal = document.getElementById('closeAddGameModal');
-  
-  const manageTitle = document.getElementById('manageGameName');
-  const manageStatus = document.getElementById('manageStatus');
-  const manageWeekly = document.getElementById('manageWeekly');
-  const manageMonthly = document.getElementById('manageMonthly');
-  const manageTrophyDate = document.getElementById('manageTrophyDate');
-  const manageNonTrophyDate = document.getElementById('manageNonTrophyDate');
-  const saveGameChanges = document.getElementById('saveGameChanges');
-  const deleteGame = document.getElementById('deleteGame');
-  const saveNewGame = document.getElementById('saveNewGame');
-const newGameTitle = document.getElementById('newGameTitle');
-const newGameGenre = document.getElementById('newGameGenre');
-const newGameWeekly = document.getElementById('newGameWeekly');
-const newGameMonthly = document.getElementById('newGameMonthly');
-const newGameStatus = document.getElementById('newGameStatus');
-const newGameAvailableDate = document.getElementById('newGameAvailableDate');
-const newGameTrophyDate = document.getElementById('newGameTrophyDate');
-const newGameNonTrophyDate = document.getElementById('newGameNonTrophyDate');
-const newGameImage = document.getElementById('newGameImage');
-function formatDateForInput(dateText) {
-  const months = {
-    January: '01',
-    February: '02',
-    March: '03',
-    April: '04',
-    May: '05',
-    June: '06',
-    July: '07',
-    August: '08',
-    September: '09',
-    October: '10',
-    November: '11',
-    December: '12'
-  };
+</div>
 
-  const parts = dateText.replace(',', '').split(/\s+/);
-  const month = months[parts[0]];
-  const day = parts[1].padStart(2, '0');
-  const year = parts[2];
-
-  return `${year}-${month}-${day}`;
-}
-  addGameButton.addEventListener('click', () => {
-  addGameModal.classList.add('active');
-});
-
-closeAddGameModal.addEventListener('click', () => {
-  addGameModal.classList.remove('active');
-});
-
-addGameModal.addEventListener('click', event => {
-  if (event.target === addGameModal) {
-    addGameModal.classList.remove('active');
-  }
-});
-  
-  manageModal.addEventListener('click', event => {
-    if (event.target === manageModal) {
-      manageModal.classList.remove('active');
-    }
-  });
-saveNewGame.addEventListener('click', async () => {
-  const title = newGameTitle.value.trim();
-  const genre = newGameGenre.value.trim();
-  const weekly = Number(newGameWeekly.value);
-  const monthly = Number(newGameMonthly.value);
-  const status = newGameStatus.value;
-  const image = newGameImage.value.trim();
-
-  if (!title || !genre || !weekly || !monthly || !image) {
-    alert('Please complete all required fields.');
-    return;
-  }
-
-  if (status === 'upcoming' && !newGameAvailableDate.value) {
-    alert('Please select the Upcoming Game Available Date.');
-    return;
-  }
-
-  const gameId = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  const formatDate = value => {
-    if (!value) return '';
-
-    const [year, month, day] = value.split('-');
-
-    const date = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day)
-    );
-
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const trophyDate = formatDate(newGameTrophyDate.value);
-  const nonTrophyDate = formatDate(newGameNonTrophyDate.value);
-  const availableDate = formatDate(newGameAvailableDate.value);
-
-  await window.firestoreSetDoc(
-    window.firestoreDoc(
-      window.firestoreDb,
-      'games',
-      gameId
-    ),
-    {
-      title: title,
-      genre: genre,
-      type: genre.toLowerCase(),
-      weekly: weekly,
-      monthly: monthly,
-      status: status,
-      image: image,
-
-      availableDate:
-        status === 'upcoming'
-          ? availableDate
-          : '',
-
-      trophyDate:
-        status === 'currently-rented'
-          ? trophyDate
-          : 'Available Now',
-
-      nonTrophyDate:
-        status === 'currently-rented'
-          ? nonTrophyDate
-          : 'Available Now'
-    }
-  );
-
-  addGameModal.classList.remove('active');
-
-  alert(
-    status === 'upcoming'
-      ? 'Upcoming game added successfully! 🎮📅'
-      : 'New game added successfully! 🎮'
-  );
-
-  window.location.reload();
-});
-  saveGameChanges.addEventListener('click', async () => {
-  const card = [...document.querySelectorAll('.game-card')]
-    .find(card => card.querySelector('h3').textContent === manageTitle.textContent);
-
-  if (!card) return;
-
-  const weekly = manageWeekly.value;
-  const monthly = manageMonthly.value;
-  const status = manageStatus.value;
-
-  const formatDate = value => {
-    if (!value) return '';
-
-    const [year, month, day] = value.split('-');
-
-    const date = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day)
-    );
-
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const trophyDate = formatDate(manageTrophyDate.value);
-  const nonTrophyDate = formatDate(manageNonTrophyDate.value);
-const gameId = manageModal.dataset.gameId;
-if (!gameId) return;
-
-await window.firestoreUpdateDoc(window.firestoreDoc(window.firestoreDb, 'games', gameId), {
-  status: status,
-  weekly: Number(weekly),
-  monthly: Number(monthly),
-  trophyDate: status === 'currently-rented' ? trophyDate : 'Available Now',
-  nonTrophyDate: status === 'currently-rented' ? nonTrophyDate : 'Available Now'
-});
-  const statusElement = card.querySelector('.status');
-  const detailsElement = card.querySelector('.details');
-
-  if (status === 'currently-rented') {
-    statusElement.textContent = '● CURRENTLY RENTED';
-    statusElement.className = 'status rented';
-
-    detailsElement.innerHTML =
-      `Weekly: ₱${weekly}<br>` +
-      `Monthly: ₱${monthly}<br>` +
-      `🏆 Trophy: ${trophyDate}<br>` +
-      `🎮 Non-Trophy: ${nonTrophyDate}`;
-  } else {
-    statusElement.textContent = '● AVAILABLE';
-    statusElement.className = 'status available';
-
-    detailsElement.innerHTML =
-      `Weekly: ₱${weekly}<br>` +
-      `Monthly: ₱${monthly}`;
-  }
-
-  manageModal.classList.remove('active');
-
-  alert('Game updated successfully! 🎮');
-});
-
-  deleteGame.addEventListener('click', async () => {
-  const gameId = manageModal.dataset.gameId;
-  if (!gameId) return;
-
-  const gameName = manageTitle.textContent;
-
-  const confirmed = confirm(
-    `Are you sure you want to delete "${gameName}"?`
-  );
-
-  if (!confirmed) return;
-
-  try {
-    await window.firestoreDeleteDoc(
-      window.firestoreDoc(
-        window.firestoreDb,
-        'games',
-        gameId
-      )
-    );
-
-    manageModal.classList.remove('active');
-
-    alert('Game deleted successfully! 🗑️');
-
-    window.location.reload();
-  } catch (error) {
-    console.error('Delete error:', error);
-    alert('Unable to delete game. Please try again.');
-  }
-});
-</script>
-  <script type="module">
-  import { initializeApp }
-    from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-
-  import {
-    getAuth,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-  import {
-  getFirestore,
-  doc,
-  updateDoc,
-setDoc,
-    collection,
-getDocs,
-query,
-orderBy,
-deleteDoc
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  getFirestore,collection,doc,getDocs,
+  setDoc,updateDoc,deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",
-    authDomain: "jdigitalrental.firebaseapp.com",
-    projectId: "jdigitalrental",
-    storageBucket: "jdigitalrental.firebasestorage.app",
-    messagingSenderId: "611741872259",
-    appId: "1:611741872259:web:01b3c2bec73d078999ebb6"
+const firebaseConfig={
+  apiKey:"AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",
+  authDomain:"jdigitalrental.firebaseapp.com",
+  projectId:"jdigitalrental",
+  storageBucket:"jdigitalrental.firebasestorage.app",
+  messagingSenderId:"611741872259",
+  appId:"1:611741872259:web:01b3c2bec73d078999ebb6"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+const $=id=>document.getElementById(id);
+let gameCache=new Map();
+let selectedGameId=null;
+
+const money=n=>"₱"+Number(n||0).toLocaleString("en-PH");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[c]));
+
+function openModal(id){$(id).classList.add("active")}
+function closeModal(id){$(id).classList.remove("active")}
+
+function dateToInput(value){
+  if(!value||/available now/i.test(value))return "";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(value))return value;
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime()))return "";
+  return [
+    d.getFullYear(),
+    String(d.getMonth()+1).padStart(2,"0"),
+    String(d.getDate()).padStart(2,"0")
+  ].join("-");
+}
+
+function dateToText(value){
+  if(!value)return "";
+  const [y,m,d]=value.split("-").map(Number);
+  return new Date(y,m-1,d).toLocaleDateString("en-US",{
+    month:"long",day:"numeric",year:"numeric"
+  });
+}
+
+function numberFrom(id){
+  const raw=$(id).value.trim();
+  if(raw==="")throw Error("Please complete all four price fields.");
+  const n=Number(raw);
+  if(!Number.isFinite(n)||n<0)throw Error("Please enter valid prices.");
+  return n;
+}
+
+function pricesFromForm(prefix){
+  const weeklyTrophy=numberFrom(prefix+"WeeklyTrophy");
+  const weeklyNonTrophy=numberFrom(prefix+"WeeklyNonTrophy");
+  const monthlyTrophy=numberFrom(prefix+"MonthlyTrophy");
+  const monthlyNonTrophy=numberFrom(prefix+"MonthlyNonTrophy");
+
+  return {
+    weeklyTrophy,
+    weeklyNonTrophy,
+    monthlyTrophy,
+    monthlyNonTrophy,
+    weekly:weeklyTrophy,
+    monthly:monthlyTrophy
   };
+}
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-const db = getFirestore(app);
-    async function loadAdminGames() {
-  const snapshot = await getDocs(collection(db, 'games'));
-  const gameGrid = document.querySelector('.game-grid');
-let totalGames = 0;
-let availableGames = 0;
-let rentedGames = 0;
+function getPrices(g){
+  return {
+    weeklyTrophy:Number(g.weeklyTrophy??g.weekly??350),
+    weeklyNonTrophy:Number(g.weeklyNonTrophy??300),
+    monthlyTrophy:Number(g.monthlyTrophy??800),
+    monthlyNonTrophy:Number(g.monthlyNonTrophy??700)
+  };
+}
 
-snapshot.forEach(gameDoc => {
-  const game = gameDoc.data();
+function statusName(status){
+  if(status==="currently-rented")return "● CURRENTLY RENTED";
+  if(status==="upcoming")return "● UPCOMING";
+  return "● AVAILABLE";
+}
 
-  totalGames++;
+function statusClass(status){
+  if(status==="currently-rented")return "rented";
+  if(status==="upcoming")return "upcoming";
+  return "available";
+}
 
-  if (game.status === 'currently-rented') {
-    rentedGames++;
-  } else {
-    availableGames++;
-  }
-});
+async function loadAdminGames(){
+  const snapshot=await getDocs(collection(db,"games"));
+  gameCache.clear();
+  $("gameGrid").innerHTML="";
+  let available=0,rented=0;
 
-document.getElementById('totalGames').textContent = totalGames;
-document.getElementById('availableGames').textContent = availableGames;
-document.getElementById('rentedGames').textContent = rentedGames;
-document.getElementById('waitingGames').textContent = (await getDocs(collection(db, 'waitingList'))).size;
-  gameGrid.innerHTML = '';
+  snapshot.forEach(gameDoc=>{
+    const g=gameDoc.data();
+    gameCache.set(gameDoc.id,g);
 
-  snapshot.forEach(gameDoc => {
-    const game = gameDoc.data();
+    if(g.status==="currently-rented")rented++;
+    else if(g.status!=="upcoming")available++;
 
-    const statusClass =
-      game.status === 'currently-rented' ? 'rented' : 'available';
+    const p=getPrices(g);
+    const card=document.createElement("article");
+    card.className="game-card";
 
-    const statusText =
-      game.status === 'currently-rented'
-        ? '● CURRENTLY RENTED'
-        : '● AVAILABLE';
-
-    const datesHtml =
-      game.status === 'currently-rented'
-        ? `<br>🏆 Trophy: ${game.trophyDate}<br>🎮 Non-Trophy: ${game.nonTrophyDate}`
-        : '';
-
-    gameGrid.innerHTML += `
-      <article class="game-card" data-id="${gameDoc.id}">
-        <div class="game-top">
-          <h3>${game.name || game.title || 'Untitled Game'}</h3>
-          <span class="status ${statusClass}">${statusText}</span>
-        </div>
-
-        <div class="details">
-          Weekly: ₱${game.weekly}<br>
-          Monthly: ₱${game.monthly}${datesHtml}
-        </div>
-
-        <button class="manage" type="button">
-          Manage Game
-        </button>
-      </article>
+    card.innerHTML=`
+      <div class="game-top">
+        <h3>${esc(g.name||g.title||"Untitled Game")}</h3>
+        <span class="status ${statusClass(g.status)}">${statusName(g.status)}</span>
+      </div>
+      <div class="price-grid">
+        <div class="price-box"><small>🏆 Weekly Trophy</small><strong>${money(p.weeklyTrophy)}</strong></div>
+        <div class="price-box"><small>🎮 Weekly Non-Trophy</small><strong>${money(p.weeklyNonTrophy)}</strong></div>
+        <div class="price-box"><small>🏆 Monthly Trophy</small><strong>${money(p.monthlyTrophy)}</strong></div>
+        <div class="price-box"><small>🎮 Monthly Non-Trophy</small><strong>${money(p.monthlyNonTrophy)}</strong></div>
+      </div>
+      <div class="details">
+        🏆 Trophy: ${esc(g.trophyDate||"Available Now")}<br>
+        🎮 Non-Trophy: ${esc(g.nonTrophyDate||"Available Now")}
+        ${g.status==="upcoming"?"<br>📅 "+esc(g.availableDate||"Date TBA"):""}
+      </div>
+      <button class="manage" type="button">Manage Game</button>
     `;
+
+    card.querySelector(".manage").addEventListener("click",()=>{
+      openManage(gameDoc.id);
+    });
+
+    $("gameGrid").appendChild(card);
   });
-    }
-    document.querySelector('.game-grid').addEventListener('click', (event) => {
-  const button = event.target.closest('.manage');
 
-  if (!button) return;
+  $("totalGames").textContent=snapshot.size;
+  $("availableGames").textContent=available;
+  $("rentedGames").textContent=rented;
 
-  const card = button.closest('.game-card');
-  if (!card) return;
+  const waiting=await getDocs(collection(db,"waitingList"));
+  $("waitingGames").textContent=waiting.size;
+}
 
-  const gameId = card.getAttribute('data-id');
-  if (!gameId) {
-    alert('Unable to find this game ID. Please refresh the page and try again.');
-    return;
+function openManage(id){
+  const g=gameCache.get(id);
+  if(!g)return;
+  selectedGameId=id;
+  const p=getPrices(g);
+
+  $("manageGameName").textContent=g.name||g.title||"Manage Game";
+  $("manageStatus").value=g.status||"available";
+
+  $("manageWeeklyTrophy").value=p.weeklyTrophy;
+  $("manageWeeklyNonTrophy").value=p.weeklyNonTrophy;
+  $("manageMonthlyTrophy").value=p.monthlyTrophy;
+  $("manageMonthlyNonTrophy").value=p.monthlyNonTrophy;
+
+  $("manageAvailableDate").value=dateToInput(g.availableDate);
+  $("manageTrophyDate").value=dateToInput(g.trophyDate);
+  $("manageNonTrophyDate").value=dateToInput(g.nonTrophyDate);
+
+  openModal("manageModal");
+}
+
+$("saveGameChanges").addEventListener("click",async()=>{
+  if(!selectedGameId)return;
+
+  try{
+    const prices=pricesFromForm("manage");
+    const status=$("manageStatus").value;
+
+    const updates={
+      ...prices,
+      status,
+      availableDate:status==="upcoming"
+        ?dateToText($("manageAvailableDate").value)
+        :"",
+      trophyDate:status==="currently-rented"
+        ?dateToText($("manageTrophyDate").value)
+        :"Available Now",
+      nonTrophyDate:status==="currently-rented"
+        ?dateToText($("manageNonTrophyDate").value)
+        :"Available Now"
+    };
+
+    if(status==="upcoming"&&!updates.availableDate)
+      throw Error("Please select the upcoming available date.");
+
+    const btn=$("saveGameChanges");
+    btn.disabled=true;
+    try{
+      await updateDoc(doc(db,"games",selectedGameId),updates);
+      closeModal("manageModal");
+      await loadAdminGames();
+      alert("Game and prices updated successfully! 🎮");
+    }finally{btn.disabled=false}
+  }catch(error){
+    console.error(error);
+    alert(error.message||"Unable to save changes.");
   }
-
-  const title = card.querySelector('h3')?.textContent.trim() || '';
-  const details = card.querySelector('.details')?.textContent || '';
-
-  const weeklyMatch = details.match(/Weekly:\s*₱?(\d+)/);
-  const monthlyMatch = details.match(/Monthly:\s*₱?(\d+)/);
-
-  manageTitle.textContent = title;
-  manageWeekly.value = weeklyMatch ? weeklyMatch[1] : '';
-  manageMonthly.value = monthlyMatch ? monthlyMatch[1] : '';
-
-  const statusElement = card.querySelector('.status');
-  const isRented =
-    statusElement?.classList.contains('rented') ||
-    statusElement?.textContent.includes('CURRENTLY RENTED');
-
-  manageStatus.value = isRented
-    ? 'currently-rented'
-    : 'available';
-
-  if (isRented) {
-    const trophyMatch = details.match(/Trophy:\s*([^\n]+)/);
-    const nonTrophyMatch = details.match(/Non-Trophy:\s*([^\n]+)/);
-
-    manageTrophyDate.value =
-      trophyMatch && trophyMatch[1].trim()
-        ? formatDateForInput(trophyMatch[1].trim())
-        : '';
-
-    manageNonTrophyDate.value =
-      nonTrophyMatch && nonTrophyMatch[1].trim()
-        ? formatDateForInput(nonTrophyMatch[1].trim())
-        : '';
-  } else {
-    manageTrophyDate.value = '';
-    manageNonTrophyDate.value = '';
-  }
-
-  manageModal.dataset.gameId = gameId;
-  manageModal.classList.add('active');
 });
-    window.firestoreDb = db;
-window.firestoreDoc = doc;
-    window.firestoreDeleteDoc = deleteDoc;
-window.firestoreUpdateDoc = updateDoc;
-    window.firestoreSetDoc = setDoc;
-  onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "admin-login.html";
-    return;
-  }
 
-  loadAdminGames();
+$("addGameButton").addEventListener("click",()=>{
+  openModal("addGameModal");
 });
 
-  const logoutButton = document.getElementById("logoutButton");
+$("saveNewGame").addEventListener("click",async()=>{
+  try{
+    const title=$("newGameTitle").value.trim();
+    const genre=$("newGameGenre").value.trim();
+    const image=$("newGameImage").value.trim();
+    const status=$("newGameStatus").value;
 
-  logoutButton.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "admin-login.html";
-  });
-    /* WAITING LIST MANAGEMENT */
+    if(!title||!genre||!image)
+      throw Error("Please enter title, genre, and image.");
 
-const waitingListCard =
-  document.getElementById('waitingListCard');
+    const prices=pricesFromForm("new");
+    const availableDate=dateToText($("newGameAvailableDate").value);
 
-const waitingListModal =
-  document.getElementById('waitingListModal');
+    if(status==="upcoming"&&!availableDate)
+      throw Error("Please select the upcoming available date.");
 
-const closeWaitingListModal =
-  document.getElementById('closeWaitingListModal');
+    const gameId=title.toLowerCase()
+      .replace(/[^a-z0-9]+/g,"-")
+      .replace(/^-|-$/g,"");
 
-const waitingListContainer =
-  document.getElementById('waitingListContainer');
+    if(!gameId)throw Error("Invalid game title.");
 
-async function loadWaitingList() {
-  waitingListContainer.innerHTML =
-    '<p style="color:#8ea0c5;">Loading reservations...</p>';
+    const existing=await getDocs(collection(db,"games"));
+    if(existing.docs.some(d=>d.id===gameId))
+      throw Error("A game with this title already exists.");
 
-  try {
-    const waitingSnapshot =
-      await getDocs(collection(db, 'waitingList'));
+    const game={
+      title,
+      name:title,
+      genre,
+      type:genre.toLowerCase(),
+      image,
+      meta:"PS5 • Digital rental",
+      ...prices,
+      status,
+      availableDate:status==="upcoming"?availableDate:"",
+      trophyDate:status==="currently-rented"
+        ?dateToText($("newGameTrophyDate").value)
+        :"Available Now",
+      nonTrophyDate:status==="currently-rented"
+        ?dateToText($("newGameNonTrophyDate").value)
+        :"Available Now"
+    };
 
-    if (waitingSnapshot.empty) {
-      waitingListContainer.innerHTML =
-        '<p style="color:#8ea0c5;">No reservations yet. 🎮</p>';
+    const btn=$("saveNewGame");
+    btn.disabled=true;
+    try{
+      await setDoc(doc(db,"games",gameId),game);
+      closeModal("addGameModal");
+      await loadAdminGames();
+      alert("New game added successfully! 🎮");
+    }finally{btn.disabled=false}
+  }catch(error){
+    console.error(error);
+    alert(error.message||"Unable to add game.");
+  }
+});
+
+$("deleteGame").addEventListener("click",async()=>{
+  if(!selectedGameId)return;
+  if(!confirm("Delete this game permanently?"))return;
+
+  try{
+    await deleteDoc(doc(db,"games",selectedGameId));
+    selectedGameId=null;
+    closeModal("manageModal");
+    await loadAdminGames();
+    alert("Game deleted successfully.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to delete game.");
+  }
+});
+
+async function loadWaitingList(){
+  const container=$("waitingListContainer");
+  container.textContent="Loading reservations...";
+
+  try{
+    const snapshot=await getDocs(collection(db,"waitingList"));
+    const reservations=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+
+    reservations.sort((a,b)=>
+      (a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)
+    );
+
+    if(!reservations.length){
+      container.textContent="No reservations yet. 🎮";
       return;
     }
 
-    const reservations = [];
+    const groups={};
 
-    waitingSnapshot.forEach(reservationDoc => {
-      reservations.push({
-        id: reservationDoc.id,
-        ...reservationDoc.data()
-      });
-    });
+    for(const r of reservations){
+      const name=r.gameName||r.gameId||"Unknown Game";
+      if(!groups[name])groups[name]={trophy:[],nonTrophy:[]};
 
-    // Oldest reservation first
-    reservations.sort((a, b) => {
-      const aTime = a.createdAt?.seconds || 0;
-      const bTime = b.createdAt?.seconds || 0;
-      return aTime - bTime;
-    });
+      const account=String(r.accountType||"")
+        .toLowerCase().replace(/[\s-]/g,"");
 
-    // GROUP RESERVATIONS BY GAME
-    const games = {};
+      if(account.includes("non"))
+        groups[name].nonTrophy.push(r);
+      else
+        groups[name].trophy.push(r);
+    }
 
-    reservations.forEach(reservation => {
-      const gameName =
-        reservation.gameName ||
-        reservation.gameId ||
-        'Unknown Game';
+    container.innerHTML="";
 
-      if (!games[gameName]) {
-        games[gameName] = {
-          trophy: [],
-          nonTrophy: []
-        };
-      }
+    for(const [name,lists] of Object.entries(groups)){
+      const group=document.createElement("div");
+      group.className="waiting-group";
 
-      const accountType =
-        String(reservation.accountType || '')
-          .toLowerCase()
-          .replace(/\s/g, '')
-          .replace(/-/g, '');
+      const toggle=document.createElement("button");
+      toggle.className="waiting-toggle";
+      toggle.textContent=`🎮 ${name} — ${lists.trophy.length+lists.nonTrophy.length} Waiting`;
 
-      if (accountType.includes('non')) {
-        games[gameName].nonTrophy.push(reservation);
-      } else {
-        games[gameName].trophy.push(reservation);
-      }
-    });
+      const panel=document.createElement("div");
+      panel.className="waiting-panel";
 
-    const createReservationCard = (reservation, number) => {
-      let reservationDate = 'Not available';
+      const columns=document.createElement("div");
+      columns.className="waiting-columns";
 
-      if (reservation.createdAt?.toDate) {
-        reservationDate =
-          reservation.createdAt.toDate().toLocaleString(
-            'en-PH',
-            {
-              dateStyle: 'medium',
-              timeStyle: 'short'
+      for(const [slot,items] of [
+        ["🏆 TROPHY",lists.trophy],
+        ["🎮 NON-TROPHY",lists.nonTrophy]
+      ]){
+        const column=document.createElement("div");
+        const heading=document.createElement("h4");
+        heading.textContent=`${slot} (${items.length})`;
+        column.appendChild(heading);
+
+        if(!items.length){
+          const empty=document.createElement("p");
+          empty.textContent="No reservations";
+          column.appendChild(empty);
+        }
+
+        items.forEach((r,index)=>{
+          const card=document.createElement("div");
+          card.className="waiting-item";
+
+          const date=r.createdAt?.toDate
+            ?r.createdAt.toDate().toLocaleString("en-PH")
+            :"Not available";
+
+          const number=document.createElement("small");
+          number.textContent=`WAITING #${index+1}`;
+
+          const customer=document.createElement("strong");
+          customer.textContent=r.customerName||"Unknown Customer";
+
+          const details=document.createElement("div");
+          details.textContent=`${r.rentalPeriod||"N/A"} • ${date}`;
+
+          const remove=document.createElement("button");
+          remove.textContent="🗑 Delete";
+          remove.addEventListener("click",async()=>{
+            if(!confirm("Delete this waiting-list reservation?"))return;
+            try{
+              remove.disabled=true;
+              await deleteDoc(doc(db,"waitingList",r.id));
+              await loadWaitingList();
+              await loadAdminGames();
+            }catch(error){
+              console.error(error);
+              alert("Unable to delete reservation.");
+              remove.disabled=false;
             }
-          );
+          });
+
+          card.append(number,customer,details,remove);
+          column.appendChild(card);
+        });
+
+        columns.appendChild(column);
       }
 
-      return `
-        <div style="
-          background:#06112b;
-          border:1px solid #173d7c;
-          border-radius:10px;
-          padding:10px;
-          margin-bottom:10px;
-        ">
-          <div style="
-            color:#39a9ff;
-            font-size:10px;
-            font-weight:800;
-            margin-bottom:6px;
-          ">
-            WAITING #${number}
-          </div>
-
-          <strong style="
-            display:block;
-            font-size:14px;
-            margin-bottom:7px;
-            word-break:break-word;
-          ">
-            ${reservation.customerName || 'Unknown Customer'}
-          </strong>
-
-          <div style="
-            color:#9aacca;
-            font-size:11px;
-            line-height:1.6;
-          ">
-            📅 ${reservation.rentalPeriod || 'Not available'}<br>
-            🕒 ${reservationDate}
-          </div>
-
-          <button
-            type="button"
-            data-reservation-id="${reservation.id}"
-            class="delete-waiting-reservation"
-            style="
-              width:100%;
-              margin-top:8px;
-              padding:8px 4px;
-              border:1px solid #ff4d4d;
-              border-radius:7px;
-              background:rgba(255,77,77,.12);
-              color:#ff6b6b;
-              font-size:10px;
-              font-weight:800;
-              cursor:pointer;
-            "
-          >
-            🗑 Delete
-          </button>
-        </div>
-      `;
-    };
-
-    waitingListContainer.innerHTML =
-      Object.entries(games)
-        .map(([gameName, lists], gameIndex) => {
-          const total =
-            lists.trophy.length +
-            lists.nonTrophy.length;
-
-          const trophyCards =
-            lists.trophy.length
-              ? lists.trophy
-                  .map((reservation, index) =>
-                    createReservationCard(
-                      reservation,
-                      index + 1
-                    )
-                  )
-                  .join('')
-              : `
-                <p style="
-                  color:#657895;
-                  font-size:11px;
-                  text-align:center;
-                ">
-                  No Trophy reservations
-                </p>
-              `;
-
-          const nonTrophyCards =
-            lists.nonTrophy.length
-              ? lists.nonTrophy
-                  .map((reservation, index) =>
-                    createReservationCard(
-                      reservation,
-                      index + 1
-                    )
-                  )
-                  .join('')
-              : `
-                <p style="
-                  color:#657895;
-                  font-size:11px;
-                  text-align:center;
-                ">
-                  No Non-Trophy reservations
-                </p>
-              `;
-
-          return `
-            <div
-              class="waiting-game-group"
-              style="
-                margin-bottom:12px;
-                border:1px solid #173d7c;
-                border-radius:12px;
-                overflow:hidden;
-                background:#06112b;
-              "
-            >
-              <button
-                type="button"
-                class="waiting-game-toggle"
-                data-waiting-game="${gameIndex}"
-                style="
-                  width:100%;
-                  padding:14px;
-                  border:0;
-                  background:#081630;
-                  color:#ffffff;
-                  text-align:left;
-                  cursor:pointer;
-                  font-weight:800;
-                  font-size:14px;
-                "
-              >
-                🎮 ${gameName}
-                <span style="
-                  display:block;
-                  color:#39a9ff;
-                  font-size:11px;
-                  margin-top:5px;
-                ">
-                  ${total} Waiting • Tap to view
-                </span>
-              </button>
-
-              <div
-                data-waiting-panel="${gameIndex}"
-                style="
-                  display:none;
-                  padding:10px;
-                "
-              >
-                <div style="
-                  display:grid;
-                  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-                  gap:8px;
-                  align-items:start;
-                ">
-
-                  <!-- LEFT: TROPHY -->
-                  <div style="min-width:0;">
-                    <div style="
-                      text-align:center;
-                      color:#ffd76a;
-                      font-size:11px;
-                      font-weight:900;
-                      margin-bottom:9px;
-                    ">
-                      🏆 TROPHY
-                      <br>
-                      (${lists.trophy.length})
-                    </div>
-
-                    ${trophyCards}
-                  </div>
-
-                  <!-- RIGHT: NON-TROPHY -->
-                  <div style="min-width:0;">
-                    <div style="
-                      text-align:center;
-                      color:#7fc8ff;
-                      font-size:11px;
-                      font-weight:900;
-                      margin-bottom:9px;
-                    ">
-                      🎮 NON-TROPHY
-                      <br>
-                      (${lists.nonTrophy.length})
-                    </div>
-
-                    ${nonTrophyCards}
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          `;
-        })
-        .join('');
-
-    // CLICK GAME TO OPEN / CLOSE
-    waitingListContainer
-      .querySelectorAll('.waiting-game-toggle')
-      .forEach(button => {
-        button.addEventListener('click', () => {
-          const gameIndex =
-            button.dataset.waitingGame;
-
-          const panel =
-            waitingListContainer.querySelector(
-              `[data-waiting-panel="${gameIndex}"]`
-            );
-
-          if (!panel) return;
-
-          const isOpen =
-            panel.style.display !== 'none';
-
-          panel.style.display =
-            isOpen ? 'none' : 'block';
-        });
+      panel.appendChild(columns);
+      toggle.addEventListener("click",()=>{
+        panel.style.display=panel.style.display==="block"?"none":"block";
       });
 
-  } catch (error) {
-    console.error('Waiting list error:', error);
-
-    waitingListContainer.innerHTML =
-      '<p style="color:#ff8d8d;">Unable to load reservations.</p>';
+      group.append(toggle,panel);
+      container.appendChild(group);
+    }
+  }catch(error){
+    console.error(error);
+    container.textContent="Unable to load reservations.";
   }
 }
-waitingListContainer.addEventListener('click', async (event) => {
-  const deleteButton = event.target.closest('.delete-waiting-reservation');
 
-  if (!deleteButton) return;
-
-  const reservationId = deleteButton.dataset.reservationId;
-
-  if (!reservationId) return;
-
-  const confirmed = confirm(
-    'Delete this reservation from the Waiting List? 🗑️'
-  );
-
-  if (!confirmed) return;
-
-  try {
-    deleteButton.disabled = true;
-    deleteButton.textContent = 'Deleting...';
-
-    await deleteDoc(
-      doc(db, 'waitingList', reservationId)
-    );
-
-    alert('Reservation deleted successfully! 🗑️');
-
-    await loadWaitingList();
-
-  } catch (error) {
-    console.error('Delete reservation error:', error);
-
-    alert(
-      'Unable to delete reservation. Please try again.'
-    );
-
-    deleteButton.disabled = false;
-    deleteButton.textContent = '🗑️ Delete Reservation';
-  }
-});
-waitingListCard.addEventListener('click', async () => {
-  waitingListModal.classList.add('active');
+$("waitingListCard").addEventListener("click",async()=>{
+  openModal("waitingListModal");
   await loadWaitingList();
 });
 
-closeWaitingListModal.addEventListener('click', () => {
-  waitingListModal.classList.remove('active');
+for(const [button,modal] of [
+  ["closeAddGameModal","addGameModal"],
+  ["closeManageModal","manageModal"],
+  ["closeWaitingListModal","waitingListModal"]
+]){
+  $(button).addEventListener("click",()=>closeModal(modal));
+  $(modal).addEventListener("click",event=>{
+    if(event.target===$(modal))closeModal(modal);
+  });
+}
+
+$("logoutButton").addEventListener("click",async()=>{
+  await signOut(auth);
+  location.href="admin-login.html";
 });
 
-waitingListModal.addEventListener('click', event => {
-  if (event.target === waitingListModal) {
-    waitingListModal.classList.remove('active');
+onAuthStateChanged(auth,user=>{
+  if(!user){
+    location.href="admin-login.html";
+    return;
   }
+  loadAdminGames().catch(error=>{
+    console.error(error);
+    alert("Unable to load admin games. Check Firebase access.");
+  });
 });
-  </script>
+</script>
+
 </body>
 </html>
