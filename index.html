@@ -1,101 +1,198 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>JDigitalsRental | PS5 Game Rentals</title>
-<meta name="description" content="Affordable PS5 digital game rentals. Weekly and monthly plans from JDigitalsRental.">
+
+<meta
+  name="description"
+  content="Affordable PS5 digital game rentals. Weekly rentals and monthly UNLI SWAP packages at JDigitalsRental."
+>
+
 <link rel="stylesheet" href="styles.css?v=16">
 
 <style>
+/* ==========================================
+   JDIGITALSRENTAL — RENTAL PLAN UPDATE
+   ========================================== */
+
+.rental-plan-info {
+  margin: 12px 0;
+  padding: 13px;
+  border: 1px solid rgba(57,169,255,.35);
+  border-radius: 12px;
+  background: rgba(57,169,255,.08);
+  color: #dbeaff;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.rental-plan-info strong {
+  color: #79c8ff;
+}
+
+.rental-plan-info p {
+  margin: 5px 0;
+}
+
+.rental-plan-info .plan-divider {
+  border-top: 1px solid rgba(255,255,255,.12);
+  margin: 10px 0;
+}
+
+.rental-plan-price {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.rental-note {
+  font-size: 11px;
+  color: #a9bbd4;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+
+/* ==========================================
+   FACEBOOK REMINDER POPUP
+   ========================================== */
+
 #facebookReminder {
-  position:fixed;
-  inset:0;
-  z-index:99999;
-  background:rgba(2,7,20,.86);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  backdrop-filter:blur(8px);
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(2,7,20,.86);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  backdrop-filter: blur(8px);
 }
-#facebookReminder.active {display:flex}
+
+#facebookReminder.active {
+  display: flex;
+}
+
 .fb-reminder-card {
-  position:relative;
-  width:100%;
-  max-width:410px;
-  max-height:90vh;
-  overflow-y:auto;
-  padding:28px 22px;
-  background:linear-gradient(155deg,#142b53,#081329);
-  border:1px solid rgba(68,155,255,.4);
-  border-radius:20px;
-  box-shadow:0 20px 65px rgba(0,0,0,.55);
-  text-align:center;
-  color:#fff;
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px 22px;
+  background: linear-gradient(
+    155deg,
+    #142b53,
+    #081329
+  );
+  border: 1px solid rgba(68,155,255,.4);
+  border-radius: 20px;
+  box-shadow: 0 20px 65px rgba(0,0,0,.55);
+  text-align: center;
+  color: #fff;
 }
-.fb-reminder-icon {font-size:46px;margin-bottom:10px}
-.fb-reminder-card h2 {color:#fff;font-size:25px;margin:0 0 12px}
-.fb-reminder-card p {color:#c1d2ea;font-size:14px;line-height:1.65}
+
+.fb-reminder-icon {
+  font-size: 46px;
+  margin-bottom: 10px;
+}
+
+.fb-reminder-card h2 {
+  color: #fff;
+  font-size: 25px;
+  margin: 0 0 12px;
+}
+
+.fb-reminder-card p {
+  color: #c1d2ea;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 .fb-reminder-note {
-  background:rgba(255,186,55,.09);
-  border:1px solid rgba(255,186,55,.35);
-  border-radius:12px;
-  padding:13px;
-  margin:18px 0;
-  color:#ffdc91;
-  font-size:12px;
-  line-height:1.6;
+  background: rgba(255,186,55,.09);
+  border: 1px solid rgba(255,186,55,.35);
+  border-radius: 12px;
+  padding: 13px;
+  margin: 18px 0;
+  color: #ffdc91;
+  font-size: 12px;
+  line-height: 1.6;
 }
+
 .fb-reminder-btn {
-  display:block;
-  box-sizing:border-box;
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border:0;
-  border-radius:11px;
-  font-size:14px;
-  font-weight:800;
-  cursor:pointer;
-  text-decoration:none;
-  text-align:center;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
 }
+
 .fb-reminder-copy {
-  color:#fff;
-  background:#263f68;
-  border:1px solid #4774b2;
+  color: #fff;
+  background: #263f68;
+  border: 1px solid #4774b2;
 }
+
 .fb-reminder-go {
-  color:white;
-  background:linear-gradient(135deg,#168cff,#0754d9);
+  color: white;
+  background: linear-gradient(
+    135deg,
+    #168cff,
+    #0754d9
+  );
 }
+
 .fb-reminder-close {
-  position:absolute;
-  right:14px;
-  top:10px;
-  border:0;
-  background:transparent;
-  color:#b9c9e0;
-  font-size:26px;
-  cursor:pointer;
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  border: 0;
+  background: transparent;
+  color: #b9c9e0;
+  font-size: 26px;
+  cursor: pointer;
 }
+
 .fb-reminder-status {
-  color:#6df0ab!important;
-  font-size:12px!important;
-  min-height:18px;
+  color: #6df0ab !important;
+  font-size: 12px !important;
+  min-height: 18px;
 }
 </style>
+
 </head>
 
 <body>
 
+<!-- ==========================================
+     HEADER
+     ========================================== -->
+
 <header class="topbar">
+
   <a class="brand" href="#home">
-    <img class="brand-logo" src="assets/jdigitals-logo.png" alt="JDigitalsRental Logo">
-    <span>JDigitals<span class="gold">Rental</span></span>
+    <img
+      class="brand-logo"
+      src="assets/jdigitals-logo.png"
+      alt="JDigitalsRental Logo"
+    >
+
+    <span>
+      JDigitals<span class="gold">Rental</span>
+    </span>
   </a>
+
   <nav>
     <a href="#games">Games</a>
     <a href="#how">How it works</a>
@@ -103,93 +200,189 @@
     <a href="#faq">FAQ</a>
     <a href="#reviews">Reviews</a>
   </nav>
-  <a class="mini-cta" href="#games">Browse games ↗</a>
+
+  <a class="mini-cta" href="#games">
+    Browse games ↗
+  </a>
+
 </header>
 
 <main>
 
+<!-- ==========================================
+     HERO SECTION
+     ========================================== -->
+
 <section class="hero" id="home">
+
   <div class="hero-copy">
-    <p class="eyebrow">DIGITAL PS5 GAME RENTALS</p>
-    <h1>Play more.<br><span>Spend less.</span></h1>
-    <p class="hero-text">
-      Premium PS5 adventures without the premium price.
-      Choose your game, message us, and start playing.
+
+    <p class="eyebrow">
+      DIGITAL PS5 GAME RENTALS
     </p>
+
+    <h1>
+      Play more.<br>
+      <span>Spend less.</span>
+    </h1>
+
+    <p class="hero-text">
+      Premium PS5 adventures without the premium
+      price. Choose your game, select your rental
+      plan, and start playing.
+    </p>
+
     <div class="hero-actions">
-      <a class="btn primary" href="#games">Explore games <span>↗</span></a>
-      <a class="text-link" href="#how">How it works ↓</a>
+
+      <a class="btn primary" href="#games">
+        Explore games <span>↗</span>
+      </a>
+
+      <a class="text-link" href="#how">
+        How it works ↓
+      </a>
+
     </div>
+
     <div class="trust-row">
       <span>✦ Affordable rates</span>
-      <span>✦ Weekly & monthly</span>
-      <span>✦ Friendly support</span>
+      <span>✦ Weekly rentals</span>
+      <span>✦ Monthly UNLI SWAP</span>
     </div>
+
   </div>
 
   <div class="hero-art">
+
     <div class="orb orb-one"></div>
     <div class="orb orb-two"></div>
+
     <div class="hero-panel">
       <span>JDR / 001</span>
-      <strong>YOUR NEXT<br>ADVENTURE<br><em>STARTS HERE.</em></strong>
+
+      <strong>
+        YOUR NEXT<br>
+        ADVENTURE<br>
+        <em>STARTS HERE.</em>
+      </strong>
+
       <small>PS5 DIGITAL LIBRARY</small>
     </div>
+
   </div>
+
 </section>
+
+<!-- ==========================================
+     ABOUT US
+     ========================================== -->
 
 <section class="section" id="about">
+
   <div class="section-inner">
+
     <span class="eyebrow">ABOUT US</span>
+
     <p>
-      JDigitalsRental was created for gamers who want to enjoy
-      their favorite PS5 games without spending too much.
-      We offer affordable weekly and monthly digital game rentals
-      for your gaming needs.
+      JDigitalsRental was created for gamers who
+      want to enjoy their favorite PS5 games
+      without spending too much.
     </p>
+
     <p>
-      Our goal is to make PS5 gaming more affordable,
-      convenient, and accessible to everyone.
-      Happy gaming! 🎮😁
+      We offer affordable weekly game rentals
+      and monthly UNLI SWAP packages to make
+      PS5 gaming more convenient and accessible.
     </p>
+
+    <p>
+      Our goal is simple: help gamers play more
+      games while spending less.
+    </p>
+
+    <p>Happy gaming! 🎮😁</p>
+
   </div>
+
 </section>
 
-<section class="section upcoming-section" id="upcoming">
+<!-- ==========================================
+     UPCOMING GAMES
+     ========================================== -->
+
+<section
+  class="section upcoming-section"
+  id="upcoming"
+>
+
   <div class="section-inner">
+
     <div class="section-heading">
+
       <div>
-        <p class="eyebrow">COMING SOON</p>
-        <h2>🎮 Upcoming Games</h2>
-        <p class="section-subtitle">
-          Reserve your slot early for our upcoming PS5 games.
+
+        <p class="eyebrow">
+          COMING SOON
         </p>
+
+        <h2>🎮 Upcoming Games</h2>
+
+        <p class="section-subtitle">
+          Reserve your slot early for our
+          upcoming PS5 games.
+        </p>
+
       </div>
+
     </div>
 
     <p class="mega-hint">
-      ⏳ Live countdowns appear on games with valid future release dates.
+      ⏳ Live countdowns appear on games
+      with valid future release dates.
     </p>
 
-    <div id="upcomingGames" class="games-grid"></div>
+    <div
+      id="upcomingGames"
+      class="games-grid"
+    ></div>
+
   </div>
+
 </section>
 
+<!-- ==========================================
+     GAME LIBRARY
+     ========================================== -->
+
 <section class="section" id="games">
+
   <div class="section-inner">
+
     <div class="section-heading">
+
       <div>
-        <p class="eyebrow">GAME LIBRARY</p>
-        <h2>🎮 PS5 Games</h2>
-        <p class="section-subtitle">
-          Choose a game and select your rental option.
+
+        <p class="eyebrow">
+          GAME LIBRARY
         </p>
+
+        <h2>🎮 PS5 Games</h2>
+
+        <p class="section-subtitle">
+          Choose a game and select your
+          preferred rental plan.
+        </p>
+
       </div>
+
     </div>
 
-    <!-- SEARCH AND SMART AVAILABILITY FILTER -->
     <div class="mega-toolbar">
-      <label class="mega-search-label" for="search">
+
+      <label
+        class="mega-search-label"
+        for="search"
+      >
         🔎 Find your next game
       </label>
 
@@ -205,35 +398,47 @@
         id="availabilityFilters"
         aria-label="Filter games by availability"
       >
+
         <button
           type="button"
           class="mega-filter active"
           data-availability="all"
-        >All Games</button>
+        >
+          All Games
+        </button>
 
         <button
           type="button"
           class="mega-filter"
           data-availability="available"
-        >🟢 Available Now</button>
+        >
+          🟢 Available Now
+        </button>
 
         <button
           type="button"
           class="mega-filter"
           data-availability="trophy"
-        >🏆 Trophy Available</button>
+        >
+          🏆 Trophy Available
+        </button>
 
         <button
           type="button"
           class="mega-filter"
           data-availability="nonTrophy"
-        >🎮 Non-Trophy Available</button>
+        >
+          🎮 Non-Trophy Available
+        </button>
 
         <button
           type="button"
           class="mega-filter"
           data-availability="favorites"
-        >❤️ My Favorites</button>
+        >
+          ❤️ My Favorites
+        </button>
+
       </div>
 
       <p
@@ -241,140 +446,467 @@
         class="mega-count"
         aria-live="polite"
       ></p>
+
     </div>
 
-    <!-- FEATURED / MOST REQUESTED -->
     <div
       id="featuredGames"
       class="mega-featured"
       aria-live="polite"
     ></div>
 
-    <!-- FIREBASE GAME LIBRARY -->
-    <div id="gameGrid" class="games-grid"></div>
+    <div
+      id="gameGrid"
+      class="games-grid"
+    ></div>
+
   </div>
+
 </section>
+
+<!-- ==========================================
+     RENTAL PLANS
+     ========================================== -->
+
+<section class="section" id="plans">
+
+  <div class="section-inner">
+
+    <div class="section-heading">
+
+      <div>
+        <p class="eyebrow">
+          AFFORDABLE GAMING
+        </p>
+
+        <h2>🎮 Our Rental Plans</h2>
+
+        <p class="section-subtitle">
+          Choose the rental plan that fits
+          your gaming style.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="steps">
+
+      <article>
+
+        <b>01</b>
+
+        <h3>📅 Weekly Rental</h3>
+
+        <p>
+          Pay the regular weekly price
+          of your selected game.
+        </p>
+
+        <p>
+          ✓ 1 Week rental
+        </p>
+
+        <p>
+          ✓ Includes 1 game swap
+        </p>
+
+        <p>
+          ✓ One game at a time
+        </p>
+
+        <p>
+          Subject to game availability.
+        </p>
+
+      </article>
+
+      <article>
+
+        <b>02</b>
+
+        <h3>🏆 Trophy UNLI SWAP</h3>
+
+        <p class="rental-plan-price">
+          ₱800 / Month
+        </p>
+
+        <p>
+          ✓ 1 Month rental
+        </p>
+
+        <p>
+          ✓ Unlimited game swaps
+        </p>
+
+        <p>
+          ✓ Maximum 1 swap per week
+        </p>
+
+        <p>
+          ✓ Trophy account option
+        </p>
+
+        <p>
+          One game at a time.
+          Subject to availability.
+        </p>
+
+      </article>
+
+      <article>
+
+        <b>03</b>
+
+        <h3>🎮 Non-Trophy UNLI SWAP</h3>
+
+        <p class="rental-plan-price">
+          ₱700 / Month
+        </p>
+
+        <p>
+          ✓ 1 Month rental
+        </p>
+
+        <p>
+          ✓ Unlimited game swaps
+        </p>
+
+        <p>
+          ✓ Maximum 1 swap per week
+        </p>
+
+        <p>
+          ✓ Non-Trophy account option
+        </p>
+
+        <p>
+          One game at a time.
+          Subject to availability.
+        </p>
+
+      </article>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ==========================================
+     HOW IT WORKS
+     ========================================== -->
 
 <section class="how section" id="how">
+
   <div class="section-heading">
+
     <div>
-      <p class="eyebrow">SIMPLE PROCESS</p>
+      <p class="eyebrow">
+        SIMPLE PROCESS
+      </p>
+
       <h2>Rent in 3 easy steps.</h2>
     </div>
+
   </div>
 
   <div class="steps">
+
     <article>
+
       <b>01</b>
+
       <h3>Choose a game</h3>
-      <p>Browse the available titles and pick your next adventure.</p>
+
+      <p>
+        Browse the available titles and
+        pick your next adventure.
+      </p>
+
     </article>
 
     <article>
+
       <b>02</b>
-      <h3>Message us</h3>
+
+      <h3>Select your plan</h3>
+
       <p>
-        Click <strong>Rent Now</strong> and send us a message
-        through Facebook Messenger to reserve.
+        Choose 1 Week or 1 Month
+        UNLI SWAP, then select
+        Trophy or Non-Trophy.
       </p>
+
     </article>
 
     <article>
+
       <b>03</b>
-      <h3>Start playing</h3>
+
+      <h3>Message us</h3>
+
       <p>
-        Choose your rental plan, follow our setup instructions,
-        and enjoy your rental period.
+        Complete the rental form,
+        copy your details, and send
+        them through our Facebook Page.
       </p>
+
     </article>
+
   </div>
+
 </section>
+
+<!-- ==========================================
+     RENTAL RULES
+     ========================================== -->
 
 <section class="rules section" id="rules">
+
   <div class="section-heading">
+
     <div>
-      <p class="eyebrow">PLEASE READ</p>
+
+      <p class="eyebrow">
+        PLEASE READ
+      </p>
+
       <h2>Rental rules.</h2>
+
     </div>
+
   </div>
 
   <div class="steps">
+
     <article>
+
       <b>01</b>
+
       <h3>Account use</h3>
+
       <p>
-        Please use the provided PS5 account only for the rented game.
-        Do not delete the account from your console.
+        Please follow the instructions
+        for your selected Trophy or
+        Non-Trophy rental slot.
       </p>
+
+      <p>
+        Do not delete the provided
+        account from your console.
+      </p>
+
     </article>
 
     <article>
+
       <b>02</b>
-      <h3>Console sharing</h3>
+
+      <h3>Game swaps</h3>
+
       <p>
-        Follow the setup instructions carefully.
-        Do not change account details or share the account with others.
+        Weekly rentals include
+        1 game swap.
       </p>
+
+      <p>
+        Monthly UNLI SWAP allows
+        unlimited swaps with a
+        maximum of 1 swap per week.
+      </p>
+
+      <p>
+        One game at a time.
+        All swaps are subject
+        to availability.
+      </p>
+
     </article>
 
     <article>
+
       <b>03</b>
+
       <h3>Expiry and return</h3>
+
       <p>
-        On the expiry date, follow the return instructions and
-        send the requested screenshot. Please do not simply log out.
+        On the expiry date,
+        follow our return
+        instructions carefully.
       </p>
+
+      <p>
+        Do not simply log out
+        or delete the account.
+      </p>
+
+      <p>
+        Send the required proof
+        of deactivation.
+      </p>
+
     </article>
+
   </div>
+
 </section>
+
+<!-- ==========================================
+     FREQUENTLY ASKED QUESTIONS
+     ========================================== -->
 
 <section class="faq section" id="faq">
+
   <div class="section-heading">
+
     <div>
-      <p class="eyebrow">NEED TO KNOW</p>
-      <h2>Frequently asked questions.</h2>
+
+      <p class="eyebrow">
+        NEED TO KNOW
+      </p>
+
+      <h2>
+        Frequently asked questions.
+      </h2>
+
     </div>
+
   </div>
 
   <details>
-    <summary>What rental plans are available?</summary>
+
+    <summary>
+      What rental plans are available?
+    </summary>
+
     <p>
-      We offer flexible weekly and monthly rentals.
-      Message us for the current rates and availability.
+      We offer weekly rentals at
+      regular game prices and monthly
+      UNLI SWAP packages.
     </p>
+
+    <p>
+      Trophy Monthly: ₱800
+      <br>
+      Non-Trophy Monthly: ₱700
+    </p>
+
   </details>
 
   <details>
-    <summary>How do I reserve a game?</summary>
+
+    <summary>
+      How many times can I swap games?
+    </summary>
+
     <p>
-      Click a Rent Now button, send us a message,
-      and tell us which title and rental plan you want.
+      Weekly rental includes
+      1 game swap.
     </p>
+
+    <p>
+      Monthly UNLI SWAP allows
+      unlimited swaps, maximum
+      1 swap per week.
+    </p>
+
   </details>
 
   <details>
-    <summary>Can I play using my own PS5 profile?</summary>
+
+    <summary>
+      Can I play multiple games
+      at the same time?
+    </summary>
+
     <p>
-      We will provide the correct setup instructions for your rental.
-      Please follow them carefully.
+      No. Only one game at a time
+      is allowed under the
+      rental plan.
     </p>
+
   </details>
+
+  <details>
+
+    <summary>
+      Are game swaps guaranteed?
+    </summary>
+
+    <p>
+      Game swaps depend on
+      availability.
+    </p>
+
+  </details>
+
+  <details>
+
+    <summary>
+      How do I reserve a game?
+    </summary>
+
+    <p>
+      Click Rent Now, complete
+      the rental form, and send
+      the details through Messenger.
+    </p>
+
+  </details>
+
+  <details>
+
+    <summary>
+      Can I play using my own
+      PS5 profile?
+    </summary>
+
+    <p>
+      It depends on your selected
+      account type. We will provide
+      the correct setup instructions.
+    </p>
+
+  </details>
+
 </section>
 
-<!-- CUSTOMER REVIEWS -->
-<section class="section mega-community" id="reviews">
+<!-- ==========================================
+     CUSTOMER REVIEWS
+     ========================================== -->
+
+<section
+  class="section mega-community"
+  id="reviews"
+>
+
   <div class="section-heading">
+
     <div>
-      <p class="eyebrow">OUR COMMUNITY</p>
+      <p class="eyebrow">
+        OUR COMMUNITY
+      </p>
+
       <h2>⭐ Customer Reviews</h2>
     </div>
+
   </div>
 
   <div class="mega-info-panel">
-    <h3>Real gamers. Real feedback.</h3>
+
+    <h3>
+      Real gamers. Real feedback.
+    </h3>
+
     <p>
-      Verified customer reviews will appear here when shared
-      with permission. We never publish made-up ratings.
+      Verified customer reviews
+      will appear here when
+      shared with permission.
+    </p>
+
+    <p>
+      We never publish
+      made-up ratings.
     </p>
 
     <a
@@ -382,31 +914,53 @@
       href="https://www.facebook.com/share/1DajrF4mTy/"
       target="_blank"
       rel="noopener noreferrer"
-    >Visit our Facebook Page ↗</a>
+    >
+      Visit our Facebook Page ↗
+    </a>
+
   </div>
+
 </section>
 
-<!-- RENTAL REQUEST SUPPORT -->
-<section class="section mega-tracking" id="tracking">
+<!-- ==========================================
+     REQUEST TRACKING
+     ========================================== -->
+
+<section
+  class="section mega-tracking"
+  id="tracking"
+>
+
   <div class="section-heading">
+
     <div>
-      <p class="eyebrow">RENTAL SUPPORT</p>
+      <p class="eyebrow">
+        RENTAL SUPPORT
+      </p>
+
       <h2>📋 Check Your Request</h2>
     </div>
+
   </div>
 
   <div class="mega-info-panel">
+
     <p>
-      Submitted a rental or waiting-list request?
-      Your request is <strong>not confirmed</strong>
-      until you send your completed form to our Facebook Page
-      and receive confirmation from us.
+      Submitted a rental or
+      waiting-list request?
     </p>
 
     <p>
-      For privacy, request status is handled directly through
-      Messenger. A secure online tracker is planned for
-      a future Firebase update.
+      Your request is not confirmed
+      until you send your completed
+      form to our Facebook Page
+      and receive confirmation.
+    </p>
+
+    <p>
+      For privacy, request status
+      is handled directly
+      through Messenger.
     </p>
 
     <a
@@ -414,13 +968,20 @@
       href="https://www.facebook.com/share/1DajrF4mTy/"
       target="_blank"
       rel="noopener noreferrer"
-    >Ask About My Request ↗</a>
+    >
+      Ask About My Request ↗
+    </a>
+
   </div>
+
 </section>
 
 </main>
 
-<!-- FLOATING MESSENGER BUTTON -->
+<!-- ==========================================
+     FLOATING FACEBOOK BUTTON
+     ========================================== -->
+
 <a
   class="mega-floating-messenger"
   href="https://www.facebook.com/share/1DajrF4mTy/"
@@ -431,34 +992,64 @@
   💬 <span>Message us</span>
 </a>
 
+<!-- ==========================================
+     FOOTER
+     ========================================== -->
+
 <footer>
+
   <div class="brand">
+
     <span class="brand-mark">J</span>
-    <span>JDigitals<span class="gold">Rental</span></span>
+
+    <span>
+      JDigitals<span class="gold">Rental</span>
+    </span>
+
   </div>
 
-  <p>Affordable digital adventures for PS5 players.</p>
+  <p>
+    Affordable digital adventures
+    for PS5 players.
+  </p>
 
   <p class="copyright">
-    © 2026 JDigitalsRental. All rights reserved.
+    © 2026 JDigitalsRental.
+    All rights reserved.
   </p>
+
 </footer>
 
-<!-- RENTAL MODAL -->
-<div id="rentalModal" class="rental-modal">
+<!-- ==========================================
+     RENTAL MODAL
+     ========================================== -->
+
+<div
+  id="rentalModal"
+  class="rental-modal"
+>
+
   <div class="rental-modal-card">
 
     <button
       id="closeRentalModal"
       class="modal-close"
       type="button"
-    >×</button>
+    >
+      ×
+    </button>
 
-    <div class="modal-eyebrow">JDIGITALSRENTAL</div>
+    <div class="modal-eyebrow">
+      JDIGITALSRENTAL
+    </div>
 
-    <h2 id="modalTitle">Rent Game</h2>
+    <h2 id="modalTitle">
+      Rent Game
+    </h2>
 
-    <p class="modal-label">First and Last Name</p>
+    <p class="modal-label">
+      First and Last Name
+    </p>
 
     <input
       id="rentalCustomerName"
@@ -468,28 +1059,84 @@
       style="width:100%;"
     >
 
-    <p style="margin:8px 0 18px;font-size:11px;line-height:1.5;color:#9baec5;">
-      📌 Please use the same First and Last Name shown on your
-      Facebook account so we can easily find and contact you.
+    <p class="rental-note">
+      📌 Please use the same First
+      and Last Name shown on your
+      Facebook account so we can
+      easily find and contact you.
     </p>
 
-    <p class="modal-label">Choose Rental Period</p>
+    <p class="modal-label">
+      Choose Rental Period
+    </p>
 
     <div class="modal-options">
+
       <button
         type="button"
         class="period-option"
         data-period="week"
-      >📅 1 Week</button>
+      >
+        📅 1 Week
+      </button>
 
       <button
         type="button"
         class="period-option"
         data-period="monthly"
-      >📅 1 Month</button>
+      >
+        ♾️ 1 Month UNLI SWAP
+      </button>
+
     </div>
 
-    <p class="modal-label">Choose Account Type</p>
+    <div class="rental-plan-info">
+
+      <strong>
+        📅 WEEKLY RENTAL
+      </strong>
+
+      <p>
+        Regular weekly game price.
+      </p>
+
+      <p>
+        ✓ Includes 1 game swap.
+      </p>
+
+      <div class="plan-divider"></div>
+
+      <strong>
+        ♾️ MONTHLY UNLI SWAP
+      </strong>
+
+      <p>
+        🏆 Trophy: ₱800
+      </p>
+
+      <p>
+        🎮 Non-Trophy: ₱700
+      </p>
+
+      <p>
+        ✓ Unlimited swaps,
+        maximum 1 swap per week.
+      </p>
+
+      <p>
+        ✓ One game at a time.
+      </p>
+
+      <p>
+        All swaps subject
+        to availability.
+      </p>
+
+    </div>
+
+    <p class="modal-label">
+      Choose Account Type
+    </p>
 
     <div class="upcoming-account-cards">
 
@@ -498,36 +1145,79 @@
         class="account-option upcoming-account-option trophy-card"
         data-account="trophy"
       >
-        <span class="account-card-icon">🏆</span>
-        <span class="account-card-content">
-          <strong>Trophy</strong>
-          <small>KEEP YOUR PROGRESS</small>
-          <span>✓ Earn trophies</span>
-          <span>✓ Save your game progress</span>
-          <span>✓ For trophy hunters</span>
+
+        <span class="account-card-icon">
+          🏆
         </span>
+
+        <span class="account-card-content">
+
+          <strong>Trophy</strong>
+
+          <small>
+            KEEP YOUR PROGRESS
+          </small>
+
+          <span>
+            ✓ Earn trophies
+          </span>
+
+          <span>
+            ✓ Save your game progress
+          </span>
+
+          <span>
+            ✓ Monthly UNLI SWAP ₱800
+          </span>
+
+        </span>
+
       </button>
 
       <button
         type="button"
         class="account-option upcoming-account-option non-trophy-card"
-        data-account="non-trophy"
+        data-account="nonTrophy"
       >
-        <span class="account-card-icon">🎮</span>
-        <span class="account-card-content">
-          <strong>Non-Trophy</strong>
-          <small>JUST PLAY</small>
-          <span>✓ Play without trophies</span>
-          <span>✓ Same great experience</span>
-          <span>✓ Perfect for casual play</span>
+
+        <span class="account-card-icon">
+          🎮
         </span>
+
+        <span class="account-card-content">
+
+          <strong>Non-Trophy</strong>
+
+          <small>
+            JUST PLAY
+          </small>
+
+          <span>
+            ✓ Play without trophies
+          </span>
+
+          <span>
+            ✓ Same great experience
+          </span>
+
+          <span>
+            ✓ Monthly UNLI SWAP ₱700
+          </span>
+
+        </span>
+
       </button>
 
     </div>
 
     <div class="modal-price">
+
       <span>TOTAL PRICE</span>
-      <strong id="modalPrice">₱0</strong>
+
+      <strong id="modalPrice">
+        Select rental period and slot
+      </strong>
+
     </div>
 
     <button
@@ -539,24 +1229,41 @@
     </button>
 
   </div>
+
 </div>
 
-<!-- UPCOMING RESERVATION MODAL -->
-<div id="upcomingReservationModal" class="rental-modal">
+<!-- ==========================================
+     UPCOMING RESERVATION MODAL
+     ========================================== -->
+
+<div
+  id="upcomingReservationModal"
+  class="rental-modal"
+>
+
   <div class="rental-modal-card">
 
     <button
       id="closeUpcomingReservationModal"
       class="modal-close"
       type="button"
-    >×</button>
+    >
+      ×
+    </button>
 
-    <div class="modal-eyebrow">JDIGITALSRENTAL</div>
+    <div class="modal-eyebrow">
+      JDIGITALSRENTAL
+    </div>
 
     <h2>Reserve Slot</h2>
-    <h3 id="upcomingReservationGame">Upcoming Game</h3>
 
-    <p class="modal-label">First and Last Name</p>
+    <h3 id="upcomingReservationGame">
+      Upcoming Game
+    </h3>
+
+    <p class="modal-label">
+      First and Last Name
+    </p>
 
     <input
       id="upcomingReservationCustomerName"
@@ -566,29 +1273,76 @@
       style="width:100%;"
     >
 
-    <p style="margin:8px 0 18px;font-size:11px;line-height:1.5;color:#9baec5;">
-      📌 Please use the same First and Last Name shown on your
-      Facebook account so we can easily find and contact you
-      when it's your turn to rent.
+    <p class="rental-note">
+      📌 Please use the same First
+      and Last Name shown on your
+      Facebook account so we can
+      easily contact you when
+      it's your turn to rent.
     </p>
 
-    <p class="modal-label">Choose Rental Period</p>
+    <p class="modal-label">
+      Choose Rental Period
+    </p>
 
-    <div class="modal-options upcoming-period-options">
+    <div
+      class="modal-options upcoming-period-options"
+    >
+
       <button
         type="button"
         class="upcoming-period-option"
         data-period="week"
-      >📅 1 Week</button>
+      >
+        📅 1 Week
+      </button>
 
       <button
         type="button"
         class="upcoming-period-option"
         data-period="month"
-      >📅 1 Month</button>
+      >
+        ♾️ 1 Month UNLI SWAP
+      </button>
+
     </div>
 
-    <p class="modal-label">Choose Account Type</p>
+    <div class="rental-plan-info">
+
+      <strong>
+        WEEKLY
+      </strong>
+
+      <p>
+        Regular weekly game price
+        with 1 game swap.
+      </p>
+
+      <div class="plan-divider"></div>
+
+      <strong>
+        MONTHLY UNLI SWAP
+      </strong>
+
+      <p>
+        🏆 Trophy: ₱800
+      </p>
+
+      <p>
+        🎮 Non-Trophy: ₱700
+      </p>
+
+      <p>
+        Maximum 1 swap per week.
+        One game at a time.
+        Subject to availability.
+      </p>
+
+    </div>
+
+    <p class="modal-label">
+      Choose Account Type
+    </p>
 
     <div class="upcoming-account-cards">
 
@@ -597,29 +1351,67 @@
         class="upcoming-account-option trophy-card"
         data-account="trophy"
       >
-        <span class="account-card-icon">🏆</span>
-        <span class="account-card-content">
-          <strong>Trophy</strong>
-          <small>KEEP YOUR PROGRESS</small>
-          <span>✓ Earn trophies</span>
-          <span>✓ Save your game progress</span>
-          <span>✓ For trophy hunters</span>
+
+        <span class="account-card-icon">
+          🏆
         </span>
+
+        <span class="account-card-content">
+
+          <strong>Trophy</strong>
+
+          <small>
+            KEEP YOUR PROGRESS
+          </small>
+
+          <span>
+            ✓ Earn trophies
+          </span>
+
+          <span>
+            ✓ Save your progress
+          </span>
+
+          <span>
+            ✓ Monthly ₱800
+          </span>
+
+        </span>
+
       </button>
 
       <button
         type="button"
         class="upcoming-account-option non-trophy-card"
-        data-account="non-trophy"
+        data-account="nonTrophy"
       >
-        <span class="account-card-icon">🎮</span>
-        <span class="account-card-content">
-          <strong>Non-Trophy</strong>
-          <small>JUST PLAY</small>
-          <span>✓ Play without trophies</span>
-          <span>✓ Same great experience</span>
-          <span>✓ Perfect for casual play</span>
+
+        <span class="account-card-icon">
+          🎮
         </span>
+
+        <span class="account-card-content">
+
+          <strong>Non-Trophy</strong>
+
+          <small>
+            JUST PLAY
+          </small>
+
+          <span>
+            ✓ Play without trophies
+          </span>
+
+          <span>
+            ✓ Same great experience
+          </span>
+
+          <span>
+            ✓ Monthly ₱700
+          </span>
+
+        </span>
+
       </button>
 
     </div>
@@ -628,21 +1420,40 @@
       id="continueUpcomingReservation"
       class="modal-continue"
       type="button"
-      style="width:100%;margin-top:20px;padding:14px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#168cff,#0754d9);color:white;font-weight:800;cursor:pointer;"
+      style="
+        width:100%;
+        margin-top:20px;
+        padding:14px 16px;
+        border:0;
+        border-radius:10px;
+        background:linear-gradient(
+          135deg,
+          #168cff,
+          #0754d9
+        );
+        color:white;
+        font-weight:800;
+        cursor:pointer;
+      "
     >
       📝 Continue to Facebook
     </button>
 
   </div>
+
 </div>
 
-<!-- FACEBOOK REMINDER -->
+<!-- ==========================================
+     FACEBOOK REMINDER
+     ========================================== -->
+
 <div
   id="facebookReminder"
   role="dialog"
   aria-modal="true"
   aria-labelledby="facebookReminderTitle"
 >
+
   <div class="fb-reminder-card">
 
     <button
@@ -650,33 +1461,58 @@
       class="fb-reminder-close"
       type="button"
       aria-label="Close"
-    >×</button>
+    >
+      ×
+    </button>
 
-    <div class="fb-reminder-icon">🎮</div>
-    <div class="modal-eyebrow">JDIGITALSRENTAL</div>
+    <div class="fb-reminder-icon">
+      🎮
+    </div>
 
-    <h2 id="facebookReminderTitle">One More Step!</h2>
+    <div class="modal-eyebrow">
+      JDIGITALSRENTAL
+    </div>
 
-    <p>Thank you for choosing JDigitalsRental!</p>
+    <h2 id="facebookReminderTitle">
+      One More Step!
+    </h2>
 
     <p>
-      Your form is ready. Please send your completed form
-      to our official Facebook Page via Messenger to continue
-      your rental or waiting list request.
+      Thank you for choosing
+      JDigitalsRental!
+    </p>
+
+    <p>
+      Your form is ready.
+      Please send your completed
+      form to our official Facebook
+      Page via Messenger.
     </p>
 
     <div class="fb-reminder-note">
-      ⚠️ <strong>IMPORTANT REMINDER</strong>
+
+      ⚠️
+      <strong>
+        IMPORTANT REMINDER
+      </strong>
+
       <div style="margin-top:6px;">
-        Your request is not yet confirmed.
-        Please send your completed form to our Facebook Page
+
+        Your request is not yet
+        confirmed.
+
+        Please send your completed
+        form to our Facebook Page
         so we can process it.
+
       </div>
+
     </div>
 
     <p>
-      📋 Copy your form details, then paste and send
-      them in Messenger.
+      📋 Copy your form details,
+      then paste and send them
+      in Messenger.
     </p>
 
     <button
@@ -704,55 +1540,118 @@
     </a>
 
   </div>
+
 </div>
+
+<!-- ==========================================
+     FACEBOOK REMINDER SCRIPT
+     ========================================== -->
 
 <script>
 (function () {
-  let pendingFacebookMessage = '';
 
-  const reminder = document.getElementById('facebookReminder');
-  const status = document.getElementById('facebookCopyStatus');
-  const copyButton = document.getElementById('copyFacebookForm');
+  let pendingFacebookMessage = "";
+
+  const reminder =
+    document.getElementById(
+      "facebookReminder"
+    );
+
+  const status =
+    document.getElementById(
+      "facebookCopyStatus"
+    );
+
+  const copyButton =
+    document.getElementById(
+      "copyFacebookForm"
+    );
 
   async function copyMessage() {
-    if (!pendingFacebookMessage) return false;
 
-    try {
-      await navigator.clipboard.writeText(pendingFacebookMessage);
-      status.textContent = '✓ Form copied! Paste it in Messenger.';
-      return true;
-    } catch (error) {
-      status.textContent = 'Copy failed. Please try again.';
+    if (!pendingFacebookMessage) {
       return false;
     }
+
+    try {
+
+      await navigator.clipboard.writeText(
+        pendingFacebookMessage
+      );
+
+      status.textContent =
+        "✓ Form copied! Paste it in Messenger.";
+
+      return true;
+
+    } catch (error) {
+
+      status.textContent =
+        "Copy failed. Please try again.";
+
+      return false;
+    }
+
   }
 
-  window.showFacebookReminder = function (message) {
-    pendingFacebookMessage = String(message || '');
-    status.textContent = '';
-    reminder.classList.add('active');
-    copyMessage();
-  };
+  window.showFacebookReminder =
+    function (message) {
 
-  copyButton.addEventListener('click', copyMessage);
+      pendingFacebookMessage =
+        String(message || "");
 
-  document.getElementById('closeFacebookReminder')
-    .addEventListener('click', function () {
-      reminder.classList.remove('active');
-    });
+      status.textContent = "";
 
-  reminder.addEventListener('click', function (event) {
-    if (event.target === reminder) {
-      reminder.classList.remove('active');
+      reminder.classList.add(
+        "active"
+      );
+
+      copyMessage();
+    };
+
+  copyButton.addEventListener(
+    "click",
+    copyMessage
+  );
+
+  document
+    .getElementById(
+      "closeFacebookReminder"
+    )
+    .addEventListener(
+      "click",
+      function () {
+        reminder.classList.remove(
+          "active"
+        );
+      }
+    );
+
+  reminder.addEventListener(
+    "click",
+    function (event) {
+
+      if (event.target === reminder) {
+        reminder.classList.remove(
+          "active"
+        );
+      }
+
     }
-  });
+  );
+
 })();
 </script>
 
-<!-- FIREBASE CONNECTION -->
+<!-- ==========================================
+     FIREBASE CONNECTION
+     ========================================== -->
+
 <script type="module">
-import { initializeApp }
-  from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 
 import {
   getFirestore,
@@ -761,6 +1660,10 @@ import {
   addDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+/* ==========================================
+   FIREBASE CONFIGURATION
+   ========================================== */
 
 const firebaseConfig = {
   apiKey: "AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",
@@ -771,128 +1674,272 @@ const firebaseConfig = {
   appId: "1:611741872259:web:01b3c2bec73d078999ebb6"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(
+  firebaseConfig
+);
+
 const db = getFirestore(app);
 
-window.saveWaitingList = async function ({
-  gameId,
-  gameName,
-  customerName,
-  accountType,
-  rentalPeriod
-}) {
-  try {
-    await addDoc(collection(db, "waitingList"), {
-      gameId: gameId || "",
-      gameName: gameName || "Unknown Game",
-      customerName: customerName || "",
-      accountType: accountType || "",
-      rentalPeriod: rentalPeriod || "",
-      status: "waiting",
-      createdAt: serverTimestamp()
-    });
+/* ==========================================
+   SAVE WAITING LIST
+   ========================================== */
 
-    return true;
-  } catch (error) {
-    console.error("Waiting list save error:", error);
-    return false;
-  }
-};
+window.saveWaitingList =
+  async function ({
+    gameId,
+    gameName,
+    customerName,
+    accountType,
+    rentalPeriod
+  }) {
+
+    try {
+
+      await addDoc(
+        collection(db, "waitingList"),
+        {
+          gameId:
+            gameId || "",
+
+          gameName:
+            gameName || "Unknown Game",
+
+          customerName:
+            customerName || "",
+
+          accountType:
+            accountType || "",
+
+          rentalPeriod:
+            rentalPeriod || "",
+
+          status:
+            "waiting",
+
+          createdAt:
+            serverTimestamp()
+        }
+      );
+
+      return true;
+
+    } catch (error) {
+
+      console.error(
+        "Waiting list save error:",
+        error
+      );
+
+      return false;
+    }
+
+  };
+
+/* ==========================================
+   LOAD GAMES FROM FIRESTORE
+   ========================================== */
 
 onSnapshot(
   collection(db, "games"),
+
   (querySnapshot) => {
+
     const firestoreGames = [];
     const upcomingGames = [];
 
-    querySnapshot.forEach((gameDoc) => {
-      const data = gameDoc.data();
+    querySnapshot.forEach(
+      (gameDoc) => {
 
-      const gameData = {
-        id: gameDoc.id,
-        ...data,
-        name: data.name || data.title || "Untitled Game",
-        genre: data.genre || "Other",
-        type: data.type || (
-          data.genre ? data.genre.toLowerCase() : "other"
-        ),
-        meta: data.meta || "PS5 • Digital rental",
-        image: data.image || "",
-        status: data.status || "available",
-        weekly: Number(data.weekly) || 0,
-        monthly: Number(data.monthly) || 0,
-        trophyDate: data.trophyDate || "Available Now",
-        nonTrophyDate: data.nonTrophyDate || "Available Now",
-        availableDate: data.availableDate || ""
-      };
+        const data =
+          gameDoc.data();
 
-      if (gameData.status === "upcoming") {
-        upcomingGames.push(gameData);
-      } else {
-        firestoreGames.push(gameData);
+        const gameData = {
+          id: gameDoc.id,
+
+          ...data,
+
+          name:
+            data.name ||
+            data.title ||
+            "Untitled Game",
+
+          genre:
+            data.genre ||
+            "Other",
+
+          type:
+            data.type ||
+            (
+              data.genre
+                ? data.genre.toLowerCase()
+                : "other"
+            ),
+
+          meta:
+            data.meta ||
+            "PS5 • Digital rental",
+
+          image:
+            data.image || "",
+
+          status:
+            data.status ||
+            "available",
+
+          weekly:
+            Number(data.weekly) || 0,
+
+          monthly:
+            Number(data.monthly) || 0,
+
+          trophyDate:
+            data.trophyDate ||
+            "Available Now",
+
+          nonTrophyDate:
+            data.nonTrophyDate ||
+            "Available Now",
+
+          availableDate:
+            data.availableDate || ""
+        };
+
+        if (
+          gameData.status ===
+          "upcoming"
+        ) {
+
+          upcomingGames.push(
+            gameData
+          );
+
+        } else {
+
+          firestoreGames.push(
+            gameData
+          );
+
+        }
+
       }
-    });
+    );
 
-    window.firestoreGames = firestoreGames;
-    window.upcomingGames = upcomingGames;
+    window.firestoreGames =
+      firestoreGames;
+
+    window.upcomingGames =
+      upcomingGames;
 
     window.dispatchEvent(
-      new Event("firestoreGamesLoaded")
+      new Event(
+        "firestoreGamesLoaded"
+      )
     );
 
     window.dispatchEvent(
-      new Event("upcomingGamesLoaded")
+      new Event(
+        "upcomingGamesLoaded"
+      )
     );
+
   },
+
   (error) => {
-    console.error("Firestore loading error:", error);
+
+    console.error(
+      "Firestore loading error:",
+      error
+    );
+
   }
 );
+
+/* ==========================================
+   WAITING LIST COUNTERS
+   ========================================== */
 
 window.waitingListCounts = {};
 
 onSnapshot(
   collection(db, "waitingList"),
+
   (querySnapshot) => {
+
     const counts = {};
 
-    querySnapshot.forEach((reservationDoc) => {
-      const data = reservationDoc.data();
+    querySnapshot.forEach(
+      (reservationDoc) => {
 
-      const gameName =
-        data.gameName || data.gameId || "Unknown Game";
+        const data =
+          reservationDoc.data();
 
-      if (!counts[gameName]) {
-        counts[gameName] = {
-          trophy: 0,
-          nonTrophy: 0
-        };
+        const gameName =
+          data.gameName ||
+          data.gameId ||
+          "Unknown Game";
+
+        if (!counts[gameName]) {
+
+          counts[gameName] = {
+            trophy: 0,
+            nonTrophy: 0
+          };
+
+        }
+
+        const accountType =
+          String(
+            data.accountType || ""
+          )
+            .toLowerCase()
+            .replace(/\s/g, "")
+            .replace(/-/g, "");
+
+        if (
+          accountType.includes("non")
+        ) {
+
+          counts[gameName]
+            .nonTrophy++;
+
+        } else {
+
+          counts[gameName]
+            .trophy++;
+
+        }
+
       }
+    );
 
-      const accountType = String(data.accountType || "")
-        .toLowerCase()
-        .replace(/\s/g, "")
-        .replace(/-/g, "");
-
-      if (accountType.includes("non")) {
-        counts[gameName].nonTrophy++;
-      } else {
-        counts[gameName].trophy++;
-      }
-    });
-
-    window.waitingListCounts = counts;
+    window.waitingListCounts =
+      counts;
 
     window.dispatchEvent(
-      new Event("waitingListCountsLoaded")
+      new Event(
+        "waitingListCountsLoaded"
+      )
     );
+
   },
+
   (error) => {
-    console.error("Waiting list counter error:", error);
+
+    console.error(
+      "Waiting list counter error:",
+      error
+    );
+
   }
 );
+
 </script>
 
-<script src="app.js?v=16"></script>
+<!-- ==========================================
+     MAIN APP SCRIPT
+     ========================================== -->
+
+<script src="app.js?v=17"></script>
+
 </body>
 </html>
