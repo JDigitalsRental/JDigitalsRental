@@ -294,37 +294,47 @@ function slotIsRented(game, account) {
   return game.status === "currently-rented";
 }
 
-function availabilityHTML(game, account) {
-  const rented = slotIsRented(game, account);
-  const trophy =
-    normalizedAccount(account) === "trophy";
+function slotIsDueForReturn(game, account) {
+  if (!slotIsRented(game, account)) return false;
 
-  const date = trophy
+  const type = normalizedAccount(account);
+  if (!type) return false;
+
+  const raw = type === "trophy"
     ? game.trophyDate
     : game.nonTrophyDate;
 
-  const label = trophy
-    ? "🏆 Trophy"
-    : "🎮 Non-Trophy";
+  if (!raw || /available now/i.test(String(raw))) return false;
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  return date <= today;
+}
+
+function availabilityHTML(game, account) {
+  const rented = slotIsRented(game, account);
+  const due = rented && slotIsDueForReturn(game, account);
+  const trophy = normalizedAccount(account) === "trophy";
+  const date = trophy ? game.trophyDate : game.nonTrophyDate;
+  const label = trophy ? "🏆 Trophy" : "🎮 Non-Trophy";
+  const border = due ? "#eabf42" : rented ? "#ff4768" : "#19d97c";
+  const background = due ? "rgba(120,87,14,.35)" : rented
+    ? "rgba(120,14,33,.35)" : "rgba(0,115,65,.28)";
+  const color = due ? "#ffe18a" : rented ? "#ff839a" : "#55f5a5";
+  const status = due ? "🟡 DUE FOR RETURN" : rented
+    ? "🔴 CURRENTLY RENTED" : "🟢 AVAILABLE";
 
   return `
-    <div
-      class="availability ${rented ? "rented" : "available"}"
-      style="
-        margin-bottom:6px;
-        padding:9px;
-        border-radius:9px;
-        border:1px solid ${rented ? "#ff4768" : "#19d97c"};
-        background:${rented ? "rgba(120,14,33,.35)" : "rgba(0,115,65,.28)"};
-      "
-    >
-      <strong style="color:${rented ? "#ff839a" : "#55f5a5"}">
-        ${rented ? "🔴 CURRENTLY RENTED" : "🟢 AVAILABLE"}
-      </strong>
-      <div>
-        ${label}:
-        ${escapeHTML(rented ? (date || "Date TBA") : "Available Now")}
-      </div>
+    <div class="availability ${rented ? "rented" : "available"}"
+      style="margin-bottom:6px;padding:9px;border-radius:9px;
+      border:1px solid ${border};background:${background};">
+      <strong style="color:${color}">${status}</strong>
+      <div>${label}: ${escapeHTML(rented ? (date || "Date TBA") : "Available Now")}</div>
+      ${due ? '<div style="font-size:11px;color:#ffe18a">Awaiting confirmed return — Join Waiting List</div>' : ''}
     </div>
   `;
 }
