@@ -1194,3 +1194,185 @@ if (Array.isArray(window.upcomingGames)) {
 /* ==========================================
    END — JDIGITALSRENTAL
    ========================================== */
+
+
+/* ==========================================
+   JDIGITALSRENTAL — FACEBOOK NOTICE POPUP
+   ========================================== */
+
+window.showFacebookReminder = function(message) {
+  let notice = document.getElementById("facebookNoticePopup");
+
+  if (!notice) {
+    notice = document.createElement("div");
+    notice.id = "facebookNoticePopup";
+
+    notice.innerHTML = `
+      <div class="jdr-notice-card">
+        <div class="jdr-notice-icon">💬</div>
+
+        <h2>One Last Step!</h2>
+
+        <p>
+          Thank you for choosing
+          <strong>JDigitalsRental!</strong> 🎮
+        </p>
+
+        <p>
+          Please message our Facebook Page to
+          confirm your rental or reservation.
+        </p>
+
+        <div class="jdr-notice-reminder">
+          ⚠️ Your rental or reservation is not yet
+          confirmed until we respond on Facebook.
+        </div>
+
+        <button id="jdrCopyMessage" type="button">
+          📋 Copy Rental Details
+        </button>
+
+        <a
+          id="jdrGoFacebook"
+          href="https://www.facebook.com/share/1DajrF4mTy/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          💬 Go to Facebook Page
+        </a>
+
+        <button id="jdrCloseNotice" type="button">
+          Close
+        </button>
+      </div>
+    `;
+
+    const style = document.createElement("style");
+
+    style.textContent = `
+      #facebookNoticePopup {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 18px;
+        background: rgba(0, 5, 20, .9);
+        backdrop-filter: blur(8px);
+      }
+
+      .jdr-notice-card {
+        width: 100%;
+        max-width: 420px;
+        padding: 28px 22px;
+        border: 1px solid #168cff;
+        border-radius: 20px;
+        background: linear-gradient(145deg, #0a2450, #020817);
+        color: white;
+        text-align: center;
+        box-shadow: 0 20px 70px rgba(0,0,0,.6);
+        font-family: Arial, sans-serif;
+      }
+
+      .jdr-notice-icon {
+        font-size: 46px;
+        margin-bottom: 12px;
+      }
+
+      .jdr-notice-card h2 {
+        font-size: 25px;
+        margin: 0 0 14px;
+      }
+
+      .jdr-notice-card p {
+        color: #c5d5f1;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .jdr-notice-reminder {
+        padding: 13px;
+        margin: 18px 0;
+        background: rgba(255,193,7,.1);
+        border: 1px solid #977722;
+        border-radius: 10px;
+        color: #ffe18a;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      #jdrCopyMessage,
+      #jdrGoFacebook,
+      #jdrCloseNotice {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 13px;
+        margin-top: 10px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 14px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      #jdrCopyMessage {
+        background: #102c55;
+        border: 1px solid #168cff;
+        color: white;
+      }
+
+      #jdrGoFacebook {
+        background: linear-gradient(135deg, #168cff, #0754d9);
+        border: none;
+        color: white;
+      }
+
+      #jdrCloseNotice {
+        background: transparent;
+        border: 1px solid #334d76;
+        color: #a9bbd9;
+      }
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(notice);
+
+    notice.querySelector("#jdrCloseNotice")
+      .addEventListener("click", () => {
+        notice.remove();
+      });
+
+    notice.addEventListener("click", event => {
+      if (event.target === notice) {
+        notice.remove();
+      }
+    });
+  }
+
+  notice.style.display = "flex";
+
+  const copyButton =
+    notice.querySelector("#jdrCopyMessage");
+
+  copyButton.textContent = "📋 Copy Rental Details";
+
+  copyButton.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(message);
+      copyButton.textContent = "✅ Details Copied!";
+    } catch (error) {
+      const textArea = document.createElement("textarea");
+      textArea.value = message;
+      document.body.appendChild(textArea);
+      textArea.select();
+      const copied = document.execCommand("copy");
+      textArea.remove();
+
+      copyButton.textContent = copied
+        ? "✅ Details Copied!"
+        : "Please copy your details manually";
+    }
+  };
+};
