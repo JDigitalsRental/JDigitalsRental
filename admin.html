@@ -204,9 +204,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .waiting-item strong{display:block;font-size:12px;margin:5px 0}
 .waiting-item button{width:100%;margin-top:8px;background:#401b28;color:#ff8b8b;border:1px solid #8b354a;border-radius:7px;padding:7px}
 @media(min-width:700px){
-  .stats{grid-template-columns:repeat(4,1fr)}
+  .stats{grid-template-columns:repeat(3,1fr)}
   .game-grid{grid-template-columns:repeat(2,1fr)}
 }
+
+/* SMART DASHBOARD V2 */
+.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stat{min-width:0}
+.stat strong{font-size:clamp(24px,4vw,32px)}
+.stat.alert{border-color:#a74952}
+.stat.good{border-color:#187b59}
+.stat.warning{border-color:#98702b}
+.priority-panel{background:linear-gradient(145deg,#081a3d,#041027);border:1px solid #24518d;border-radius:15px;padding:16px;margin:18px 0 26px}
+.priority-panel h3{margin:0 0 12px;font-size:17px}
+.priority-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #193963;font-size:13px}
+.priority-item small{display:block;color:#a7b9d6;margin-top:5px;line-height:1.5}
+.priority-item button{flex-shrink:0;border:1px solid #377ac3;border-radius:8px;background:#103b70;color:white;padding:9px;font-weight:700}
+.priority-empty{color:#a9d9c7;font-size:13px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 
@@ -227,26 +242,20 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <p class="eyebrow">ADMIN MANAGEMENT</p>
   <h2 class="title">Game Dashboard</h2>
   <p class="subtitle">
-    Manage games, rental extensions, returns, and prices.
+    Monitor rental slots, return alerts, waiting customers, extensions, and prices.
   </p>
 
-  <section class="stats">
-    <div class="stat">
-      <span>TOTAL GAMES</span>
-      <strong id="totalGames">0</strong>
-    </div>
-    <div class="stat">
-      <span>AVAILABLE GAMES</span>
-      <strong id="availableGames">0</strong>
-    </div>
-    <div class="stat">
-      <span>DUE FOR RETURN SLOTS</span>
-      <strong id="dueGames">0</strong>
-    </div>
-    <div class="stat" id="waitingListCard" style="cursor:pointer">
-      <span>WAITING LIST</span>
-      <strong id="waitingGames">0</strong>
-    </div>
+  <section class="stats" aria-label="Rental overview">
+    <div class="stat"><span>TOTAL GAMES</span><strong id="totalGames">—</strong></div>
+    <div class="stat"><span>ACTIVE RENTAL SLOTS</span><strong id="activeSlots">—</strong></div>
+    <div class="stat good"><span>AVAILABLE SLOTS</span><strong id="availableSlots">—</strong></div>
+    <div class="stat warning"><span>DUE TODAY</span><strong id="dueToday">—</strong></div>
+    <div class="stat alert"><span>OVERDUE SLOTS</span><strong id="overdueSlots">—</strong></div>
+    <div class="stat" id="waitingListCard" style="cursor:pointer" role="button" tabindex="0"><span>WAITING LIST ↗</span><strong id="waitingGames">—</strong></div>
+  </section>
+  <section class="priority-panel" aria-live="polite">
+    <h3>🚨 Priority Rental Alerts</h3>
+    <div id="priorityAlerts">Loading rental alerts...</div>
   </section>
 
   <h2 class="section-title">🎮 Game Management</h2>
@@ -254,7 +263,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <section class="game-grid" id="gameGrid"></section>
 
   <div class="note">
-    🟡 Due for Return means the expected return date has arrived.
+    🟡 Due Today means the expected return date is today. 🔴 Overdue means the expected return date has passed.
     The slot stays rented until you confirm the renter has disabled
     the account.
     <br><br>
@@ -757,19 +766,33 @@ async function loadAdminGames(){
   gameCache.clear();
   $("gameGrid").innerHTML="";
 
-  let available=0;
-  let due=0;
+  let active=0, availableSlots=0, dueToday=0, overdue=0;
+  const alerts=[];
+  const today=todayISO();
 
   snapshot.forEach(gameDoc=>{
     const g=gameDoc.data();
     gameCache.set(gameDoc.id,g);
 
-    if(overallStatus(g)==="available")
-      available++;
-
-    for(const slot of ["trophy","nonTrophy"]){
-      if(slotState(g,slot)==="due")
-        due++;
+    if(g.status!=="upcoming"){
+      for(const slot of ["trophy","nonTrophy"]){
+        const state=slotState(g,slot);
+        const label=slot==="trophy"?"🏆 Trophy":"🎮 Non-Trophy";
+        const name=g.name||g.title||"Untitled Game";
+        if(state==="available") availableSlots++;
+        else {
+          active++;
+          const raw=g[slotFields(slot).date];
+          const iso=dateToInput(raw);
+          if(iso===today){
+            dueToday++;
+            alerts.push({id:gameDoc.id,name,label,iso,kind:"Due Today",rank:1});
+          }else if(iso && iso<today){
+            overdue++;
+            alerts.push({id:gameDoc.id,name,label,iso,kind:"Overdue",rank:0});
+          }
+        }
+      }
     }
 
     const p=getPrices(g);
@@ -829,135 +852,119 @@ async function loadAdminGames(){
   });
 
   $("totalGames").textContent=snapshot.size;
-  $("availableGames").textContent=available;
-  $("dueGames").textContent=due;
+  $("activeSlots").textContent=active;
+  $("availableSlots").textContent=availableSlots;
+  $("dueToday").textContent=dueToday;
+  $("overdueSlots").textContent=overdue;
+
+  const alertBox=$("priorityAlerts");
+  alertBox.replaceChildren();
+  alerts.sort((a,b)=>a.rank-b.rank||a.iso.localeCompare(b.iso));
+
+  if(!alerts.length){
+    const empty=document.createElement("p");
+    empty.className="priority-empty";
+    empty.textContent="✅ No due or overdue rental slots right now.";
+    alertBox.appendChild(empty);
+  }
+
+  for(const item of alerts){
+    const row=document.createElement("div");
+    row.className="priority-item";
+    const info=document.createElement("div");
+    const title=document.createElement("strong");
+    title.textContent=(item.rank===0?"🔴 ":"🟡 ")+item.kind+" — "+item.name;
+
+    const detail=document.createElement("small");
+    detail.textContent=item.label+" • Expected return: "+dateToText(item.iso)+" • Awaiting confirmed return";
+    info.append(title,detail);
+
+    const button=document.createElement("button");
+    button.type="button";
+    button.textContent="Manage";
+    button.addEventListener("click",()=>openManage(item.id));
+
+    row.append(info,button);
+    alertBox.appendChild(row);
+  }
 
   const waiting=await getDocs(collection(db,"waitingList"));
   $("waitingGames").textContent=waiting.size;
 }
 
 function updateManageSlotUI(slot){
-  const prefix=slot==="trophy"
-    ?"manageTrophy"
-    :"manageNonTrophy";
-
+  const prefix=slot==="trophy"?"manageTrophy":"manageNonTrophy";
   const status=$(prefix+"Status").value;
   const date=$(prefix+"Date").value;
-
-  const state=status==="available"
-    ?"available"
-    :isDue(date)
-      ?"due"
-      :"rented";
-
+  const state=status==="available"?"available":isDue(date)?"due":"rented";
   const badge=$(prefix+"Badge");
   badge.className="slot-badge "+state;
   badge.textContent=slotText(state);
 
   const notice=$(prefix+"Notice");
-
-  const confirm=$(
-    slot==="trophy"
-      ?"confirmTrophyReturn"
-      :"confirmNonTrophyReturn"
-  );
-
-  if(status==="available"){
-    notice.textContent="This slot is available.";
-    confirm.disabled=true;
-  }else if(state==="due"){
-    notice.textContent=
-      "Return date reached. Check the renter's disable video before confirming.";
-    confirm.disabled=false;
-  }else{
-    notice.textContent=
-      "Currently rented. Confirm return only after checking proof.";
-    confirm.disabled=false;
-  }
+  const confirmButton=$(slot==="trophy"?"confirmTrophyReturn":"confirmNonTrophyReturn");
 
   if($("manageStatus").value==="upcoming"){
     notice.textContent="This game is still upcoming.";
-    confirm.disabled=true;
+    confirmButton.disabled=true;
+  }else if(status==="available"){
+    notice.textContent="This slot is available.";
+    confirmButton.disabled=true;
+  }else{
+    notice.textContent=state==="due"
+      ?"Return date reached. Check the renter's disable video before confirming."
+      :"Currently rented. Confirm return only after checking proof.";
+    confirmButton.disabled=false;
   }
-
   updateExtensionPreview(slot);
 }
 
 function openManage(id){
   const g=gameCache.get(id);
   if(!g)return;
-
   selectedGameId=id;
   const p=getPrices(g);
 
-  $("manageGameName").textContent=
-    g.name||g.title||"Manage Game";
+  $("manageGameName").textContent=g.name||g.title||"Manage Game";
+  $("manageStatus").value=g.status==="upcoming"?"upcoming":
+    overallStatus(g)==="available"?"available":"currently-rented";
 
-  $("manageStatus").value=
-    g.status==="upcoming"
-      ?"upcoming"
-      :overallStatus(g)==="available"
-        ?"available"
-        :"currently-rented";
-
-  $("manageWeeklyTrophy").value=p.weeklyTrophy;
-  $("manageWeeklyNonTrophy").value=p.weeklyNonTrophy;
-  $("manageMonthlyTrophy").value=p.monthlyTrophy;
-  $("manageMonthlyNonTrophy").value=p.monthlyNonTrophy;
+  for(const key of ["WeeklyTrophy","WeeklyNonTrophy","MonthlyTrophy","MonthlyNonTrophy"]){
+    const field=key.charAt(0).toLowerCase()+key.slice(1);
+    $("manage"+key).value=p[field];
+  }
 
   $("manageAvailableDate").value=dateToInput(g.availableDate);
-
   $("manageTrophyStatus").value=getSlotStatus(g,"trophy");
   $("manageNonTrophyStatus").value=getSlotStatus(g,"nonTrophy");
-
   $("manageTrophyDate").value=dateToInput(g.trophyDate);
   $("manageNonTrophyDate").value=dateToInput(g.nonTrophyDate);
-
   $("trophyExtensionPeriod").value="week";
   $("nonTrophyExtensionPeriod").value="week";
 
   updateManageSlotUI("trophy");
   updateManageSlotUI("nonTrophy");
-
   openModal("manageModal");
 }
 
 function readSlot(prefix){
   const status=$(prefix+"Status").value;
   const date=$(prefix+"Date").value;
-
   if(status==="currently-rented"&&!date)
-    throw Error(
-      "Please enter an expected return date for every rented slot."
-    );
-
+    throw Error("Please enter an expected return date for every rented slot.");
   return {
     status,
-    date:status==="available"
-      ?"Available Now"
-      :dateToText(date)
+    date:status==="available"?"Available Now":dateToText(date)
   };
 }
 
 function formGameData(prefix){
   const prices=pricesFromForm(prefix);
-
-  const trophy=readSlot(
-    prefix==="new"?"newTrophy":"manageTrophy"
-  );
-
-  const nonTrophy=readSlot(
-    prefix==="new"?"newNonTrophy":"manageNonTrophy"
-  );
-
-  const selectedStatus=$(
-    prefix==="new"?"newGameStatus":"manageStatus"
-  ).value;
-
+  const trophy=readSlot(prefix==="new"?"newTrophy":"manageTrophy");
+  const nonTrophy=readSlot(prefix==="new"?"newNonTrophy":"manageNonTrophy");
+  const selectedStatus=$(prefix==="new"?"newGameStatus":"manageStatus").value;
   const availableDate=dateToText(
-    $(prefix==="new"
-      ?"newGameAvailableDate"
-      :"manageAvailableDate").value
+    $(prefix==="new"?"newGameAvailableDate":"manageAvailableDate").value
   );
 
   if(selectedStatus==="upcoming"&&!availableDate)
@@ -965,14 +972,8 @@ function formGameData(prefix){
 
   return {
     ...prices,
-    status:derivedGameStatus(
-      trophy.status,
-      nonTrophy.status,
-      selectedStatus
-    ),
-    availableDate:selectedStatus==="upcoming"
-      ?availableDate
-      :"",
+    status:derivedGameStatus(trophy.status,nonTrophy.status,selectedStatus),
+    availableDate:selectedStatus==="upcoming"?availableDate:"",
     trophyStatus:trophy.status,
     nonTrophyStatus:nonTrophy.status,
     trophyDate:trophy.date,
@@ -982,21 +983,13 @@ function formGameData(prefix){
 
 $("saveGameChanges").addEventListener("click",async()=>{
   if(!selectedGameId)return;
-
   const btn=$("saveGameChanges");
-
   try{
     const updates=formGameData("manage");
     btn.disabled=true;
-
-    await updateDoc(
-      doc(db,"games",selectedGameId),
-      updates
-    );
-
+    await updateDoc(doc(db,"games",selectedGameId),updates);
     closeModal("manageModal");
     await loadAdminGames();
-
     alert("Game and slot statuses updated successfully! 🎮");
   }catch(error){
     console.error(error);
@@ -1008,9 +1001,7 @@ $("saveGameChanges").addEventListener("click",async()=>{
 
 async function confirmReturn(slot){
   if(!selectedGameId)return;
-
   const g=gameCache.get(selectedGameId);
-
   if(!g||g.status==="upcoming")return;
 
   const label=slot==="trophy"?"Trophy":"Non-Trophy";
@@ -1023,25 +1014,15 @@ async function confirmReturn(slot){
 
   if(!confirm(
     "Have you checked the renter's disable video?\n\n"+
-    "Confirm return of "+label+" slot for "+
-    (g.name||g.title)+"?"
+    "Confirm return of "+label+" slot for "+(g.name||g.title)+"?"
   ))return;
 
-  const btn=$(
-    slot==="trophy"
-      ?"confirmTrophyReturn"
-      :"confirmNonTrophyReturn"
-  );
-
+  const btn=$(slot==="trophy"?"confirmTrophyReturn":"confirmNonTrophyReturn");
   btn.disabled=true;
 
   try{
-    const otherSlot=slot==="trophy"
-      ?"nonTrophy"
-      :"trophy";
-
+    const otherSlot=slot==="trophy"?"nonTrophy":"trophy";
     const otherStatus=getSlotStatus(g,otherSlot);
-
     const updates={
       [fields.status]:"available",
       [fields.date]:"Available Now",
@@ -1051,19 +1032,10 @@ async function confirmReturn(slot){
         g.status
       )
     };
-
-    await updateDoc(
-      doc(db,"games",selectedGameId),
-      updates
-    );
-
+    await updateDoc(doc(db,"games",selectedGameId),updates);
     closeModal("manageModal");
     await loadAdminGames();
-
-    alert(
-      "✅ "+label+
-      " return confirmed! Slot is now available."
-    );
+    alert("✅ "+label+" return confirmed! Slot is now available.");
   }catch(error){
     console.error(error);
     alert("Unable to confirm return.");
@@ -1072,21 +1044,13 @@ async function confirmReturn(slot){
   }
 }
 
-$("confirmTrophyReturn").addEventListener("click",()=>{
-  confirmReturn("trophy");
-});
+$("confirmTrophyReturn").addEventListener("click",()=>confirmReturn("trophy"));
+$("confirmNonTrophyReturn").addEventListener("click",()=>confirmReturn("nonTrophy"));
 
-$("confirmNonTrophyReturn").addEventListener("click",()=>{
-  confirmReturn("nonTrophy");
-});
-
-/* ==========================================
-   RENTAL EXTENSION
-   ========================================== */
+/* RENTAL EXTENSION */
 
 function extensionElements(slot){
   const trophy=slot==="trophy";
-
   return {
     date:$(trophy?"manageTrophyDate":"manageNonTrophyDate"),
     status:$(trophy?"manageTrophyStatus":"manageNonTrophyStatus"),
@@ -1098,116 +1062,74 @@ function extensionElements(slot){
 
 function getExtendedDate(iso,period){
   if(!iso)return "";
-
-  return period==="month"
-    ?addMonth(iso)
-    :addWeek(iso);
+  return period==="month"?addMonth(iso):addWeek(iso);
 }
 
 function updateExtensionPreview(slot){
   const el=extensionElements(slot);
-
   const game=gameCache.get(selectedGameId);
   const fields=slotFields(slot);
-
-  const savedDate=game
-    ?dateToInput(game[fields.date])
-    :"";
-
+  const savedDate=game?dateToInput(game[fields.date]):"";
   const shownDate=el.date.value;
-  const rented=el.status.value==="currently-rented";
-  const upcoming=$("manageStatus").value==="upcoming";
 
-  if(upcoming){
-    el.preview.textContent=
-      "Upcoming games cannot be extended.";
+  if($("manageStatus").value==="upcoming"){
+    el.preview.textContent="Upcoming games cannot be extended.";
     el.button.disabled=true;
     return;
   }
-
-  if(!rented){
-    el.preview.textContent=
-      "This slot is available. Extension is not needed.";
+  if(el.status.value!=="currently-rented"){
+    el.preview.textContent="This slot is available. Extension is not needed.";
     el.button.disabled=true;
     return;
   }
-
   if(!shownDate){
-    el.preview.textContent=
-      "Please enter an expected return date.";
+    el.preview.textContent="Please enter an expected return date.";
     el.button.disabled=true;
     return;
   }
-
   if(!savedDate||savedDate!==shownDate){
-    el.preview.textContent=
-      "The return date has unsaved changes. Save Changes first, then reopen this game.";
+    el.preview.textContent="The return date has unsaved changes. Save Changes first, then reopen this game.";
     el.button.disabled=true;
     return;
   }
 
-  const next=getExtendedDate(
-    savedDate,
-    el.period.value
-  );
-
+  const next=getExtendedDate(savedDate,el.period.value);
   el.preview.innerHTML=`
-    <div>
-      Current Return:
-      <strong>${esc(dateToText(savedDate))}</strong>
-    </div>
+    <div>Current Return: <strong>${esc(dateToText(savedDate))}</strong></div>
     <div style="color:#70ffb1;margin-top:6px">
-      New Return:
-      <strong>${esc(dateToText(next))}</strong>
+      New Return: <strong>${esc(dateToText(next))}</strong>
     </div>
   `;
-
   el.button.disabled=false;
 }
 
 async function extendRental(slot){
   if(!selectedGameId)return;
-
   const game=gameCache.get(selectedGameId);
   const el=extensionElements(slot);
-
   if(!game||game.status==="upcoming")return;
 
   const fields=slotFields(slot);
-
   if(getSlotStatus(game,slot)!=="currently-rented"){
     alert("This slot is not currently rented.");
     return;
   }
 
   const oldDate=dateToInput(game[fields.date]);
-
   if(!oldDate||oldDate!==el.date.value){
-    alert(
-      "Please save or reload the current return date before extending."
-    );
+    alert("Please save or reload the current return date before extending.");
     return;
   }
 
   const period=el.period.value;
-
-  const newDate=getExtendedDate(
-    oldDate,
-    period
-  );
-
+  const newDate=getExtendedDate(oldDate,period);
   if(!newDate){
     alert("Invalid return date.");
     return;
   }
 
-  const label=slot==="trophy"
-    ?"Trophy"
-    :"Non-Trophy";
-
-  const duration=period==="week"
-    ?"1 Week"
-    :"1 Month";
+  const label=slot==="trophy"?"Trophy":"Non-Trophy";
+  const duration=period==="week"?"1 Week":"1 Month";
 
   if(!confirm(
     "Please confirm payment has been received.\n\n"+
@@ -1220,44 +1142,23 @@ async function extendRental(slot){
   ))return;
 
   el.button.disabled=true;
-
   try{
-    const otherSlot=slot==="trophy"
-      ?"nonTrophy"
-      :"trophy";
-
-    const otherStatus=getSlotStatus(
-      game,
-      otherSlot
-    );
-
+    const otherSlot=slot==="trophy"?"nonTrophy":"trophy";
+    const otherStatus=getSlotStatus(game,otherSlot);
     const updates={
       [fields.status]:"currently-rented",
       [fields.date]:dateToText(newDate),
       status:derivedGameStatus(
-        slot==="trophy"
-          ?"currently-rented"
-          :otherStatus,
-        slot==="nonTrophy"
-          ?"currently-rented"
-          :otherStatus,
+        slot==="trophy"?"currently-rented":otherStatus,
+        slot==="nonTrophy"?"currently-rented":otherStatus,
         game.status
       )
     };
-
-    await updateDoc(
-      doc(db,"games",selectedGameId),
-      updates
-    );
-
+    await updateDoc(doc(db,"games",selectedGameId),updates);
     closeModal("manageModal");
     await loadAdminGames();
-
-    alert(
-      "✅ Rental extended successfully!\n\n"+
-      label+" Slot\n"+
-      "New Return Date: "+dateToText(newDate)
-    );
+    alert("✅ Rental extended successfully!\n\n"+
+      label+" Slot\nNew Return Date: "+dateToText(newDate));
   }catch(error){
     console.error(error);
     alert("Unable to save rental extension.");
@@ -1266,28 +1167,14 @@ async function extendRental(slot){
   }
 }
 
-$("extendTrophy").addEventListener("click",()=>{
-  extendRental("trophy");
-});
-
-$("extendNonTrophy").addEventListener("click",()=>{
-  extendRental("nonTrophy");
-});
+$("extendTrophy").addEventListener("click",()=>extendRental("trophy"));
+$("extendNonTrophy").addEventListener("click",()=>extendRental("nonTrophy"));
 
 for(const slot of ["trophy","nonTrophy"]){
   const el=extensionElements(slot);
-
-  el.period.addEventListener("change",()=>{
-    updateExtensionPreview(slot);
-  });
-
-  el.date.addEventListener("change",()=>{
-    updateManageSlotUI(slot);
-  });
-
-  el.status.addEventListener("change",()=>{
-    updateManageSlotUI(slot);
-  });
+  el.period.addEventListener("change",()=>updateExtensionPreview(slot));
+  el.date.addEventListener("change",()=>updateManageSlotUI(slot));
+  el.status.addEventListener("change",()=>updateManageSlotUI(slot));
 }
 
 $("manageStatus").addEventListener("change",()=>{
@@ -1295,17 +1182,12 @@ $("manageStatus").addEventListener("change",()=>{
   updateManageSlotUI("nonTrophy");
 });
 
-/* ==========================================
-   ADD NEW GAME
-   ========================================== */
+/* ADD NEW GAME */
 
-$("addGameButton").addEventListener("click",()=>{
-  openModal("addGameModal");
-});
+$("addGameButton").addEventListener("click",()=>openModal("addGameModal"));
 
 $("saveNewGame").addEventListener("click",async()=>{
   const btn=$("saveNewGame");
-
   try{
     const title=$("newGameTitle").value.trim();
     const genre=$("newGameGenre").value.trim();
@@ -1315,18 +1197,13 @@ $("saveNewGame").addEventListener("click",async()=>{
       throw Error("Please enter title, genre, and image.");
 
     const data=formGameData("new");
-
     const gameId=title.toLowerCase()
       .replace(/[^a-z0-9]+/g,"-")
       .replace(/^-|-$/g,"");
 
-    if(!gameId)
-      throw Error("Invalid game title.");
+    if(!gameId)throw Error("Invalid game title.");
 
-    const existing=await getDocs(
-      collection(db,"games")
-    );
-
+    const existing=await getDocs(collection(db,"games"));
     if(existing.docs.some(d=>d.id===gameId))
       throw Error("A game with this title already exists.");
 
@@ -1341,15 +1218,9 @@ $("saveNewGame").addEventListener("click",async()=>{
     };
 
     btn.disabled=true;
-
-    await setDoc(
-      doc(db,"games",gameId),
-      game
-    );
-
+    await setDoc(doc(db,"games",gameId),game);
     closeModal("addGameModal");
     await loadAdminGames();
-
     alert("New game added successfully! 🎮");
   }catch(error){
     console.error(error);
@@ -1359,25 +1230,17 @@ $("saveNewGame").addEventListener("click",async()=>{
   }
 });
 
-/* ==========================================
-   DELETE GAME
-   ========================================== */
+/* DELETE GAME */
 
 $("deleteGame").addEventListener("click",async()=>{
   if(!selectedGameId)return;
-
-  if(!confirm("Delete this game permanently?"))
-    return;
+  if(!confirm("Delete this game permanently?"))return;
 
   try{
-    await deleteDoc(
-      doc(db,"games",selectedGameId)
-    );
-
+    await deleteDoc(doc(db,"games",selectedGameId));
     selectedGameId=null;
     closeModal("manageModal");
     await loadAdminGames();
-
     alert("Game deleted successfully.");
   }catch(error){
     console.error(error);
@@ -1385,27 +1248,18 @@ $("deleteGame").addEventListener("click",async()=>{
   }
 });
 
-/* ==========================================
-   WAITING LIST
-   ========================================== */
+/* WAITING LIST */
 
 async function loadWaitingList(){
   const container=$("waitingListContainer");
   container.textContent="Loading reservations...";
 
   try{
-    const snapshot=await getDocs(
-      collection(db,"waitingList")
-    );
-
-    const reservations=snapshot.docs.map(d=>({
-      id:d.id,
-      ...d.data()
-    }));
+    const snapshot=await getDocs(collection(db,"waitingList"));
+    const reservations=snapshot.docs.map(d=>({id:d.id,...d.data()}));
 
     reservations.sort((a,b)=>
-      (a.createdAt?.seconds||0)-
-      (b.createdAt?.seconds||0)
+      (a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)
     );
 
     if(!reservations.length){
@@ -1414,26 +1268,17 @@ async function loadWaitingList(){
     }
 
     const groups={};
-
     for(const r of reservations){
       const name=r.gameName||r.gameId||"Unknown Game";
-
-      if(!groups[name]){
-        groups[name]={
-          trophy:[],
-          nonTrophy:[]
-        };
-      }
+      if(!groups[name])groups[name]={trophy:[],nonTrophy:[]};
 
       const account=String(r.accountType||"")
-        .toLowerCase()
-        .replace(/[\s-]/g,"");
+        .toLowerCase().replace(/[\s-]/g,"");
 
-      if(account.includes("non")){
+      if(account.includes("non"))
         groups[name].nonTrophy.push(r);
-      }else{
+      else
         groups[name].trophy.push(r);
-      }
     }
 
     container.innerHTML="";
@@ -1444,11 +1289,9 @@ async function loadWaitingList(){
 
       const toggle=document.createElement("button");
       toggle.className="waiting-toggle";
-
-      toggle.textContent=
-        `🎮 ${name} — ${
-          lists.trophy.length+lists.nonTrophy.length
-        } Waiting`;
+      toggle.textContent=`🎮 ${name} — ${
+        lists.trophy.length+lists.nonTrophy.length
+      } Waiting`;
 
       const panel=document.createElement("div");
       panel.className="waiting-panel";
@@ -1462,7 +1305,6 @@ async function loadWaitingList(){
       ]){
         const column=document.createElement("div");
         const heading=document.createElement("h4");
-
         heading.textContent=`${slot} (${items.length})`;
         column.appendChild(heading);
 
@@ -1484,28 +1326,18 @@ async function loadWaitingList(){
           number.textContent=`WAITING #${index+1}`;
 
           const customer=document.createElement("strong");
-          customer.textContent=
-            r.customerName||"Unknown Customer";
+          customer.textContent=r.customerName||"Unknown Customer";
 
           const details=document.createElement("div");
-          details.textContent=
-            `${r.rentalPeriod||"N/A"} • ${date}`;
+          details.textContent=`${r.rentalPeriod||"N/A"} • ${date}`;
 
           const remove=document.createElement("button");
           remove.textContent="🗑 Delete";
-
           remove.addEventListener("click",async()=>{
-            if(!confirm(
-              "Delete this waiting-list reservation?"
-            ))return;
-
+            if(!confirm("Delete this waiting-list reservation?"))return;
             try{
               remove.disabled=true;
-
-              await deleteDoc(
-                doc(db,"waitingList",r.id)
-              );
-
+              await deleteDoc(doc(db,"waitingList",r.id));
               await loadWaitingList();
               await loadAdminGames();
             }catch(error){
@@ -1515,13 +1347,7 @@ async function loadWaitingList(){
             }
           });
 
-          card.append(
-            number,
-            customer,
-            details,
-            remove
-          );
-
+          card.append(number,customer,details,remove);
           column.appendChild(card);
         });
 
@@ -1529,12 +1355,8 @@ async function loadWaitingList(){
       }
 
       panel.appendChild(columns);
-
       toggle.addEventListener("click",()=>{
-        panel.style.display=
-          panel.style.display==="block"
-            ?"none"
-            :"block";
+        panel.style.display=panel.style.display==="block"?"none":"block";
       });
 
       group.append(toggle,panel);
@@ -1546,27 +1368,29 @@ async function loadWaitingList(){
   }
 }
 
-$("waitingListCard").addEventListener("click",async()=>{
+async function showWaitingList(){
   openModal("waitingListModal");
   await loadWaitingList();
+}
+
+$("waitingListCard").addEventListener("click",showWaitingList);
+$("waitingListCard").addEventListener("keydown",e=>{
+  if(e.key==="Enter"||e.key===" "){
+    e.preventDefault();
+    showWaitingList();
+  }
 });
 
-/* ==========================================
-   MODALS AND AUTH
-   ========================================== */
+/* MODALS AND AUTH */
 
 for(const [button,modal] of [
   ["closeAddGameModal","addGameModal"],
   ["closeManageModal","manageModal"],
   ["closeWaitingListModal","waitingListModal"]
 ]){
-  $(button).addEventListener("click",()=>{
-    closeModal(modal);
-  });
-
+  $(button).addEventListener("click",()=>closeModal(modal));
   $(modal).addEventListener("click",event=>{
-    if(event.target===$(modal))
-      closeModal(modal);
+    if(event.target===$(modal))closeModal(modal);
   });
 }
 
@@ -1580,16 +1404,12 @@ onAuthStateChanged(auth,user=>{
     location.href="admin-login.html";
     return;
   }
-
   loadAdminGames().catch(error=>{
     console.error(error);
-    alert(
-      "Unable to load admin games. Check Firebase access."
-    );
+    alert("Unable to load admin games. Check Firebase access.");
   });
 });
 
-/* Refresh due-for-return labels while admin is open. */
 setInterval(()=>{
   if(auth.currentUser){
     loadAdminGames().catch(console.error);
