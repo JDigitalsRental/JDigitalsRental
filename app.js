@@ -1,7 +1,22 @@
 
 /* ==========================================
-   JDIGITALSRENTAL — MEGA UPGRADE
-   Complete app.js replacement
+   JDIGITALSRENTAL — COMPLETE APP.JS
+   Rental Plans + UNLI SWAP Update
+   ========================================== */
+
+const FACEBOOK_URL =
+  "https://www.facebook.com/share/1DajrF4mTy/";
+
+const RENTAL_PLANS = {
+  trophyMonthly: 800,
+  nonTrophyMonthly: 700,
+  weeklySwaps: 1,
+  monthlySwapsPerWeek: 1
+};
+
+/* ==========================================
+   DEFAULT GAME LIBRARY
+   Firestore games will replace these when loaded.
    ========================================== */
 
 let games = [
@@ -51,97 +66,150 @@ let games = [
   }
 ];
 
+/* ==========================================
+   ELEMENTS AND STATE
+   ========================================== */
+
 const grid = document.getElementById("gameGrid");
 const search = document.getElementById("search");
-const facebookUrl =
-  "https://www.facebook.com/share/1DajrF4mTy/";
+
+const rentalModal =
+  document.getElementById("rentalModal");
+
+const modalTitle =
+  document.getElementById("modalTitle");
+
+const modalPrice =
+  document.getElementById("modalPrice");
+
+const continueRental =
+  document.getElementById("continueRental");
+
+const upcomingReservationModal =
+  document.getElementById("upcomingReservationModal");
+
+const upcomingReservationGame =
+  document.getElementById("upcomingReservationGame");
+
+const continueUpcomingReservation =
+  document.getElementById("continueUpcomingReservation");
 
 let filter = "all";
 let availabilityFilter = "all";
+
 let selectedGame = null;
-let selectedPeriod = null;
-let selectedAccount = null;
-let rentalSubmitting = false;
-let upcomingSubmitting = false;
+let selectedPeriod = "";
+let selectedAccount = "";
+
+let selectedUpcomingGame = "";
+let selectedUpcomingDate = "";
+let selectedUpcomingAccount = "";
+let selectedUpcomingPeriod = "";
 
 let favoriteGames = new Set();
 
 try {
-  const stored = JSON.parse(
-    localStorage.getItem("jdrFavorites") || "[]"
-  );
-  if (Array.isArray(stored)) {
-    favoriteGames = new Set(stored);
-  }
-} catch (error) {
-  console.warn("Favorites storage unavailable.");
-}
-
-/* HELPERS */
-
-function escapeHtml(value) {
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    character => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[character]
-  );
-}
-
-function money(value) {
-  return "₱" + Number(value || 0).toLocaleString("en-PH");
-}
-
-function dateValue(value) {
-  if (!value) return null;
-
-  if (
-    value instanceof Date &&
-    !Number.isNaN(value.getTime())
-  ) {
-    return value;
-  }
-
-  if (
-    typeof value === "object" &&
-    typeof value.toDate === "function"
-  ) {
-    return value.toDate();
-  }
-
-  const date = new Date(value);
-
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function formatSlotDate(value) {
-  if (
-    !value ||
-    /^(available now|available|open)$/i.test(
-      String(value).trim()
+  favoriteGames = new Set(
+    JSON.parse(
+      localStorage.getItem("jdrFavorites") || "[]"
     )
-  ) {
-    return "Available Now";
-  }
-
-  const date = dateValue(value);
-
-  if (!date) return String(value);
-
-  return date.toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "2-digit"
-  });
+  );
+} catch (error) {
+  favoriteGames = new Set();
 }
 
-/* TROPHY / NON-TROPHY AVAILABILITY */
+/* ==========================================
+   GENERAL HELPERS
+   ========================================== */
+
+function peso(value) {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return "Price TBA";
+  }
+
+  return "₱" + amount.toLocaleString("en-PH");
+}
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function accountLabel(account) {
+  return account === "trophy"
+    ? "Trophy"
+    : "Non-Trophy";
+}
+
+function normalizePeriod(period) {
+  return period === "week" ? "week" : "month";
+}
+
+function rentalPeriodLabel(period) {
+  return normalizePeriod(period) === "week"
+    ? "1 Week"
+    : "1 Month";
+}
+
+function rentalPlanLabel(period) {
+  return normalizePeriod(period) === "week"
+    ? "Regular Weekly Rental"
+    : "Monthly UNLI SWAP";
+}
+
+function rentalSwapRules(period) {
+  if (normalizePeriod(period) === "week") {
+    return "Includes 1 game swap during the rental period. One game at a time, subject to availability.";
+  }
+
+  return "Unlimited game swaps, maximum 1 swap per week. One game at a time, subject to availability.";
+}
+
+/* ==========================================
+   RENTAL PRICING
+   ========================================== */
+
+function getRentalPrice(game, period, account) {
+  if (!game || !period || !account) {
+    return null;
+  }
+
+  if (normalizePeriod(period) === "week") {
+    const weekly = Number(game.weekly);
+
+    return Number.isFinite(weekly) && weekly > 0
+      ? weekly
+      : null;
+  }
+
+  if (account === "trophy") {
+    return RENTAL_PLANS.trophyMonthly;
+  }
+
+  if (account === "nonTrophy") {
+    return RENTAL_PLANS.nonTrophyMonthly;
+  }
+
+  return null;
+}
+
+function getRentalPriceText(game, period, account) {
+  return peso(getRentalPrice(game, period, account));
+}
+
+/* ==========================================
+   SLOT AVAILABILITY
+   ========================================== */
 
 function slotIsRented(game, type) {
+  if (!game) return false;
+
   const key =
     type === "trophy" ? "trophy" : "nonTrophy";
 
@@ -156,23 +224,27 @@ function slotIsRented(game, type) {
   if (typeof explicit === "string") {
     const value = explicit.toLowerCase().trim();
 
-    if ([
-      "available",
-      "available now",
-      "vacant",
-      "open",
-      "false"
-    ].includes(value)) {
+    if (
+      [
+        "available",
+        "available now",
+        "vacant",
+        "open",
+        "false"
+      ].includes(value)
+    ) {
       return false;
     }
 
-    if ([
-      "currently-rented",
-      "currently rented",
-      "rented",
-      "occupied",
-      "true"
-    ].includes(value)) {
+    if (
+      [
+        "currently-rented",
+        "currently rented",
+        "rented",
+        "occupied",
+        "true"
+      ].includes(value)
+    ) {
       return true;
     }
   }
@@ -188,16 +260,48 @@ function slotIsRented(game, type) {
     return false;
   }
 
-  if (game.status === "available") return false;
+  if (game.status === "available") {
+    return false;
+  }
 
   return game.status === "currently-rented";
 }
 
-function slotAvailabilityHtml(game, type, label, icon) {
+function formatSlotDate(value) {
+  if (
+    !value ||
+    /^(available now|available)$/i.test(
+      String(value).trim()
+    )
+  ) {
+    return "Available Now";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit"
+  });
+}
+
+function slotAvailabilityHtml(
+  game,
+  type,
+  label,
+  icon
+) {
   const rented = slotIsRented(game, type);
 
   const key =
-    type === "trophy" ? "trophyDate" : "nonTrophyDate";
+    type === "trophy"
+      ? "trophyDate"
+      : "nonTrophyDate";
 
   const dateText = rented
     ? formatSlotDate(game[key])
@@ -207,12 +311,19 @@ function slotAvailabilityHtml(game, type, label, icon) {
     ? "rgba(120,14,33,.35)"
     : "rgba(0,115,65,.28)";
 
-  const border = rented ? "#ff4768" : "#19d97c";
-  const color = rented ? "#ff839a" : "#55f5a5";
+  const border = rented
+    ? "#ff4768"
+    : "#19d97c";
+
+  const color = rented
+    ? "#ff839a"
+    : "#55f5a5";
 
   return `
     <div
-      class="availability ${rented ? "rented" : "available"}"
+      class="availability ${
+        rented ? "rented" : "available"
+      }"
       style="
         margin-bottom:6px;
         padding:8px;
@@ -222,27 +333,37 @@ function slotAvailabilityHtml(game, type, label, icon) {
       "
     >
       <strong style="color:${color}">
-        ${rented ? "🔴 CURRENTLY RENTED" : "🟢 AVAILABLE"}
+        ${
+          rented
+            ? "🔴 CURRENTLY RENTED"
+            : "🟢 AVAILABLE"
+        }
       </strong>
+
       <div>
-        ${icon} ${label}: ${escapeHtml(dateText)}
+        ${icon} ${label}:
+        ${escapeHTML(dateText)}
       </div>
     </div>
   `;
 }
 
-/* FACEBOOK REMINDER */
+/* ==========================================
+   FACEBOOK REMINDER
+   ========================================== */
 
 function showRentalFacebookReminder(message) {
   if (
-    typeof window.showFacebookReminder === "function"
+    typeof window.showFacebookReminder ===
+    "function"
   ) {
     window.showFacebookReminder(message);
     return;
   }
 
   if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(message)
+    navigator.clipboard
+      .writeText(message)
       .catch(() => {});
   }
 
@@ -251,135 +372,47 @@ function showRentalFacebookReminder(message) {
     "Please send your completed form to our " +
     "Facebook Page via Messenger.\n\n" +
     "Your request is not confirmed until " +
-    "you send the form."
+    "you message our page."
   );
 
   window.open(
-    facebookUrl,
+    FACEBOOK_URL,
     "_blank",
     "noopener,noreferrer"
   );
 }
 
-/* WAITING LIST COUNTS */
-
-function getWaitingCounts(game) {
-  const counts =
-    window.waitingListCounts?.[game.name] || {};
-
-  return {
-    trophy: Number(counts.trophy) || 0,
-    nonTrophy: Number(counts.nonTrophy) || 0
-  };
-}
-
-function waitingCountersHtml(game) {
-  const counts = getWaitingCounts(game);
-
-  return `
-    <div class="waiting-list-count"
-      style="
-        margin-top:6px;
-        padding:7px 5px;
-        border:1px solid rgba(57,169,255,.28);
-        border-radius:8px;
-        background:rgba(57,169,255,.06);
-        text-align:center;
-      "
-    >
-      <strong>WAITING LIST</strong>
-      <div style="color:#f7b84b">
-        🏆 Trophy: ${counts.trophy}
-      </div>
-      <div style="color:#79c8ff">
-        🎮 Non-Trophy: ${counts.nonTrophy}
-      </div>
-    </div>
-  `;
-}
-
-/* FAVORITES */
-
-function toggleFavorite(name) {
-  if (favoriteGames.has(name)) {
-    favoriteGames.delete(name);
-  } else {
-    favoriteGames.add(name);
-  }
-
-  try {
-    localStorage.setItem(
-      "jdrFavorites",
-      JSON.stringify([...favoriteGames])
-    );
-  } catch (error) {
-    console.warn("Unable to save favorites.");
-  }
-
-  render();
-}
-
-/* FEATURED / MOST REQUESTED */
-
-function renderFeaturedGames() {
-  const container =
-    document.getElementById("featuredGames");
-
-  if (!container) return;
-
-  const ranked = games.map(game => {
-    const counts = getWaitingCounts(game);
-
-    return {
-      name: game.name,
-      total: counts.trophy + counts.nonTrophy
-    };
-  })
-  .filter(game => game.total > 0)
-  .sort((a, b) => b.total - a.total)
-  .slice(0, 3);
-
-  container.innerHTML = "";
-
-  if (!ranked.length) return;
-
-  const heading = document.createElement("div");
-  heading.className = "mega-featured-heading";
-  heading.innerHTML = `
-    🔥 MOST REQUESTED
-    <small>Based on current waiting-list entries</small>
-  `;
-
-  const tags = document.createElement("div");
-  tags.className = "mega-featured-tags";
-
-  ranked.forEach(game => {
-    const tag = document.createElement("span");
-    tag.textContent =
-      `${game.name} • ${game.total} request` +
-      (game.total === 1 ? "" : "s");
-    tags.appendChild(tag);
-  });
-
-  container.appendChild(heading);
-  container.appendChild(tags);
-}
-
-/* GAME LIBRARY */
+/* ==========================================
+   GAME LIBRARY
+   ========================================== */
 
 function render() {
   if (!grid) return;
 
-  const q = (search?.value || "")
-    .trim()
-    .toLowerCase();
+  const q = search
+    ? search.value.toLowerCase().trim()
+    : "";
+
+  grid.innerHTML = "";
+
+  const gameCount =
+    document.getElementById("gameCount");
+
+  if (gameCount) {
+    gameCount.textContent = String(
+      games.length
+    ).padStart(2, "0");
+  }
 
   const filteredGames = games.filter(game => {
     const genreMatches =
-      filter === "all" || game.type === filter;
+      filter === "all" ||
+      game.type === filter;
 
-    const searchMatches =
-      (game.name || "").toLowerCase().includes(q);
+    const nameMatches =
+      (game.name || "")
+        .toLowerCase()
+        .includes(q);
 
     const trophyAvailable =
       !slotIsRented(game, "trophy");
@@ -387,111 +420,117 @@ function render() {
     const nonTrophyAvailable =
       !slotIsRented(game, "nonTrophy");
 
-    let availabilityMatches = true;
+    let slotMatches = true;
 
-    if (availabilityFilter === "available") {
-      availabilityMatches =
-        trophyAvailable || nonTrophyAvailable;
-    } else if (availabilityFilter === "trophy") {
-      availabilityMatches = trophyAvailable;
-    } else if (
-      availabilityFilter === "nonTrophy"
-    ) {
-      availabilityMatches = nonTrophyAvailable;
-    } else if (
-      availabilityFilter === "favorites"
-    ) {
-      availabilityMatches =
-        favoriteGames.has(game.name);
+    switch (availabilityFilter) {
+      case "available":
+        slotMatches =
+          trophyAvailable ||
+          nonTrophyAvailable;
+        break;
+
+      case "trophy":
+        slotMatches = trophyAvailable;
+        break;
+
+      case "nonTrophy":
+        slotMatches = nonTrophyAvailable;
+        break;
+
+      case "favorites":
+        slotMatches =
+          favoriteGames.has(game.name);
+        break;
+
+      default:
+        slotMatches = true;
     }
 
     return (
       genreMatches &&
-      searchMatches &&
-      availabilityMatches
+      nameMatches &&
+      slotMatches
     );
   });
 
-  const count =
-    document.getElementById("libraryResultCount");
+  const resultCount =
+    document.getElementById(
+      "libraryResultCount"
+    );
 
-  if (count) {
-    count.textContent =
+  if (resultCount) {
+    resultCount.textContent =
       `${filteredGames.length} game` +
       (filteredGames.length === 1 ? "" : "s") +
       " found";
   }
 
-  const oldCount =
-    document.getElementById("gameCount");
-
-  if (oldCount) {
-    oldCount.textContent =
-      games.length.toString().padStart(2, "0");
-  }
-
-  grid.innerHTML = "";
-
   if (!filteredGames.length) {
     grid.innerHTML = `
       <p class="mega-empty">
-        No games match your search or filter.
+        No games match this filter.
         Try All Games.
       </p>
     `;
   }
 
+  renderFeaturedGames();
+
   filteredGames.forEach(game => {
-    const card = document.createElement("article");
+    const card =
+      document.createElement("article");
+
     card.className = "game-card";
+
+    const availability =
+      slotAvailabilityHtml(
+        game,
+        "trophy",
+        "Trophy",
+        "🏆"
+      ) +
+      slotAvailabilityHtml(
+        game,
+        "nonTrophy",
+        "Non-Trophy",
+        "🎮"
+      );
 
     const allSlotsRented =
       slotIsRented(game, "trophy") &&
       slotIsRented(game, "nonTrophy");
 
+    const counts =
+      window.waitingListCounts?.[
+        game.name
+      ] || {
+        trophy: 0,
+        nonTrophy: 0
+      };
+
     const isFavorite =
       favoriteGames.has(game.name);
-
-    const weekly = Number(game.weekly) || 0;
-    const monthly = Number(game.monthly) || 0;
-
-    const savings =
-      weekly > 0 && monthly > 0
-        ? Math.max(0, weekly * 4 - monthly)
-        : 0;
-
-    const savingsHtml = savings > 0
-      ? `
-        <div class="mega-savings">
-          💰 Save ${money(savings)} with 1 month
-          compared with four 1-week rentals!
-        </div>
-      `
-      : `
-        <div class="mega-savings">
-          📅 Weekly and monthly rental options
-        </div>
-      `;
 
     card.innerHTML = `
       <div class="cover-wrap">
         <img
           class="cover"
-          src="${escapeHtml(game.image || "")}"
-          alt="${escapeHtml(game.name)}"
+          src="${escapeHTML(game.image || "")}"
+          alt="${escapeHTML(game.name)}"
           loading="lazy"
         >
 
         <span class="tag">
-          ${escapeHtml(
+          ${escapeHTML(
             (game.genre || "GAME").toUpperCase()
           )}
         </span>
 
         <button
           type="button"
-          class="mega-favorite
-            ${isFavorite ? "is-favorite" : ""}"
+          class="mega-favorite ${
+            isFavorite ? "is-favorite" : ""
+          }"
           aria-label="${
             isFavorite
               ? "Remove from favorites"
@@ -504,33 +543,75 @@ function render() {
       </div>
 
       <div class="game-info">
-        <h3>${escapeHtml(game.name)}</h3>
+        <h3>${escapeHTML(game.name)}</h3>
 
         <div class="meta">
-          ${escapeHtml(
-            game.meta || "PS5 • Digital rental"
+          ${escapeHTML(
+            game.meta ||
+            "PS5 • Digital rental"
           )}
         </div>
 
-        ${slotAvailabilityHtml(
-          game, "trophy", "Trophy", "🏆"
-        )}
+        ${availability}
 
-        ${slotAvailabilityHtml(
-          game, "nonTrophy", "Non-Trophy", "🎮"
-        )}
+        <div
+          style="
+            margin-top:6px;
+            padding:8px;
+            border:1px solid rgba(57,169,255,.28);
+            border-radius:7px;
+            background:rgba(57,169,255,.06);
+            text-align:center;
+            font-size:11px;
+          "
+        >
+          <strong>WAITING LIST</strong>
 
-        ${waitingCountersHtml(game)}
+          <div>
+            🏆 Trophy:
+            ${Number(counts.trophy) || 0}
+          </div>
 
-        ${savingsHtml}
+          <div>
+            🎮 Non-Trophy:
+            ${Number(counts.nonTrophy) || 0}
+          </div>
+        </div>
+
+        <div
+          class="mega-savings"
+          style="margin-top:8px"
+        >
+          🔄 Weekly: 1 game swap
+          <br>
+          ♾️ Monthly: UNLI SWAP
+          (max 1 swap/week)
+        </div>
 
         <div class="game-bottom">
           <div class="price">
-            <span>WEEKLY: ${money(weekly)}</span>
-            <span>MONTHLY: ${money(monthly)}</span>
+            <span>
+              WEEKLY:
+              ${peso(game.weekly)}
+            </span>
+
+            <span>
+              MONTHLY UNLI SWAP:
+            </span>
+
+            <span>
+              🏆 Trophy: ₱800
+            </span>
+
+            <span>
+              🎮 Non-Trophy: ₱700
+            </span>
           </div>
 
-          <button class="rent" type="button">
+          <button
+            class="rent"
+            type="button"
+          >
             ${
               allSlotsRented
                 ? "Join Waiting List ↗"
@@ -541,295 +622,514 @@ function render() {
       </div>
     `;
 
-    card.querySelector(".rent")
+    card
+      .querySelector(".rent")
       ?.addEventListener("click", () => {
         openRentalModal(game);
       });
 
-    card.querySelector(".mega-favorite")
+    card
+      .querySelector(".mega-favorite")
       ?.addEventListener("click", () => {
-        toggleFavorite(game.name);
+        if (favoriteGames.has(game.name)) {
+          favoriteGames.delete(game.name);
+        } else {
+          favoriteGames.add(game.name);
+        }
+
+        try {
+          localStorage.setItem(
+            "jdrFavorites",
+            JSON.stringify(
+              [...favoriteGames]
+            )
+          );
+        } catch (error) {}
+
+        render();
       });
 
     grid.appendChild(card);
   });
-
-  renderFeaturedGames();
 }
 
-/* SMART AVAILABILITY FILTERS */
+/* ==========================================
+   MOST REQUESTED GAMES
+   ========================================== */
 
-document.querySelectorAll(
-  "[data-availability]"
-).forEach(button => {
-  button.addEventListener("click", () => {
-    availabilityFilter =
-      button.dataset.availability || "all";
-
-    document.querySelectorAll(
-      "[data-availability]"
-    ).forEach(other => {
-      other.classList.toggle(
-        "active",
-        other === button
-      );
-    });
-
-    render();
-  });
-});
-
-/* OPTIONAL OLD GENRE FILTER SUPPORT */
-
-document.querySelectorAll(".filter")
-  .forEach(button => {
-    button.addEventListener("click", () => {
-      document.querySelectorAll(".filter")
-        .forEach(other => {
-          other.classList.remove("active");
-        });
-
-      button.classList.add("active");
-      filter = button.dataset.filter || "all";
-      render();
-    });
-  });
-
-search?.addEventListener("input", render);
-
-/* RENTAL MODAL */
-
-const rentalModal =
-  document.getElementById("rentalModal");
-
-const modalTitle =
-  document.getElementById("modalTitle");
-
-const modalPrice =
-  document.getElementById("modalPrice");
-
-const continueRental =
-  document.getElementById("continueRental");
-
-function updateRentalButton() {
-  if (!continueRental || !selectedGame) return;
-
-  const rented = selectedAccount
-    ? slotIsRented(selectedGame, selectedAccount)
-    : (
-      slotIsRented(selectedGame, "trophy") &&
-      slotIsRented(selectedGame, "nonTrophy")
+function renderFeaturedGames() {
+  const featured =
+    document.getElementById(
+      "featuredGames"
     );
 
-  continueRental.textContent = rented
-    ? "Join Waiting List"
-    : "📝 Continue to Facebook";
+  if (!featured) return;
+
+  const counts =
+    window.waitingListCounts || {};
+
+  const popular = games
+    .map(game => ({
+      name: game.name,
+      count:
+        Number(
+          counts[game.name]?.trophy || 0
+        ) +
+        Number(
+          counts[game.name]?.nonTrophy || 0
+        )
+    }))
+    .filter(game => game.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+
+  if (!popular.length) {
+    featured.innerHTML = "";
+    return;
+  }
+
+  featured.innerHTML = `
+    <div class="mega-featured-heading">
+      🔥 MOST REQUESTED
+
+      <small>
+        Based on current waiting-list entries
+      </small>
+    </div>
+
+    <div class="mega-featured-tags"></div>
+  `;
+
+  const tags =
+    featured.querySelector(
+      ".mega-featured-tags"
+    );
+
+  popular.forEach(game => {
+    const tag =
+      document.createElement("span");
+
+    tag.textContent =
+      `${game.name} · ` +
+      `${game.count} waiting`;
+
+    tags.appendChild(tag);
+  });
+}
+
+/* ==========================================
+   SEARCH AND FILTERS
+   ========================================== */
+
+document
+  .querySelectorAll(".filter")
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        document
+          .querySelectorAll(".filter")
+          .forEach(b => {
+            b.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        filter =
+          button.dataset.filter || "all";
+
+        render();
+      }
+    );
+  });
+
+document
+  .querySelectorAll("[data-availability]")
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        availabilityFilter =
+          button.dataset.availability ||
+          "all";
+
+        document
+          .querySelectorAll(
+            "[data-availability]"
+          )
+          .forEach(b => {
+            b.classList.toggle(
+              "active",
+              b === button
+            );
+          });
+
+        render();
+      }
+    );
+  });
+
+if (search) {
+  search.addEventListener(
+    "input",
+    render
+  );
+}
+
+/* ==========================================
+   RENTAL MODAL
+   ========================================== */
+
+function updateRentalPrice() {
+  if (!modalPrice) return;
+
+  const price = getRentalPrice(
+    selectedGame,
+    selectedPeriod,
+    selectedAccount
+  );
+
+  modalPrice.textContent =
+    price === null
+      ? "Select rental period and slot"
+      : peso(price);
+}
+
+function updateRentalButton() {
+  if (
+    !continueRental ||
+    !selectedGame
+  ) {
+    return;
+  }
+
+  if (!selectedAccount) {
+    const bothRented =
+      slotIsRented(
+        selectedGame,
+        "trophy"
+      ) &&
+      slotIsRented(
+        selectedGame,
+        "nonTrophy"
+      );
+
+    continueRental.textContent =
+      bothRented
+        ? "Join Waiting List"
+        : "Continue to Facebook";
+
+    return;
+  }
+
+  continueRental.textContent =
+    slotIsRented(
+      selectedGame,
+      selectedAccount
+    )
+      ? "Join Waiting List"
+      : "Continue to Facebook";
 }
 
 function openRentalModal(game) {
-  if (!rentalModal) return;
+  if (
+    !rentalModal ||
+    !modalTitle ||
+    !modalPrice ||
+    !continueRental
+  ) {
+    return;
+  }
 
   selectedGame = game;
-  selectedPeriod = null;
-  selectedAccount = null;
+  selectedPeriod = "";
+  selectedAccount = "";
 
   const bothRented =
     slotIsRented(game, "trophy") &&
     slotIsRented(game, "nonTrophy");
 
-  if (modalTitle) {
-    modalTitle.textContent =
-      (bothRented ? "Join Waiting List — " : "Rent — ") +
-      game.name;
-  }
-
-  if (modalPrice) {
-    modalPrice.textContent = "₱0";
-  }
-
-  rentalModal.querySelectorAll(
-    ".period-option, .account-option"
-  ).forEach(button => {
-    button.classList.remove("active");
-  });
+  modalTitle.textContent =
+    bothRented
+      ? `Join Waiting List — ${game.name}`
+      : `Rent — ${game.name}`;
 
   const nameInput =
-    document.getElementById("rentalCustomerName");
+    document.getElementById(
+      "rentalCustomerName"
+    );
 
-  if (nameInput) nameInput.value = "";
+  if (nameInput) {
+    nameInput.value = "";
+  }
 
+  document
+    .querySelectorAll(
+      "#rentalModal .period-option, " +
+      "#rentalModal .account-option"
+    )
+    .forEach(button => {
+      button.classList.remove("active");
+    });
+
+  updateRentalPrice();
   updateRentalButton();
+
   rentalModal.classList.add("active");
 }
 
-rentalModal?.querySelectorAll(".period-option")
+/* ==========================================
+   RENTAL PERIOD SELECTION
+   ========================================== */
+
+document
+  .querySelectorAll(
+    "#rentalModal .period-option"
+  )
   .forEach(button => {
-    button.addEventListener("click", () => {
+    button.addEventListener(
+      "click",
+      () => {
+        if (!selectedGame) return;
+
+        document
+          .querySelectorAll(
+            "#rentalModal .period-option"
+          )
+          .forEach(b => {
+            b.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        selectedPeriod =
+          button.dataset.period || "";
+
+        updateRentalPrice();
+      }
+    );
+  });
+
+/* ==========================================
+   TROPHY / NON-TROPHY SELECTION
+   ========================================== */
+
+document
+  .querySelectorAll(
+    "#rentalModal .account-option"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        if (!selectedGame) return;
+
+        document
+          .querySelectorAll(
+            "#rentalModal .account-option"
+          )
+          .forEach(b => {
+            b.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        selectedAccount =
+          button.dataset.account || "";
+
+        updateRentalPrice();
+        updateRentalButton();
+      }
+    );
+  });
+
+/* ==========================================
+   RENTAL SUBMISSION
+   ========================================== */
+
+if (continueRental) {
+  continueRental.addEventListener(
+    "click",
+    async () => {
       if (!selectedGame) return;
 
-      rentalModal.querySelectorAll(
-        ".period-option"
-      ).forEach(other => {
-        other.classList.remove("active");
-      });
+      const customerName =
+        document.getElementById(
+          "rentalCustomerName"
+        )?.value.trim() || "";
 
-      button.classList.add("active");
-      selectedPeriod = button.dataset.period;
-
-      const price = selectedPeriod === "week"
-        ? selectedGame.weekly
-        : selectedGame.monthly;
-
-      if (modalPrice) {
-        modalPrice.textContent = money(price);
+      if (!customerName) {
+        alert(
+          "Please enter your First and Last Name."
+        );
+        return;
       }
-    });
-  });
 
-rentalModal?.querySelectorAll(".account-option")
-  .forEach(button => {
-    button.addEventListener("click", () => {
-      rentalModal.querySelectorAll(
-        ".account-option"
-      ).forEach(other => {
-        other.classList.remove("active");
-      });
+      if (!selectedPeriod) {
+        alert(
+          "Please choose 1 Week or 1 Month."
+        );
+        return;
+      }
 
-      button.classList.add("active");
-      selectedAccount = button.dataset.account;
+      if (!selectedAccount) {
+        alert(
+          "Please choose Trophy or Non-Trophy."
+        );
+        return;
+      }
 
-      updateRentalButton();
-    });
-  });
+      const price = getRentalPrice(
+        selectedGame,
+        selectedPeriod,
+        selectedAccount
+      );
 
-continueRental?.addEventListener(
-  "click",
-  async () => {
-    if (!selectedGame || rentalSubmitting) return;
+      if (price === null) {
+        alert(
+          "Price is unavailable. Please contact our page."
+        );
+        return;
+      }
 
-    const customerName =
-      document.getElementById("rentalCustomerName")
-        ?.value.trim() || "";
+      const duration =
+        rentalPeriodLabel(selectedPeriod);
 
-    if (!customerName) {
-      alert("Please enter your First and Last Name.");
-      return;
-    }
+      const plan =
+        rentalPlanLabel(selectedPeriod);
 
-    if (!selectedPeriod) {
-      alert("Please choose 1 Week or 1 Month.");
-      return;
-    }
+      const swapRules =
+        rentalSwapRules(selectedPeriod);
 
-    if (!selectedAccount) {
-      alert("Please choose Trophy or Non-Trophy.");
-      return;
-    }
+      const accountType =
+        accountLabel(selectedAccount);
 
-    const duration =
-      selectedPeriod === "week"
-        ? "1 Week"
-        : "1 Month";
+      const isWaitingList =
+        slotIsRented(
+          selectedGame,
+          selectedAccount
+        );
 
-    const accountType =
-      selectedAccount === "trophy"
-        ? "Trophy"
-        : "Non-Trophy";
-
-    const price =
-      selectedPeriod === "week"
-        ? selectedGame.weekly
-        : selectedGame.monthly;
-
-    const isWaitingList =
-      slotIsRented(selectedGame, selectedAccount);
-
-    rentalSubmitting = true;
-    continueRental.disabled = true;
-
-    try {
       if (isWaitingList) {
         if (
-          typeof window.saveWaitingList !== "function"
+          typeof window.saveWaitingList !==
+          "function"
         ) {
           alert(
-            "Waiting list is unavailable. Please try again."
+            "Unable to save your waiting list request. Please try again."
           );
           return;
         }
 
-        const saved = await window.saveWaitingList({
-          gameId:
-            selectedGame.id || selectedGame.name,
-          gameName: selectedGame.name,
-          customerName,
-          accountType,
-          rentalPeriod: duration
-        });
+        continueRental.disabled = true;
+
+        let saved = false;
+
+        try {
+          saved =
+            await window.saveWaitingList({
+              gameId:
+                selectedGame.id ||
+                selectedGame.name,
+              gameName:
+                selectedGame.name,
+              customerName,
+              accountType,
+              rentalPeriod: duration
+            });
+        } catch (error) {
+          console.error(
+            "Waiting list error:",
+            error
+          );
+        } finally {
+          continueRental.disabled = false;
+        }
 
         if (!saved) {
           alert(
-            "Unable to save your waiting list request."
+            "Unable to save your waiting list request. Please try again."
           );
           return;
         }
       }
 
-      const message = isWaitingList
-        ? `Hi JDigitalsRental! 🎮
+      const requestTitle = isWaitingList
+        ? "I would like to join the waiting list."
+        : "I would like to rent this game.";
 
-I would like to join the waiting list.
+      const message =
+`Hi JDigitalsRental! 🎮
 
-First and Last Name: ${customerName}
-Game: ${selectedGame.name}
-Rental Period: ${duration}
-Account Type: ${accountType}
-Price: ${money(price)}
-
-📌 My name matches the name shown on my Facebook account.
-
-Please let me know when a slot becomes available.
-
-Thank you!`
-        : `Hi JDigitalsRental! 🎮
-
-I would like to rent this game.
+${requestTitle}
 
 First and Last Name: ${customerName}
 Game: ${selectedGame.name}
 Rental Period: ${duration}
+Rental Plan: ${plan}
 Account Type: ${accountType}
-Price: ${money(price)}
+Price: ${peso(price)}
+
+SWAP RULES:
+${swapRules}
 
 📌 My name matches the name shown on my Facebook account.
+
+${
+  isWaitingList
+    ? "Please let me know when a slot becomes available."
+    : "Please let me know how to proceed with my rental."
+}
 
 Thank you!`;
 
-      rentalModal.classList.remove("active");
-      showRentalFacebookReminder(message);
+      rentalModal.classList.remove(
+        "active"
+      );
 
-    } finally {
-      rentalSubmitting = false;
-      continueRental.disabled = false;
+      showRentalFacebookReminder(
+        message
+      );
+    }
+  );
+}
+
+/* ==========================================
+   CLOSE RENTAL MODAL
+   ========================================== */
+
+document
+  .getElementById("closeRentalModal")
+  ?.addEventListener(
+    "click",
+    () => {
+      rentalModal?.classList.remove(
+        "active"
+      );
+    }
+  );
+
+rentalModal?.addEventListener(
+  "click",
+  event => {
+    if (event.target === rentalModal) {
+      rentalModal.classList.remove(
+        "active"
+      );
     }
   }
 );
 
-document.getElementById("closeRentalModal")
-  ?.addEventListener("click", () => {
-    rentalModal?.classList.remove("active");
-  });
-
-rentalModal?.addEventListener("click", event => {
-  if (event.target === rentalModal) {
-    rentalModal.classList.remove("active");
-  }
-});
-
-/* FIRESTORE GAME LIBRARY */
+/* ==========================================
+   FIRESTORE GAME LIBRARY
+   ========================================== */
 
 function loadFirestoreGames() {
-  if (Array.isArray(window.firestoreGames)) {
+  if (
+    Array.isArray(
+      window.firestoreGames
+    )
+  ) {
     games = window.firestoreGames;
     render();
   }
@@ -840,67 +1140,15 @@ window.addEventListener(
   loadFirestoreGames
 );
 
-window.addEventListener(
-  "waitingListCountsLoaded",
-  render
-);
-
-/* UPCOMING GAMES */
-
-function sortUpcomingGamesByDate() {
-  if (!Array.isArray(window.upcomingGames)) return;
-
-  window.upcomingGames.sort((a, b) => {
-    const dateA = dateValue(a.availableDate);
-    const dateB = dateValue(b.availableDate);
-
-    return (
-      (dateA ? dateA.getTime() : Infinity) -
-      (dateB ? dateB.getTime() : Infinity)
-    );
-  });
-}
-
-function countdownText(value) {
-  const date = dateValue(value);
-
-  if (!date) return "";
-
-  const remaining = date.getTime() - Date.now();
-
-  if (remaining <= 0) {
-    return "🎮 Release date has arrived!";
-  }
-
-  const totalDays = Math.floor(
-    remaining / 86400000
-  );
-
-  const hours = Math.floor(
-    (remaining % 86400000) / 3600000
-  );
-
-  const minutes = Math.floor(
-    (remaining % 3600000) / 60000
-  );
-
-  return (
-    `⏳ ${totalDays}d ${hours}h ${minutes}m remaining`
-  );
-}
-
-function updateUpcomingCountdowns() {
-  document.querySelectorAll(
-    ".mega-countdown"
-  ).forEach(element => {
-    const value = element.dataset.releaseDate;
-    element.textContent = countdownText(value);
-  });
-}
+/* ==========================================
+   UPCOMING GAMES
+   ========================================== */
 
 function renderUpcomingGames() {
   const container =
-    document.getElementById("upcomingGames");
+    document.getElementById(
+      "upcomingGames"
+    );
 
   if (!container) return;
 
@@ -908,6 +1156,9 @@ function renderUpcomingGames() {
     Array.isArray(window.upcomingGames)
       ? window.upcomingGames
       : [];
+
+  const waitingCounts =
+    window.waitingListCounts || {};
 
   container.innerHTML = "";
 
@@ -920,25 +1171,29 @@ function renderUpcomingGames() {
     return;
   }
 
-  sortUpcomingGamesByDate();
-
   upcomingGames.forEach(game => {
-    const card = document.createElement("article");
+    const card =
+      document.createElement("article");
 
     card.className =
       "game-card upcoming-game-card";
 
     const availableDate =
-      game.availableDate || "Date to be announced";
+      game.availableDate ||
+      "Date to be announced";
 
-    const countdown = countdownText(availableDate);
+    const counts =
+      waitingCounts[game.name] || {
+        trophy: 0,
+        nonTrophy: 0
+      };
 
     card.innerHTML = `
       <div class="cover-wrap">
         <img
           class="cover"
-          src="${escapeHtml(game.image || "")}"
-          alt="${escapeHtml(game.name)}"
+          src="${escapeHTML(game.image || "")}"
+          alt="${escapeHTML(game.name)}"
           loading="lazy"
         >
 
@@ -948,38 +1203,71 @@ function renderUpcomingGames() {
       </div>
 
       <div class="game-info">
-        <h3>${escapeHtml(game.name)}</h3>
+        <h3>
+          ${escapeHTML(game.name)}
+        </h3>
 
         <div class="meta">
-          ${escapeHtml(
-            game.meta || "PS5 • Digital rental"
+          ${escapeHTML(
+            game.meta ||
+            "PS5 • Digital rental"
           )}
         </div>
 
-        <div class="availability upcoming-availability">
-          <strong>📅 AVAILABLE FOR RENT</strong>
-          <div>${escapeHtml(availableDate)}</div>
-          ${
-            countdown
-              ? `<div
-                   class="mega-countdown"
-                   data-release-date="${
-                     escapeHtml(availableDate)
-                   }"
-                 >${escapeHtml(countdown)}</div>`
-              : ""
-          }
+        <div
+          class="availability upcoming-availability"
+        >
+          <strong>
+            📅 AVAILABLE FOR RENT
+          </strong>
+
+          <div>
+            ${escapeHTML(availableDate)}
+          </div>
+
+          <div
+            class="mega-countdown"
+            data-release-date="${escapeHTML(
+              availableDate
+            )}"
+          >
+            ⏳ Checking release date...
+          </div>
         </div>
 
-        ${waitingCountersHtml(game)}
+        <div
+          class="availability waiting-list-count"
+        >
+          <strong>WAITING LIST</strong>
+
+          <div>
+            🏆 Trophy:
+            ${Number(counts.trophy) || 0}
+          </div>
+
+          <div>
+            🎮 Non-Trophy:
+            ${Number(counts.nonTrophy) || 0}
+          </div>
+        </div>
 
         <div class="game-bottom">
           <div class="price">
             <span>
-              WEEKLY<br>${money(game.weekly)}
+              WEEKLY:
+              ${peso(game.weekly)}
             </span>
+
             <span>
-              MONTHLY<br>${money(game.monthly)}
+              MONTHLY UNLI SWAP:
+            </span>
+
+            <span>
+              🏆 Trophy: ₱800
+            </span>
+
+            <span>
+              🎮 Non-Trophy: ₱700
             </span>
           </div>
 
@@ -987,16 +1275,25 @@ function renderUpcomingGames() {
             class="reserve-slot-button"
             type="button"
           >
-            📝 Reserve Slot / Join Waiting List
+            📝 Reserve Slot /
+            Join Waiting List
           </button>
         </div>
       </div>
     `;
 
-    card.querySelector(".reserve-slot-button")
-      ?.addEventListener("click", () => {
-        openUpcomingReservationModal(game);
-      });
+    const button =
+      card.querySelector(
+        ".reserve-slot-button"
+      );
+
+    if (button) {
+      button.dataset.game =
+        game.name;
+
+      button.dataset.date =
+        availableDate;
+    }
 
     container.appendChild(card);
   });
@@ -1004,168 +1301,400 @@ function renderUpcomingGames() {
   updateUpcomingCountdowns();
 }
 
-/* UPCOMING RESERVATION MODAL */
+/* ==========================================
+   UPCOMING RELEASE COUNTDOWN
+   ========================================== */
 
-const upcomingReservationModal =
-  document.getElementById(
-    "upcomingReservationModal"
-  );
+function updateUpcomingCountdowns() {
+  document
+    .querySelectorAll(
+      ".mega-countdown"
+    )
+    .forEach(element => {
+      const raw =
+        element.dataset.releaseDate || "";
 
-const upcomingReservationGame =
-  document.getElementById(
-    "upcomingReservationGame"
-  );
+      const target =
+        new Date(raw).getTime();
 
-const continueUpcomingReservation =
-  document.getElementById(
-    "continueUpcomingReservation"
-  );
+      if (!Number.isFinite(target)) {
+        element.textContent =
+          "📅 Release date to be announced";
+        return;
+      }
 
-let selectedUpcomingGame = null;
-let selectedUpcomingAccount = "";
-let selectedUpcomingPeriod = "";
+      const diff =
+        target - Date.now();
 
-function openUpcomingReservationModal(game) {
-  if (!upcomingReservationModal) return;
+      if (diff <= 0) {
+        element.textContent =
+          "🎮 Release date reached — contact us to confirm availability";
+        return;
+      }
 
-  selectedUpcomingGame = game;
-  selectedUpcomingAccount = "";
-  selectedUpcomingPeriod = "";
+      const days =
+        Math.floor(
+          diff / 86400000
+        );
 
-  if (upcomingReservationGame) {
-    upcomingReservationGame.textContent =
-      game.name;
-  }
+      const hours =
+        Math.floor(
+          (diff % 86400000) /
+          3600000
+        );
 
-  const nameInput =
-    document.getElementById(
-      "upcomingReservationCustomerName"
-    );
+      const minutes =
+        Math.floor(
+          (diff % 3600000) /
+          60000
+        );
 
-  if (nameInput) nameInput.value = "";
-
-  upcomingReservationModal.querySelectorAll(
-    ".upcoming-account-option, .upcoming-period-option"
-  ).forEach(button => {
-    button.classList.remove("active");
-  });
-
-  upcomingReservationModal.classList.add("active");
+      element.textContent =
+        `⏳ ${days}d ${hours}h ` +
+        `${minutes}m until release`;
+    });
 }
 
-upcomingReservationModal?.querySelectorAll(
-  ".upcoming-account-option"
-).forEach(button => {
-  button.addEventListener("click", () => {
-    upcomingReservationModal.querySelectorAll(
-      ".upcoming-account-option"
-    ).forEach(other => {
-      other.classList.remove("active");
-    });
+setInterval(
+  updateUpcomingCountdowns,
+  60000
+);
 
-    button.classList.add("active");
-    selectedUpcomingAccount =
-      button.dataset.account || "";
-  });
-});
+/* ==========================================
+   UPCOMING RESERVATION MODAL
+   ========================================== */
 
-upcomingReservationModal?.querySelectorAll(
-  ".upcoming-period-option"
-).forEach(button => {
-  button.addEventListener("click", () => {
-    upcomingReservationModal.querySelectorAll(
-      ".upcoming-period-option"
-    ).forEach(other => {
-      other.classList.remove("active");
-    });
+function getSelectedUpcomingGame() {
+  if (!Array.isArray(
+    window.upcomingGames
+  )) {
+    return null;
+  }
 
-    button.classList.add("active");
-    selectedUpcomingPeriod =
-      button.dataset.period || "";
-  });
-});
+  return window.upcomingGames.find(
+    game =>
+      game.name ===
+      selectedUpcomingGame
+  ) || null;
+}
 
-document.getElementById(
-  "closeUpcomingReservationModal"
-)?.addEventListener("click", () => {
-  upcomingReservationModal?.classList.remove(
-    "active"
+function updateUpcomingPrice() {
+  if (!upcomingReservationModal) {
+    return;
+  }
+
+  let priceElement =
+    document.getElementById(
+      "upcomingRentalPrice"
+    );
+
+  if (!priceElement) {
+    priceElement =
+      document.createElement("div");
+
+    priceElement.id =
+      "upcomingRentalPrice";
+
+    priceElement.style.cssText = `
+      margin:12px 0;
+      padding:12px;
+      border:1px solid rgba(57,169,255,.35);
+      border-radius:10px;
+      text-align:center;
+      font-weight:800;
+      color:#79c8ff;
+    `;
+
+    const target =
+      continueUpcomingReservation;
+
+    if (target?.parentNode) {
+      target.parentNode.insertBefore(
+        priceElement,
+        target
+      );
+    } else {
+      return;
+    }
+  }
+
+  const game =
+    getSelectedUpcomingGame();
+
+  const price = getRentalPrice(
+    game,
+    selectedUpcomingPeriod,
+    selectedUpcomingAccount
   );
-});
 
-upcomingReservationModal?.addEventListener(
+  priceElement.textContent =
+    price === null
+      ? "Select period and account type to see the price"
+      : `Rental Price: ${peso(price)}`;
+}
+
+/* ==========================================
+   OPEN UPCOMING RESERVATION
+   ========================================== */
+
+document.addEventListener(
   "click",
   event => {
-    if (event.target === upcomingReservationModal) {
-      upcomingReservationModal.classList.remove(
-        "active"
+    const button =
+      event.target.closest(
+        ".reserve-slot-button"
       );
+
+    if (!button) return;
+
+    selectedUpcomingGame =
+      button.dataset.game || "";
+
+    selectedUpcomingDate =
+      button.dataset.date || "";
+
+    selectedUpcomingAccount = "";
+    selectedUpcomingPeriod = "";
+
+    if (upcomingReservationGame) {
+      upcomingReservationGame.textContent =
+        selectedUpcomingGame;
     }
+
+    const nameInput =
+      document.getElementById(
+        "upcomingReservationCustomerName"
+      );
+
+    if (nameInput) {
+      nameInput.value = "";
+    }
+
+    document
+      .querySelectorAll(
+        "#upcomingReservationModal " +
+        ".upcoming-account-option, " +
+        "#upcomingReservationModal " +
+        ".upcoming-period-option"
+      )
+      .forEach(b => {
+        b.classList.remove("active");
+      });
+
+    updateUpcomingPrice();
+
+    upcomingReservationModal
+      ?.classList.add("active");
   }
 );
 
-continueUpcomingReservation?.addEventListener(
-  "click",
-  async () => {
-    if (
-      !selectedUpcomingGame ||
-      upcomingSubmitting
-    ) {
-      return;
+/* ==========================================
+   UPCOMING ACCOUNT SELECTION
+   ========================================== */
+
+document
+  .querySelectorAll(
+    "#upcomingReservationModal " +
+    ".upcoming-account-option"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        document
+          .querySelectorAll(
+            "#upcomingReservationModal " +
+            ".upcoming-account-option"
+          )
+          .forEach(b => {
+            b.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        selectedUpcomingAccount =
+          button.dataset.account || "";
+
+        updateUpcomingPrice();
+      }
+    );
+  });
+
+/* ==========================================
+   UPCOMING PERIOD SELECTION
+   ========================================== */
+
+document
+  .querySelectorAll(
+    "#upcomingReservationModal " +
+    ".upcoming-period-option"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        document
+          .querySelectorAll(
+            "#upcomingReservationModal " +
+            ".upcoming-period-option"
+          )
+          .forEach(b => {
+            b.classList.remove("active");
+          });
+
+        button.classList.add("active");
+
+        selectedUpcomingPeriod =
+          button.dataset.period || "";
+
+        updateUpcomingPrice();
+      }
+    );
+  });
+
+/* ==========================================
+   CLOSE UPCOMING MODAL
+   ========================================== */
+
+document
+  .getElementById(
+    "closeUpcomingReservationModal"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      upcomingReservationModal
+        ?.classList.remove("active");
     }
+  );
 
-    const customerName =
-      document.getElementById(
-        "upcomingReservationCustomerName"
-      )?.value.trim() || "";
-
-    if (!customerName) {
-      alert("Please enter your First and Last Name.");
-      return;
+upcomingReservationModal
+  ?.addEventListener(
+    "click",
+    event => {
+      if (
+        event.target ===
+        upcomingReservationModal
+      ) {
+        upcomingReservationModal
+          .classList.remove("active");
+      }
     }
+  );
 
-    if (!selectedUpcomingPeriod) {
-      alert("Please choose 1 Week or 1 Month.");
-      return;
-    }
+/* ==========================================
+   UPCOMING RESERVATION SUBMISSION
+   ========================================== */
 
-    if (!selectedUpcomingAccount) {
-      alert("Please choose Trophy or Non-Trophy.");
-      return;
-    }
+if (continueUpcomingReservation) {
+  continueUpcomingReservation.addEventListener(
+    "click",
+    async () => {
+      const customerName =
+        document.getElementById(
+          "upcomingReservationCustomerName"
+        )?.value.trim() || "";
 
-    const rentalPeriod =
-      selectedUpcomingPeriod === "week"
-        ? "1 Week"
-        : "1 Month";
+      if (!customerName) {
+        alert(
+          "Please enter your First and Last Name."
+        );
+        return;
+      }
 
-    const accountType =
-      selectedUpcomingAccount === "trophy"
-        ? "Trophy"
-        : "Non-Trophy";
+      if (!selectedUpcomingPeriod) {
+        alert(
+          "Please choose 1 Week or 1 Month."
+        );
+        return;
+      }
 
-    if (
-      typeof window.saveWaitingList !== "function"
-    ) {
-      alert(
-        "Reservation is unavailable. Please try again."
+      if (!selectedUpcomingAccount) {
+        alert(
+          "Please choose Trophy or Non-Trophy."
+        );
+        return;
+      }
+
+      const game =
+        getSelectedUpcomingGame();
+
+      if (!game) {
+        alert(
+          "Unable to find this upcoming game. Please refresh the page."
+        );
+        return;
+      }
+
+      const price = getRentalPrice(
+        game,
+        selectedUpcomingPeriod,
+        selectedUpcomingAccount
       );
-      return;
-    }
 
-    upcomingSubmitting = true;
-    continueUpcomingReservation.disabled = true;
+      if (price === null) {
+        alert(
+          "Price is not available yet. Please contact our Facebook page."
+        );
+        return;
+      }
 
-    try {
-      const game = selectedUpcomingGame;
+      const rentalPeriod =
+        rentalPeriodLabel(
+          selectedUpcomingPeriod
+        );
 
-      const saved = await window.saveWaitingList({
-        gameId: game.id || game.name,
-        gameName: game.name,
-        customerName,
-        accountType,
-        rentalPeriod
-      });
+      const plan =
+        rentalPlanLabel(
+          selectedUpcomingPeriod
+        );
+
+      const accountType =
+        accountLabel(
+          selectedUpcomingAccount
+        );
+
+      const swapRules =
+        rentalSwapRules(
+          selectedUpcomingPeriod
+        );
+
+      if (
+        typeof window.saveWaitingList !==
+        "function"
+      ) {
+        alert(
+          "Unable to save your reservation. Please try again."
+        );
+        return;
+      }
+
+      continueUpcomingReservation.disabled =
+        true;
+
+      let saved = false;
+
+      try {
+        saved =
+          await window.saveWaitingList({
+            gameId:
+              game.id ||
+              selectedUpcomingGame,
+            gameName:
+              selectedUpcomingGame,
+            customerName,
+            accountType,
+            rentalPeriod
+          });
+      } catch (error) {
+        console.error(
+          "Upcoming reservation error:",
+          error
+        );
+      } finally {
+        continueUpcomingReservation.disabled =
+          false;
+      }
 
       if (!saved) {
         alert(
@@ -1174,114 +1703,198 @@ continueUpcomingReservation?.addEventListener(
         return;
       }
 
-      const message = `Hi JDigitalsRental! 🎮
+      const message =
+`Hi JDigitalsRental! 🎮
 
 I would like to reserve a slot / join the waiting list.
 
 First and Last Name: ${customerName}
-Game: ${game.name}
+Game: ${selectedUpcomingGame}
 Rental Period: ${rentalPeriod}
+Rental Plan: ${plan}
 Account Type: ${accountType}
-Available Date: ${game.availableDate || "To be announced"}
+Price: ${peso(price)}
+Available Date: ${selectedUpcomingDate}
 
-📌 I understand that my First and Last Name should match the name shown on my Facebook account so JDigitalsRental can easily find and contact me when it is my turn to rent.
+SWAP RULES:
+${swapRules}
+
+📌 My First and Last Name matches the name shown on my Facebook account.
+
+Please let me know when a slot becomes available.
 
 Thank you!`;
 
-      upcomingReservationModal.classList.remove(
-        "active"
+      upcomingReservationModal
+        ?.classList.remove("active");
+
+      showRentalFacebookReminder(
+        message
       );
-
-      showRentalFacebookReminder(message);
-
-    } finally {
-      upcomingSubmitting = false;
-      continueUpcomingReservation.disabled = false;
     }
-  }
-);
+  );
+}
 
-/* UPCOMING AUTO SLIDER */
+/* ==========================================
+   UPCOMING GAMES AUTO SLIDER
+   ========================================== */
 
 let upcomingSlideTimer = null;
 
 function startUpcomingAutoSlide() {
   const slider =
-    document.getElementById("upcomingGames");
+    document.getElementById(
+      "upcomingGames"
+    );
 
   if (!slider) return;
 
   if (upcomingSlideTimer) {
-    clearInterval(upcomingSlideTimer);
+    clearInterval(
+      upcomingSlideTimer
+    );
   }
 
   let currentIndex = 0;
 
-  upcomingSlideTimer = setInterval(() => {
-    const cards = slider.querySelectorAll(
-      ".upcoming-game-card"
-    );
+  upcomingSlideTimer =
+    setInterval(() => {
+      const cards =
+        slider.querySelectorAll(
+          ".upcoming-game-card"
+        );
 
-    if (cards.length <= 3) return;
+      if (cards.length <= 3) {
+        return;
+      }
 
-    currentIndex++;
+      currentIndex++;
 
-    if (currentIndex >= cards.length) {
-      currentIndex = 0;
+      if (
+        currentIndex >= cards.length
+      ) {
+        currentIndex = 0;
+      }
+
+      const card =
+        cards[currentIndex];
+
+      slider.scrollTo({
+        left:
+          card.offsetLeft -
+          slider.offsetLeft,
+        behavior: "smooth"
+      });
+    }, 3500);
+}
+
+/* ==========================================
+   SORT UPCOMING GAMES
+   ========================================== */
+
+function sortUpcomingGamesByDate() {
+  if (
+    !Array.isArray(
+      window.upcomingGames
+    )
+  ) {
+    return;
+  }
+
+  window.upcomingGames.sort(
+    (a, b) => {
+      const dateA =
+        new Date(
+          a.availableDate
+        );
+
+      const dateB =
+        new Date(
+          b.availableDate
+        );
+
+      const timeA =
+        Number.isNaN(
+          dateA.getTime()
+        )
+          ? Infinity
+          : dateA.getTime();
+
+      const timeB =
+        Number.isNaN(
+          dateB.getTime()
+        )
+          ? Infinity
+          : dateB.getTime();
+
+      return timeA - timeB;
     }
+  );
 
-    const card = cards[currentIndex];
-
-    slider.scrollTo({
-      left: card.offsetLeft - slider.offsetLeft,
-      behavior: "smooth"
-    });
-  }, 3500);
-}
-
-function refreshUpcomingGames() {
   renderUpcomingGames();
-
-  const slider =
-    document.getElementById("upcomingGames");
-
-  slider?.scrollTo({
-    left: 0,
-    behavior: "instant"
-  });
-
-  startUpcomingAutoSlide();
 }
+
+/* ==========================================
+   FIRESTORE EVENT LISTENERS
+   ========================================== */
 
 window.addEventListener(
   "upcomingGamesLoaded",
-  refreshUpcomingGames
+  () => {
+    sortUpcomingGamesByDate();
+
+    document
+      .getElementById(
+        "upcomingGames"
+      )
+      ?.scrollTo({
+        left: 0,
+        behavior: "auto"
+      });
+
+    setTimeout(
+      startUpcomingAutoSlide,
+      300
+    );
+  }
 );
 
 window.addEventListener(
   "waitingListCountsLoaded",
-  renderUpcomingGames
+  () => {
+    render();
+    renderUpcomingGames();
+  }
 );
 
-/* UPDATE COUNTDOWNS EVERY MINUTE */
-
-setInterval(
-  updateUpcomingCountdowns,
-  60000
-);
-
-/* INITIAL LOAD */
+/* ==========================================
+   INITIAL RENDER
+   ========================================== */
 
 render();
 
-if (Array.isArray(window.firestoreGames)) {
+if (
+  Array.isArray(
+    window.firestoreGames
+  )
+) {
   loadFirestoreGames();
 }
 
-if (Array.isArray(window.upcomingGames)) {
-  refreshUpcomingGames();
+if (
+  Array.isArray(
+    window.upcomingGames
+  )
+) {
+  sortUpcomingGamesByDate();
+
+  setTimeout(
+    startUpcomingAutoSlide,
+    300
+  );
 }
 
 /* ==========================================
-   END — JDIGITALSRENTAL MEGA UPGRADE
+   END OF APP.JS
+   JDIGITALSRENTAL
    ========================================== */
