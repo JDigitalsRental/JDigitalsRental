@@ -10,13 +10,14 @@
 *{box-sizing:border-box}
 body{
   margin:0;
+  min-height:100vh;
   font-family:Arial,sans-serif;
   color:#fff;
-  background:radial-gradient(circle at top right,#0b3b91,transparent 35%),#020817;
-  min-height:100vh
+  background:radial-gradient(circle at top right,#0b3b91,transparent 35%),#020817
 }
 button,input,select{font:inherit}
 button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
 .header{
   padding:18px;
   border-bottom:1px solid #17356b;
@@ -55,11 +56,18 @@ button{cursor:pointer}
 .game-grid{display:grid;gap:14px;margin-top:15px}
 .game-top{display:flex;justify-content:space-between;gap:10px;align-items:start}
 .game-top h3{font-size:16px;margin:0}
-.status{font-size:10px;font-weight:800;padding:7px;border-radius:20px;white-space:nowrap}
+.status,.slot-badge{
+  display:inline-block;
+  font-size:10px;
+  font-weight:800;
+  padding:7px;
+  border-radius:20px
+}
 .available{color:#70ffb1;background:#103e30}
 .rented{color:#ff8d8d;background:#4a1c2a}
+.due{color:#ffe18a;background:#544018}
 .upcoming{color:#ffd76a;background:#443718}
-.details{color:#b1c2de;font-size:12px;line-height:1.9;margin:15px 0}
+.details{color:#b1c2de;font-size:12px;line-height:1.7;margin:15px 0}
 .price-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
 .price-box{padding:10px;border:1px solid #254b83;border-radius:9px;background:#08142c}
 .price-box small{display:block;color:#91a0bf;margin-bottom:5px}
@@ -87,7 +95,7 @@ button{cursor:pointer}
 .manage-modal-card{
   position:relative;
   width:100%;
-  max-width:460px;
+  max-width:480px;
   max-height:92vh;
   overflow-y:auto;
   padding:24px 20px;
@@ -143,6 +151,32 @@ button{cursor:pointer}
   background:#3d1420;
   font-weight:bold
 }
+.slot-panel{
+  padding:13px;
+  margin:14px 0;
+  border:1px solid #254b83;
+  border-radius:12px;
+  background:#081a34
+}
+.slot-panel h3{font-size:15px;margin:0 0 8px}
+.slot-panel p{font-size:12px;color:#afc5e2;line-height:1.6}
+.slot-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:10px 0
+}
+.confirm-return{
+  width:100%;
+  padding:11px;
+  margin-top:10px;
+  border:1px solid #26d987;
+  border-radius:9px;
+  color:#b5ffda;
+  background:#104331;
+  font-weight:800
+}
 .waiting-group{border:1px solid #254b83;border-radius:10px;margin-bottom:10px;overflow:hidden}
 .waiting-toggle{width:100%;padding:13px;background:#0b2145;border:0;color:white;text-align:left;font-weight:bold}
 .waiting-panel{padding:10px;display:none}
@@ -173,14 +207,24 @@ button{cursor:pointer}
 <main class="container">
   <p class="eyebrow">ADMIN MANAGEMENT</p>
   <h2 class="title">Game Dashboard</h2>
-  <p class="subtitle">Manage games, slot availability, and individual Trophy / Non-Trophy prices.</p>
+  <p class="subtitle">Manage prices, rental slots, return dates, and waiting lists.</p>
 
   <section class="stats">
-    <div class="stat"><span>TOTAL GAMES</span><strong id="totalGames">0</strong></div>
-    <div class="stat"><span>AVAILABLE</span><strong id="availableGames">0</strong></div>
-    <div class="stat"><span>RENTED</span><strong id="rentedGames">0</strong></div>
+    <div class="stat">
+      <span>TOTAL GAMES</span>
+      <strong id="totalGames">0</strong>
+    </div>
+    <div class="stat">
+      <span>AVAILABLE GAMES</span>
+      <strong id="availableGames">0</strong>
+    </div>
+    <div class="stat">
+      <span>DUE FOR RETURN SLOTS</span>
+      <strong id="dueGames">0</strong>
+    </div>
     <div class="stat" id="waitingListCard" style="cursor:pointer">
-      <span>WAITING LIST</span><strong id="waitingGames">0</strong>
+      <span>WAITING LIST</span>
+      <strong id="waitingGames">0</strong>
     </div>
   </section>
 
@@ -189,8 +233,9 @@ button{cursor:pointer}
   <section class="game-grid" id="gameGrid"></section>
 
   <div class="note">
-    💰 Each game has four separate prices. Changes are saved in Firebase.
-    The customer website will use these prices after its app.js is updated.
+    🟡 Due for Return means the expected return date has arrived.
+    The slot stays unavailable until you confirm the renter has disabled
+    the account. Only then use Confirm Return.
   </div>
 </main>
 
@@ -238,19 +283,37 @@ button{cursor:pointer}
       <option value="upcoming">Upcoming Game</option>
     </select>
 
-    <label>📅 Upcoming Available Date</label>
+    <label>📅 Upcoming Release Date</label>
     <input id="newGameAvailableDate" type="date">
 
-    <label>🏆 Trophy Available Date</label>
-    <input id="newGameTrophyDate" type="date">
+    <div class="slot-panel">
+      <h3>🏆 Trophy Slot</h3>
+      <label>Slot Status</label>
+      <select id="newTrophyStatus">
+        <option value="available">Available</option>
+        <option value="currently-rented">Currently Rented</option>
+      </select>
+      <label>Expected Return Date</label>
+      <input id="newGameTrophyDate" type="date">
+    </div>
 
-    <label>🎮 Non-Trophy Available Date</label>
-    <input id="newGameNonTrophyDate" type="date">
+    <div class="slot-panel">
+      <h3>🎮 Non-Trophy Slot</h3>
+      <label>Slot Status</label>
+      <select id="newNonTrophyStatus">
+        <option value="available">Available</option>
+        <option value="currently-rented">Currently Rented</option>
+      </select>
+      <label>Expected Return Date</label>
+      <input id="newGameNonTrophyDate" type="date">
+    </div>
 
     <label>Game Image Path</label>
     <input id="newGameImage" placeholder="assets/game-name.jpg">
 
-    <button id="saveNewGame" class="save-game" style="margin-top:20px">➕ Add Game</button>
+    <button id="saveNewGame" class="save-game" style="margin-top:20px">
+      ➕ Add Game
+    </button>
   </div>
 </div>
 
@@ -292,16 +355,58 @@ button{cursor:pointer}
       </div>
     </div>
 
-    <label>📅 Upcoming Available Date</label>
+    <label>📅 Upcoming Release Date</label>
     <input id="manageAvailableDate" type="date">
 
-    <label>🏆 Trophy Available Date</label>
-    <input id="manageTrophyDate" type="date">
+    <div class="slot-panel">
+      <h3>🏆 Trophy Slot</h3>
+      <div class="slot-row">
+        <span>Current Status</span>
+        <span id="manageTrophyBadge" class="slot-badge available">AVAILABLE</span>
+      </div>
 
-    <label>🎮 Non-Trophy Available Date</label>
-    <input id="manageNonTrophyDate" type="date">
+      <label>Slot Status</label>
+      <select id="manageTrophyStatus">
+        <option value="available">Available</option>
+        <option value="currently-rented">Currently Rented</option>
+      </select>
 
-    <button id="saveGameChanges" class="save-game" style="margin-top:20px">💾 Save Changes</button>
+      <label>Expected Return Date</label>
+      <input id="manageTrophyDate" type="date">
+
+      <p id="manageTrophyNotice"></p>
+
+      <button id="confirmTrophyReturn" class="confirm-return" type="button">
+        ✅ Confirm Trophy Return
+      </button>
+    </div>
+
+    <div class="slot-panel">
+      <h3>🎮 Non-Trophy Slot</h3>
+      <div class="slot-row">
+        <span>Current Status</span>
+        <span id="manageNonTrophyBadge" class="slot-badge available">AVAILABLE</span>
+      </div>
+
+      <label>Slot Status</label>
+      <select id="manageNonTrophyStatus">
+        <option value="available">Available</option>
+        <option value="currently-rented">Currently Rented</option>
+      </select>
+
+      <label>Expected Return Date</label>
+      <input id="manageNonTrophyDate" type="date">
+
+      <p id="manageNonTrophyNotice"></p>
+
+      <button id="confirmNonTrophyReturn" class="confirm-return" type="button">
+        ✅ Confirm Non-Trophy Return
+      </button>
+    </div>
+
+    <button id="saveGameChanges" class="save-game" style="margin-top:20px">
+      💾 Save Changes
+    </button>
     <button id="deleteGame" class="delete-game">🗑️ Delete Game</button>
   </div>
 </div>
@@ -350,7 +455,7 @@ function openModal(id){$(id).classList.add("active")}
 function closeModal(id){$(id).classList.remove("active")}
 
 function dateToInput(value){
-  if(!value||/available now/i.test(value))return "";
+  if(!value||/available now/i.test(String(value)))return "";
   if(/^\d{4}-\d{2}-\d{2}$/.test(value))return value;
   const d=new Date(value);
   if(Number.isNaN(d.getTime()))return "";
@@ -369,11 +474,26 @@ function dateToText(value){
   });
 }
 
+function todayISO(){
+  const d=new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth()+1).padStart(2,"0"),
+    String(d.getDate()).padStart(2,"0")
+  ].join("-");
+}
+
+function isDue(date){
+  const iso=dateToInput(date);
+  return !!iso && iso<=todayISO();
+}
+
 function numberFrom(id){
   const raw=$(id).value.trim();
   if(raw==="")throw Error("Please complete all four price fields.");
   const n=Number(raw);
-  if(!Number.isFinite(n)||n<0)throw Error("Please enter valid prices.");
+  if(!Number.isFinite(n)||n<0)
+    throw Error("Please enter valid prices.");
   return n;
 }
 
@@ -402,52 +522,167 @@ function getPrices(g){
   };
 }
 
-function statusName(status){
-  if(status==="currently-rented")return "● CURRENTLY RENTED";
-  if(status==="upcoming")return "● UPCOMING";
-  return "● AVAILABLE";
+function slotFields(slot){
+  return slot==="trophy"
+    ?{status:"trophyStatus",date:"trophyDate"}
+    :{status:"nonTrophyStatus",date:"nonTrophyDate"};
 }
 
-function statusClass(status){
-  if(status==="currently-rented")return "rented";
-  if(status==="upcoming")return "upcoming";
+function normalizedSlotStatus(value){
+  if(value===true)return "currently-rented";
+  if(value===false)return "available";
+
+  const text=String(value??"").toLowerCase().trim();
+
+  if(["currently-rented","currently rented","rented","true"]
+    .includes(text))return "currently-rented";
+
+  if(["available","available now","false","open"]
+    .includes(text))return "available";
+
+  return "";
+}
+
+function getSlotStatus(game,slot){
+  const fields=slotFields(slot);
+  const explicit=normalizedSlotStatus(game[fields.status]);
+
+  if(explicit)return explicit;
+
+  const date=String(game[fields.date]||"").trim();
+
+  if(/^available now$/i.test(date))return "available";
+
+  if(game.status==="currently-rented")
+    return "currently-rented";
+
   return "available";
+}
+
+function slotState(game,slot){
+  if(game.status==="upcoming")return "upcoming";
+
+  if(getSlotStatus(game,slot)==="available")
+    return "available";
+
+  const date=game[slotFields(slot).date];
+
+  return isDue(date)?"due":"rented";
+}
+
+function slotText(state){
+  if(state==="due")return "🟡 DUE FOR RETURN";
+  if(state==="rented")return "🔴 CURRENTLY RENTED";
+  if(state==="upcoming")return "🟡 UPCOMING";
+  return "🟢 AVAILABLE";
+}
+
+function overallStatus(game){
+  if(game.status==="upcoming")return "upcoming";
+
+  const a=slotState(game,"trophy");
+  const b=slotState(game,"nonTrophy");
+
+  if(a==="available"||b==="available")return "available";
+  if(a==="due"||b==="due")return "due";
+  return "rented";
+}
+
+function derivedGameStatus(trophy,nonTrophy,currentStatus){
+  if(currentStatus==="upcoming")return "upcoming";
+  return trophy==="currently-rented"||
+    nonTrophy==="currently-rented"
+      ?"currently-rented"
+      :"available";
+}
+
+function slotHTML(game,slot){
+  const state=slotState(game,slot);
+  const date=game[slotFields(slot).date];
+  const label=slot==="trophy"?"🏆 Trophy":"🎮 Non-Trophy";
+
+  return `
+    <div class="slot-row">
+      <span>${label}</span>
+      <span class="slot-badge ${state}">
+        ${slotText(state)}
+      </span>
+    </div>
+    <div>
+      ${
+        state==="available"
+          ?"Available Now"
+          :state==="upcoming"
+            ?"Not released yet"
+            :"Expected return: "+esc(date||"Date not set")
+      }
+    </div>
+  `;
 }
 
 async function loadAdminGames(){
   const snapshot=await getDocs(collection(db,"games"));
   gameCache.clear();
   $("gameGrid").innerHTML="";
-  let available=0,rented=0;
+
+  let available=0;
+  let due=0;
 
   snapshot.forEach(gameDoc=>{
     const g=gameDoc.data();
     gameCache.set(gameDoc.id,g);
 
-    if(g.status==="currently-rented")rented++;
-    else if(g.status!=="upcoming")available++;
+    if(overallStatus(g)==="available")available++;
+
+    for(const slot of ["trophy","nonTrophy"]){
+      if(slotState(g,slot)==="due")due++;
+    }
 
     const p=getPrices(g);
+    const status=overallStatus(g);
     const card=document.createElement("article");
     card.className="game-card";
 
     card.innerHTML=`
       <div class="game-top">
         <h3>${esc(g.name||g.title||"Untitled Game")}</h3>
-        <span class="status ${statusClass(g.status)}">${statusName(g.status)}</span>
+        <span class="status ${status}">
+          ${slotText(status)}
+        </span>
       </div>
+
       <div class="price-grid">
-        <div class="price-box"><small>🏆 Weekly Trophy</small><strong>${money(p.weeklyTrophy)}</strong></div>
-        <div class="price-box"><small>🎮 Weekly Non-Trophy</small><strong>${money(p.weeklyNonTrophy)}</strong></div>
-        <div class="price-box"><small>🏆 Monthly Trophy</small><strong>${money(p.monthlyTrophy)}</strong></div>
-        <div class="price-box"><small>🎮 Monthly Non-Trophy</small><strong>${money(p.monthlyNonTrophy)}</strong></div>
+        <div class="price-box">
+          <small>🏆 Weekly Trophy</small>
+          <strong>${money(p.weeklyTrophy)}</strong>
+        </div>
+        <div class="price-box">
+          <small>🎮 Weekly Non-Trophy</small>
+          <strong>${money(p.weeklyNonTrophy)}</strong>
+        </div>
+        <div class="price-box">
+          <small>🏆 Monthly Trophy</small>
+          <strong>${money(p.monthlyTrophy)}</strong>
+        </div>
+        <div class="price-box">
+          <small>🎮 Monthly Non-Trophy</small>
+          <strong>${money(p.monthlyNonTrophy)}</strong>
+        </div>
       </div>
+
       <div class="details">
-        🏆 Trophy: ${esc(g.trophyDate||"Available Now")}<br>
-        🎮 Non-Trophy: ${esc(g.nonTrophyDate||"Available Now")}
-        ${g.status==="upcoming"?"<br>📅 "+esc(g.availableDate||"Date TBA"):""}
+        ${slotHTML(g,"trophy")}
+        ${slotHTML(g,"nonTrophy")}
+        ${
+          g.status==="upcoming"
+            ?"<p>📅 Release: "+esc(g.availableDate||"Date TBA")+"</p>"
+            :""
+        }
       </div>
-      <button class="manage" type="button">Manage Game</button>
+
+      <button class="manage" type="button">
+        Manage Game
+      </button>
     `;
 
     card.querySelector(".manage").addEventListener("click",()=>{
@@ -459,20 +694,66 @@ async function loadAdminGames(){
 
   $("totalGames").textContent=snapshot.size;
   $("availableGames").textContent=available;
-  $("rentedGames").textContent=rented;
+  $("dueGames").textContent=due;
 
   const waiting=await getDocs(collection(db,"waitingList"));
   $("waitingGames").textContent=waiting.size;
 }
 
+function updateManageSlotUI(slot){
+  const prefix=slot==="trophy"?"manageTrophy":"manageNonTrophy";
+  const status=$(prefix+"Status").value;
+  const date=$(prefix+"Date").value;
+
+  const state=status==="available"
+    ?"available"
+    :isDue(date)
+      ?"due"
+      :"rented";
+
+  const badge=$(prefix+"Badge");
+  badge.className="slot-badge "+state;
+  badge.textContent=slotText(state);
+
+  const notice=$(prefix+"Notice");
+  const confirm=$(
+    slot==="trophy"
+      ?"confirmTrophyReturn"
+      :"confirmNonTrophyReturn"
+  );
+
+  if(status==="available"){
+    notice.textContent="This slot is available.";
+    confirm.disabled=true;
+  }else if(state==="due"){
+    notice.textContent=
+      "Return date reached. Check the renter's disable video before confirming.";
+    confirm.disabled=false;
+  }else{
+    notice.textContent=
+      "Currently rented. You may confirm an early return after checking proof.";
+    confirm.disabled=false;
+  }
+
+  if($("manageStatus").value==="upcoming"){
+    notice.textContent="This game is still upcoming.";
+    confirm.disabled=true;
+  }
+}
+
 function openManage(id){
   const g=gameCache.get(id);
   if(!g)return;
+
   selectedGameId=id;
   const p=getPrices(g);
 
-  $("manageGameName").textContent=g.name||g.title||"Manage Game";
-  $("manageStatus").value=g.status||"available";
+  $("manageGameName").textContent=
+    g.name||g.title||"Manage Game";
+
+  $("manageStatus").value=
+    g.status==="upcoming"?"upcoming":overallStatus(g)==="available"
+      ?"available":"currently-rented";
 
   $("manageWeeklyTrophy").value=p.weeklyTrophy;
   $("manageWeeklyNonTrophy").value=p.weeklyNonTrophy;
@@ -480,48 +761,159 @@ function openManage(id){
   $("manageMonthlyNonTrophy").value=p.monthlyNonTrophy;
 
   $("manageAvailableDate").value=dateToInput(g.availableDate);
+
+  $("manageTrophyStatus").value=getSlotStatus(g,"trophy");
+  $("manageNonTrophyStatus").value=getSlotStatus(g,"nonTrophy");
+
   $("manageTrophyDate").value=dateToInput(g.trophyDate);
   $("manageNonTrophyDate").value=dateToInput(g.nonTrophyDate);
 
+  updateManageSlotUI("trophy");
+  updateManageSlotUI("nonTrophy");
   openModal("manageModal");
+}
+
+function readSlot(prefix){
+  const status=$(prefix+"Status").value;
+  const date=$(prefix+"Date").value;
+
+  if(status==="currently-rented"&&!date)
+    throw Error("Please enter an expected return date for every rented slot.");
+
+  return {
+    status,
+    date:status==="available"?"Available Now":dateToText(date)
+  };
+}
+
+function formGameData(prefix){
+  const prices=pricesFromForm(prefix);
+  const trophy=readSlot(prefix==="new"?"newTrophy":"manageTrophy");
+  const nonTrophy=readSlot(
+    prefix==="new"?"newNonTrophy":"manageNonTrophy"
+  );
+
+  const selectedStatus=$(prefix==="new"?"newGameStatus":"manageStatus").value;
+  const availableDate=dateToText(
+    $(prefix==="new"?"newGameAvailableDate":"manageAvailableDate").value
+  );
+
+  if(selectedStatus==="upcoming"&&!availableDate)
+    throw Error("Please select the upcoming release date.");
+
+  return {
+    ...prices,
+    status:derivedGameStatus(
+      trophy.status,
+      nonTrophy.status,
+      selectedStatus
+    ),
+    availableDate:selectedStatus==="upcoming"?availableDate:"",
+    trophyStatus:trophy.status,
+    nonTrophyStatus:nonTrophy.status,
+    trophyDate:trophy.date,
+    nonTrophyDate:nonTrophy.date
+  };
 }
 
 $("saveGameChanges").addEventListener("click",async()=>{
   if(!selectedGameId)return;
 
+  const btn=$("saveGameChanges");
+
   try{
-    const prices=pricesFromForm("manage");
-    const status=$("manageStatus").value;
-
-    const updates={
-      ...prices,
-      status,
-      availableDate:status==="upcoming"
-        ?dateToText($("manageAvailableDate").value)
-        :"",
-      trophyDate:status==="currently-rented"
-        ?dateToText($("manageTrophyDate").value)
-        :"Available Now",
-      nonTrophyDate:status==="currently-rented"
-        ?dateToText($("manageNonTrophyDate").value)
-        :"Available Now"
-    };
-
-    if(status==="upcoming"&&!updates.availableDate)
-      throw Error("Please select the upcoming available date.");
-
-    const btn=$("saveGameChanges");
+    const updates=formGameData("manage");
     btn.disabled=true;
-    try{
-      await updateDoc(doc(db,"games",selectedGameId),updates);
-      closeModal("manageModal");
-      await loadAdminGames();
-      alert("Game and prices updated successfully! 🎮");
-    }finally{btn.disabled=false}
+
+    await updateDoc(doc(db,"games",selectedGameId),updates);
+
+    closeModal("manageModal");
+    await loadAdminGames();
+    alert("Game and slot statuses updated successfully! 🎮");
   }catch(error){
     console.error(error);
     alert(error.message||"Unable to save changes.");
+  }finally{
+    btn.disabled=false;
   }
+});
+
+async function confirmReturn(slot){
+  if(!selectedGameId)return;
+
+  const g=gameCache.get(selectedGameId);
+  if(!g||g.status==="upcoming")return;
+
+  const label=slot==="trophy"?"Trophy":"Non-Trophy";
+  const fields=slotFields(slot);
+
+  if(getSlotStatus(g,slot)==="available"){
+    alert(label+" slot is already available.");
+    return;
+  }
+
+  if(!confirm(
+    "Have you checked the renter's disable video?\n\n"+
+    "Confirm return of "+label+" slot for "+(g.name||g.title)+"?"
+  ))return;
+
+  const btn=$(
+    slot==="trophy"
+      ?"confirmTrophyReturn"
+      :"confirmNonTrophyReturn"
+  );
+
+  btn.disabled=true;
+
+  try{
+    const otherSlot=slot==="trophy"?"nonTrophy":"trophy";
+    const otherStatus=getSlotStatus(g,otherSlot);
+
+    const updates={
+      [fields.status]:"available",
+      [fields.date]:"Available Now",
+      status:derivedGameStatus(
+        slot==="trophy"?"available":otherStatus,
+        slot==="nonTrophy"?"available":otherStatus,
+        g.status
+      )
+    };
+
+    await updateDoc(doc(db,"games",selectedGameId),updates);
+
+    closeModal("manageModal");
+    await loadAdminGames();
+
+    alert("✅ "+label+" return confirmed! Slot is now available.");
+  }catch(error){
+    console.error(error);
+    alert("Unable to confirm return.");
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+$("confirmTrophyReturn").addEventListener("click",()=>{
+  confirmReturn("trophy");
+});
+
+$("confirmNonTrophyReturn").addEventListener("click",()=>{
+  confirmReturn("nonTrophy");
+});
+
+for(const slot of ["Trophy","NonTrophy"]){
+  $("manage"+slot+"Status").addEventListener("change",()=>{
+    updateManageSlotUI(slot==="Trophy"?"trophy":"nonTrophy");
+  });
+
+  $("manage"+slot+"Date").addEventListener("change",()=>{
+    updateManageSlotUI(slot==="Trophy"?"trophy":"nonTrophy");
+  });
+}
+
+$("manageStatus").addEventListener("change",()=>{
+  updateManageSlotUI("trophy");
+  updateManageSlotUI("nonTrophy");
 });
 
 $("addGameButton").addEventListener("click",()=>{
@@ -529,20 +921,17 @@ $("addGameButton").addEventListener("click",()=>{
 });
 
 $("saveNewGame").addEventListener("click",async()=>{
+  const btn=$("saveNewGame");
+
   try{
     const title=$("newGameTitle").value.trim();
     const genre=$("newGameGenre").value.trim();
     const image=$("newGameImage").value.trim();
-    const status=$("newGameStatus").value;
 
     if(!title||!genre||!image)
       throw Error("Please enter title, genre, and image.");
 
-    const prices=pricesFromForm("new");
-    const availableDate=dateToText($("newGameAvailableDate").value);
-
-    if(status==="upcoming"&&!availableDate)
-      throw Error("Please select the upcoming available date.");
+    const data=formGameData("new");
 
     const gameId=title.toLowerCase()
       .replace(/[^a-z0-9]+/g,"-")
@@ -551,6 +940,7 @@ $("saveNewGame").addEventListener("click",async()=>{
     if(!gameId)throw Error("Invalid game title.");
 
     const existing=await getDocs(collection(db,"games"));
+
     if(existing.docs.some(d=>d.id===gameId))
       throw Error("A game with this title already exists.");
 
@@ -561,28 +951,22 @@ $("saveNewGame").addEventListener("click",async()=>{
       type:genre.toLowerCase(),
       image,
       meta:"PS5 • Digital rental",
-      ...prices,
-      status,
-      availableDate:status==="upcoming"?availableDate:"",
-      trophyDate:status==="currently-rented"
-        ?dateToText($("newGameTrophyDate").value)
-        :"Available Now",
-      nonTrophyDate:status==="currently-rented"
-        ?dateToText($("newGameNonTrophyDate").value)
-        :"Available Now"
+      ...data
     };
 
-    const btn=$("saveNewGame");
     btn.disabled=true;
-    try{
-      await setDoc(doc(db,"games",gameId),game);
-      closeModal("addGameModal");
-      await loadAdminGames();
-      alert("New game added successfully! 🎮");
-    }finally{btn.disabled=false}
+
+    await setDoc(doc(db,"games",gameId),game);
+
+    closeModal("addGameModal");
+    await loadAdminGames();
+
+    alert("New game added successfully! 🎮");
   }catch(error){
     console.error(error);
     alert(error.message||"Unable to add game.");
+  }finally{
+    btn.disabled=false;
   }
 });
 
@@ -608,7 +992,9 @@ async function loadWaitingList(){
 
   try{
     const snapshot=await getDocs(collection(db,"waitingList"));
-    const reservations=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+    const reservations=snapshot.docs.map(d=>({
+      id:d.id,...d.data()
+    }));
 
     reservations.sort((a,b)=>
       (a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)
@@ -623,15 +1009,19 @@ async function loadWaitingList(){
 
     for(const r of reservations){
       const name=r.gameName||r.gameId||"Unknown Game";
-      if(!groups[name])groups[name]={trophy:[],nonTrophy:[]};
+
+      if(!groups[name]){
+        groups[name]={trophy:[],nonTrophy:[]};
+      }
 
       const account=String(r.accountType||"")
         .toLowerCase().replace(/[\s-]/g,"");
 
-      if(account.includes("non"))
+      if(account.includes("non")){
         groups[name].nonTrophy.push(r);
-      else
+      }else{
         groups[name].trophy.push(r);
+      }
     }
 
     container.innerHTML="";
@@ -642,7 +1032,8 @@ async function loadWaitingList(){
 
       const toggle=document.createElement("button");
       toggle.className="waiting-toggle";
-      toggle.textContent=`🎮 ${name} — ${lists.trophy.length+lists.nonTrophy.length} Waiting`;
+      toggle.textContent=
+        `🎮 ${name} — ${lists.trophy.length+lists.nonTrophy.length} Waiting`;
 
       const panel=document.createElement("div");
       panel.className="waiting-panel";
@@ -656,6 +1047,7 @@ async function loadWaitingList(){
       ]){
         const column=document.createElement("div");
         const heading=document.createElement("h4");
+
         heading.textContent=`${slot} (${items.length})`;
         column.appendChild(heading);
 
@@ -680,12 +1072,15 @@ async function loadWaitingList(){
           customer.textContent=r.customerName||"Unknown Customer";
 
           const details=document.createElement("div");
-          details.textContent=`${r.rentalPeriod||"N/A"} • ${date}`;
+          details.textContent=
+            `${r.rentalPeriod||"N/A"} • ${date}`;
 
           const remove=document.createElement("button");
           remove.textContent="🗑 Delete";
+
           remove.addEventListener("click",async()=>{
             if(!confirm("Delete this waiting-list reservation?"))return;
+
             try{
               remove.disabled=true;
               await deleteDoc(doc(db,"waitingList",r.id));
@@ -706,8 +1101,10 @@ async function loadWaitingList(){
       }
 
       panel.appendChild(columns);
+
       toggle.addEventListener("click",()=>{
-        panel.style.display=panel.style.display==="block"?"none":"block";
+        panel.style.display=
+          panel.style.display==="block"?"none":"block";
       });
 
       group.append(toggle,panel);
@@ -730,6 +1127,7 @@ for(const [button,modal] of [
   ["closeWaitingListModal","waitingListModal"]
 ]){
   $(button).addEventListener("click",()=>closeModal(modal));
+
   $(modal).addEventListener("click",event=>{
     if(event.target===$(modal))closeModal(modal);
   });
@@ -745,12 +1143,20 @@ onAuthStateChanged(auth,user=>{
     location.href="admin-login.html";
     return;
   }
+
   loadAdminGames().catch(error=>{
     console.error(error);
     alert("Unable to load admin games. Check Firebase access.");
   });
 });
-</script>
 
+/* Refresh due-for-return labels when the admin page stays open. */
+setInterval(()=>{
+  if(auth.currentUser){
+    loadAdminGames().catch(console.error);
+  }
+},60000);
+
+</script>
 </body>
 </html>
