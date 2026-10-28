@@ -1,4 +1,3 @@
-
 /* ==========================================
    JDIGITALSRENTAL — APP.JS
    Separate Trophy / Non-Trophy Prices
@@ -11,7 +10,9 @@ const DEFAULT_PRICES = {
   weeklyTrophy: 350,
   weeklyNonTrophy: 300,
   monthlyTrophy: 800,
-  monthlyNonTrophy: 700
+  monthlyNonTrophy: 700,
+  singleMonthlyTrophy: 500,
+  singleMonthlyNonTrophy: 400
 };
 
 let games = [
@@ -131,11 +132,24 @@ function normalizedAccount(account) {
 }
 
 function normalizedPeriod(period) {
-  return period === "week"
-    ? "week"
-    : period === "month" || period === "monthly"
-      ? "month"
-      : "";
+  const value = String(period || "").toLowerCase().trim();
+
+  if (["week", "weekly", "1week"].includes(value))
+    return "week";
+
+  if (
+    ["single", "single-month", "singlemonthly", "month-single"]
+      .includes(value)
+  )
+    return "single";
+
+  if (
+    ["month", "monthly", "unli", "month-unli", "monthly-unli"]
+      .includes(value)
+  )
+    return "month";
+
+  return "";
 }
 
 function accountLabel(account) {
@@ -151,16 +165,83 @@ function periodLabel(period) {
 }
 
 function planLabel(period) {
-  return normalizedPeriod(period) === "week"
+  const plan = normalizedPeriod(period);
+
+  return plan === "week"
     ? "Regular Weekly Rental"
-    : "Monthly UNLI SWAP";
+    : plan === "single"
+      ? "Monthly Single Game (No Swap)"
+      : "Monthly UNLI SWAP";
 }
 
 function swapRules(period) {
-  return normalizedPeriod(period) === "week"
+  const plan = normalizedPeriod(period);
+
+  return plan === "week"
     ? "Includes 1 game swap during the rental period. One game at a time, subject to availability."
-    : "Unlimited game swaps, maximum 1 swap per week. One game at a time, subject to availability.";
+    : plan === "single"
+      ? "No game swaps. One selected game for the full month."
+      : "Unlimited game swaps, maximum 1 swap per week. One game at a time, subject to availability.";
 }
+
+/* ==========================================
+   INSTALL 3 RENTAL PLAN BUTTONS
+   ========================================== */
+
+// Add the third plan to existing rental and upcoming
+// reservation modals.
+//
+// No index.html changes required as long as the
+// original plan buttons exist.
+
+function installRentalPlanButtons() {
+  for (const [modalId, buttonClass] of [
+    ["rentalModal", "period-option"],
+    ["upcomingReservationModal", "upcoming-period-option"]
+  ]) {
+    const modal = document.getElementById(modalId);
+
+    if (!modal) continue;
+
+    const buttons = [
+      ...modal.querySelectorAll("." + buttonClass)
+    ];
+
+    const monthly = buttons.find(button =>
+      ["month", "monthly"].includes(
+        String(button.dataset.period || "").toLowerCase()
+      )
+    );
+
+    if (!monthly) continue;
+
+    monthly.dataset.period = "month";
+    monthly.textContent = "♾️ 1 Month UNLI SWAP";
+
+    if (!buttons.some(
+      button => button.dataset.period === "single"
+    )) {
+      const single = monthly.cloneNode(true);
+
+      single.classList.remove("active");
+      single.dataset.period = "single";
+      single.textContent =
+        "🎮 1 Month Single Game (No Swap)";
+
+      monthly.before(single);
+    }
+
+    const weekly = buttons.find(
+      button => button.dataset.period === "week"
+    );
+
+    if (weekly) {
+      weekly.textContent = "📅 1 Week Regular";
+    }
+  }
+}
+
+installRentalPlanButtons();
 
 /* ==========================================
    ADMIN-CONTROLLED PRICES
@@ -194,6 +275,16 @@ function gamePrices(game) {
     monthlyNonTrophy: Number(
       game?.monthlyNonTrophy ??
       DEFAULT_PRICES.monthlyNonTrophy
+    ),
+
+    singleMonthlyTrophy: Number(
+      game?.singleMonthlyTrophy ??
+      DEFAULT_PRICES.singleMonthlyTrophy
+    ),
+
+    singleMonthlyNonTrophy: Number(
+      game?.singleMonthlyNonTrophy ??
+      DEFAULT_PRICES.singleMonthlyNonTrophy
     )
   };
 }
@@ -214,6 +305,16 @@ function getRentalPrice(game, period, account) {
 
     if (type === "nonTrophy") {
       return prices.weeklyNonTrophy;
+    }
+  }
+
+  if (duration === "single") {
+    if (type === "trophy") {
+      return prices.singleMonthlyTrophy;
+    }
+
+    if (type === "nonTrophy") {
+      return prices.singleMonthlyNonTrophy;
     }
   }
 
@@ -298,23 +399,33 @@ function slotIsDueForReturn(game, account) {
   if (!slotIsRented(game, account)) return false;
 
   const type = normalizedAccount(account);
+
   if (!type) return false;
 
   const raw = type === "trophy"
     ? game.trophyDate
     : game.nonTrophyDate;
 
-  if (!raw || /available now/i.test(String(raw))) return false;
+  if (
+    !raw ||
+    /available now/i.test(String(raw))
+  ) {
+    return false;
+  }
 
   const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return false;
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
 
   const today = new Date();
+
   today.setHours(0, 0, 0, 0);
   date.setHours(0, 0, 0, 0);
+
   return date <= today;
 }
-
 function availabilityHTML(game, account) {
   const rented = slotIsRented(game, account);
   const due = rented && slotIsDueForReturn(game, account);
@@ -481,7 +592,9 @@ function render() {
         <div class="mega-savings">
           🔄 Weekly: 1 game swap
           <br>
-          ♾️ Monthly: UNLI SWAP (max 1/week)
+          🎮 Monthly Single Game: No Swap
+          <br>
+          ♾️ Monthly UNLI SWAP: Max 1 swap/week
         </div>
 
         <div class="game-bottom">
@@ -489,6 +602,10 @@ function render() {
             <span>📅 WEEKLY</span>
             <span>🏆 Trophy: ${money(p.weeklyTrophy)}</span>
             <span>🎮 Non-Trophy: ${money(p.weeklyNonTrophy)}</span>
+
+            <span>🎮 1 MONTH SINGLE GAME (NO SWAP)</span>
+            <span>🏆 Trophy: ${money(p.singleMonthlyTrophy)}</span>
+            <span>🎮 Non-Trophy: ${money(p.singleMonthlyNonTrophy)}</span>
 
             <span>♾️ MONTHLY UNLI SWAP</span>
             <span>🏆 Trophy: ${money(p.monthlyTrophy)}</span>
@@ -603,7 +720,6 @@ document.querySelectorAll("[data-availability]")
 /* ==========================================
    RENTAL MODAL
    ========================================== */
-
 function updateRentalPrice() {
   if (!modalPrice) return;
 
@@ -752,7 +868,9 @@ continueRental?.addEventListener("click", async () => {
         gameName: selectedGame.name,
         customerName,
         accountType: accountLabel(selectedAccount),
-        rentalPeriod: periodLabel(selectedPeriod)
+        rentalPeriod: periodLabel(selectedPeriod),
+        rentalPlan: planLabel(selectedPeriod),
+        price
       });
     } catch (error) {
       console.error(error);
@@ -807,7 +925,6 @@ rentalModal?.addEventListener("click", event => {
 /* ==========================================
    UPCOMING GAMES
    ========================================== */
-
 function getUpcomingGames() {
   return Array.isArray(window.upcomingGames)
     ? window.upcomingGames
@@ -836,6 +953,7 @@ function renderUpcomingGames() {
 
   upcoming.forEach(game => {
     const p = gamePrices(game);
+
     const counts =
       window.waitingListCounts?.[game.name] || {};
 
@@ -875,11 +993,23 @@ function renderUpcomingGames() {
           <div>🎮 Non-Trophy: ${Number(counts.nonTrophy) || 0}</div>
         </div>
 
+        <div class="mega-savings">
+          🔄 Weekly: 1 game swap
+          <br>
+          🎮 Monthly Single Game: No Swap
+          <br>
+          ♾️ Monthly UNLI SWAP: Max 1 swap/week
+        </div>
+
         <div class="game-bottom">
           <div class="price">
             <span>📅 WEEKLY</span>
             <span>🏆 Trophy: ${money(p.weeklyTrophy)}</span>
             <span>🎮 Non-Trophy: ${money(p.weeklyNonTrophy)}</span>
+
+            <span>🎮 1 MONTH SINGLE GAME (NO SWAP)</span>
+            <span>🏆 Trophy: ${money(p.singleMonthlyTrophy)}</span>
+            <span>🎮 Non-Trophy: ${money(p.singleMonthlyNonTrophy)}</span>
 
             <span>♾️ MONTHLY UNLI SWAP</span>
             <span>🏆 Trophy: ${money(p.monthlyTrophy)}</span>
@@ -1071,7 +1201,9 @@ continueUpcoming?.addEventListener("click", async () => {
       gameName: game.name,
       customerName,
       accountType: accountLabel(selectedUpcomingAccount),
-      rentalPeriod: periodLabel(selectedUpcomingPeriod)
+      rentalPeriod: periodLabel(selectedUpcomingPeriod),
+      rentalPlan: planLabel(selectedUpcomingPeriod),
+      price
     });
   } catch (error) {
     console.error(error);
@@ -1202,12 +1334,7 @@ if (Array.isArray(window.upcomingGames)) {
 }
 
 /* ==========================================
-   END — JDIGITALSRENTAL
-   ========================================== */
-
-
-/* ==========================================
-   JDIGITALSRENTAL — FACEBOOK NOTICE POPUP
+   FACEBOOK NOTICE POPUP
    ========================================== */
 
 window.showFacebookReminder = function(message) {
@@ -1377,7 +1504,9 @@ window.showFacebookReminder = function(message) {
       textArea.value = message;
       document.body.appendChild(textArea);
       textArea.select();
+
       const copied = document.execCommand("copy");
+
       textArea.remove();
 
       copyButton.textContent = copied
@@ -1386,3 +1515,7 @@ window.showFacebookReminder = function(message) {
     }
   };
 };
+
+/* ==========================================
+   END — JDIGITALSRENTAL APP.JS
+   ========================================== */
