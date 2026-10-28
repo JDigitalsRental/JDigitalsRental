@@ -769,7 +769,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
   getFirestore,collection,doc,getDocs,
-  setDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp
+  setDoc,getDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig={
@@ -2049,6 +2049,28 @@ async function loadWaitingList(){
       collection(db,"waitingList")
     );
 
+    // Publish anonymized counters for older reservations, too.
+    // Admin-only writes; customer names never enter the public collection.
+    for(let i=0;i<snapshot.docs.length;i+=400){
+      const chunk=snapshot.docs.slice(i,i+400);
+      const publicDocs=await Promise.all(chunk.map(d=>
+        getDoc(doc(db,"publicWaitingList",d.id))
+      ));
+      const batch=writeBatch(db);
+      let changes=0;
+      chunk.forEach((d,j)=>{
+        if(publicDocs[j].exists())return;
+        const r=d.data();
+        batch.set(doc(db,"publicWaitingList",d.id),{
+          gameId:String(r.gameId||""),
+          gameName:String(r.gameName||r.gameId||"Unknown Game"),
+          accountType:String(r.accountType||"Trophy")
+        });
+        changes++;
+      });
+      if(changes)await batch.commit();
+    }
+
     const reservations=snapshot.docs.map(d=>({
       id:d.id,
       ...d.data()
@@ -2160,9 +2182,10 @@ async function loadWaitingList(){
             try{
               remove.disabled=true;
 
-              await deleteDoc(
-                doc(db,"waitingList",r.id)
-              );
+              const batch=writeBatch(db);
+              batch.delete(doc(db,"waitingList",r.id));
+              batch.delete(doc(db,"publicWaitingList",r.id));
+              await batch.commit();
 
               await loadWaitingList();
               await loadAdminGames();
@@ -2265,6 +2288,8 @@ onAuthStateChanged(auth,user=>{
   }
 
   loadActivityHistory();
+  // Sync existing reservations once when admin opens dashboard.
+  loadWaitingList().catch(error=>console.error("Counter sync:",error));
 
   loadAdminGames().catch(error=>{
     console.error(error);
