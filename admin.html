@@ -356,7 +356,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
     Record payments separately.
   </div>
 </main>
-
 <!-- ADD GAME -->
 
 <div id="addGameModal" class="manage-modal">
@@ -381,6 +380,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       placeholder="Action, RPG, Adventure"
     >
 
+    <p class="note">🟢 Overall availability is calculated automatically from the Trophy and Non-Trophy slots. Mark Upcoming only for unreleased games.</p>
     <h3 class="form-heading">📅 Weekly Prices</h3>
 
     <div class="form-grid">
@@ -457,12 +457,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </div>
     </div>
 
-    <label>Game Status</label>
-    <select id="newGameStatus">
-      <option value="available">Available</option>
-      <option value="currently-rented">Currently Rented</option>
-      <option value="upcoming">Upcoming Game</option>
-    </select>
+    <label style="display:flex;align-items:center;gap:9px;font-size:14px">
+      <input id="newGameStatusUpcoming" type="checkbox" style="width:auto;accent-color:#168cff">
+      🗓️ Upcoming Game (not released yet)
+    </label>
+    <input id="newGameStatus" type="hidden" value="available">
 
     <label>📅 Upcoming Release Date</label>
     <input
@@ -480,7 +479,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </select>
 
       <label>Expected Return Date</label>
-      <input id="newGameTrophyDate" type="date">
+      <input id="newTrophyDate" type="date">
     </div>
 
     <div class="slot-panel">
@@ -493,7 +492,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </select>
 
       <label>Expected Return Date</label>
-      <input id="newGameNonTrophyDate" type="date">
+      <input id="newNonTrophyDate" type="date">
     </div>
 
     <label>Game Image Path</label>
@@ -525,13 +524,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <p class="eyebrow">GAME MANAGEMENT</p>
     <h2 id="manageGameName">Manage Game</h2>
 
-    <label>Game Status</label>
-    <select id="manageStatus">
-      <option value="available">Available</option>
-      <option value="currently-rented">Currently Rented</option>
-      <option value="upcoming">Upcoming Game</option>
-    </select>
+    <label style="display:flex;align-items:center;gap:9px;font-size:14px">
+      <input id="manageStatusUpcoming" type="checkbox" style="width:auto;accent-color:#168cff">
+      🗓️ Upcoming Game (not released yet)
+    </label>
+    <input id="manageStatus" type="hidden" value="available">
 
+    <p class="note">🟢 Overall availability is calculated automatically from the Trophy and Non-Trophy slots. Mark Upcoming only for unreleased games.</p>
     <h3 class="form-heading">📅 Weekly Prices</h3>
 
     <div class="form-grid">
@@ -990,7 +989,9 @@ function dateToInput(value){
   if(/^\d{4}-\d{2}-\d{2}$/.test(value))
     return value;
 
-  const d=new Date(value);
+  const text=String(value).trim();
+  const match=text.match(/^(\w+)\s+(\d{1,2}),?\s+(\d{4})$/);
+  const d=match?new Date(`${match[1]} ${match[2]}, ${match[3]} 12:00:00`):new Date(text);
 
   if(Number.isNaN(d.getTime()))
     return "";
@@ -1015,13 +1016,9 @@ function dateToText(value){
 }
 
 function todayISO(){
-  const d=new Date();
-
-  return [
-    d.getFullYear(),
-    String(d.getMonth()+1).padStart(2,"0"),
-    String(d.getDate()).padStart(2,"0")
-  ].join("-");
+  return new Intl.DateTimeFormat("en-CA",{
+    timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit"
+  }).format(new Date());
 }
 
 function isDue(date){
@@ -1041,7 +1038,6 @@ function addWeek(iso){
     String(date.getDate()).padStart(2,"0")
   ].join("-");
 }
-
 function addMonth(iso){
   const [y,m,d]=iso.split("-").map(Number);
   const target=new Date(y,m,1);
@@ -1190,10 +1186,10 @@ function overallStatus(game){
 }
 
 function derivedGameStatus(trophy,nonTrophy,currentStatus){
-  if(currentStatus==="upcoming")
-    return "upcoming";
+  if(currentStatus==="upcoming")return "upcoming";
 
-  return trophy==="currently-rented"||
+  // Overall is available whenever at least one slot is available.
+  return trophy==="currently-rented" &&
     nonTrophy==="currently-rented"
       ?"currently-rented"
       :"available";
@@ -1399,7 +1395,6 @@ async function loadAdminGames(){
   const waiting=await getDocs(collection(db,"waitingList"));
   $("waitingGames").textContent=waiting.size;
 }
-
 function updateManageSlotUI(slot){
   const prefix=slot==="trophy"?"manageTrophy":"manageNonTrophy";
   const status=$(prefix+"Status").value;
@@ -1422,7 +1417,7 @@ function updateManageSlotUI(slot){
       :"confirmNonTrophyReturn"
   );
 
-  if($("manageStatus").value==="upcoming"){
+  if($("manageStatusUpcoming").checked){
     notice.textContent="This game is still upcoming.";
     confirmButton.disabled=true;
   }else if(status==="available"){
@@ -1450,12 +1445,9 @@ function openManage(id){
   $("manageGameName").textContent=
     g.name||g.title||"Manage Game";
 
+  $("manageStatusUpcoming").checked=g.status==="upcoming";
   $("manageStatus").value=
-    g.status==="upcoming"
-      ?"upcoming"
-      :overallStatus(g)==="available"
-        ?"available"
-        :"currently-rented";
+    g.status==="upcoming"?"upcoming":"available";
 
   for(const key of [
     "WeeklyTrophy",
@@ -1492,6 +1484,7 @@ function openManage(id){
 
   openModal("manageModal");
 }
+
 function readSlot(prefix){
   const status=$(prefix+"Status").value;
   const date=$(prefix+"Date").value;
@@ -1520,8 +1513,10 @@ function formGameData(prefix){
   );
 
   const selectedStatus=$(
-    prefix==="new"?"newGameStatus":"manageStatus"
-  ).value;
+    prefix==="new"
+      ?"newGameStatusUpcoming"
+      :"manageStatusUpcoming"
+  ).checked?"upcoming":"available";
 
   const availableDate=dateToText(
     $(prefix==="new"
@@ -1721,7 +1716,6 @@ function extensionElements(slot){
     )
   };
 }
-
 function getExtendedDate(iso,period){
   if(!iso)return "";
 
@@ -1741,7 +1735,7 @@ function updateExtensionPreview(slot){
 
   const shownDate=el.date.value;
 
-  if($("manageStatus").value==="upcoming"){
+  if($("manageStatusUpcoming").checked){
     el.preview.textContent=
       "Upcoming games cannot be extended.";
 
@@ -1917,10 +1911,21 @@ for(const slot of ["trophy","nonTrophy"]){
   );
 }
 
-$("manageStatus").addEventListener("change",()=>{
-  updateManageSlotUI("trophy");
-  updateManageSlotUI("nonTrophy");
-});
+/* UPCOMING GAME CHECKBOX */
+
+for(const prefix of ["newGameStatus","manageStatus"]){
+  $(prefix+"Upcoming").addEventListener("change",()=>{
+    $(prefix).value=
+      $(prefix+"Upcoming").checked
+        ?"upcoming"
+        :"available";
+
+    if(prefix==="manageStatus"){
+      updateManageSlotUI("trophy");
+      updateManageSlotUI("nonTrophy");
+    }
+  });
+}
 
 /* ADD NEW GAME */
 
@@ -2247,9 +2252,15 @@ $("logoutButton").addEventListener("click",async()=>{
 
 /* FIREBASE AUTHENTICATION */
 
+const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
 onAuthStateChanged(auth,user=>{
   if(!user){
     location.href="admin-login.html";
+    return;
+  }
+  if(user.uid!==ADMIN_UID){
+    alert("This account is not authorized to access the admin dashboard.");
+    signOut(auth).then(()=>location.href="admin-login.html");
     return;
   }
 
@@ -2266,7 +2277,7 @@ onAuthStateChanged(auth,user=>{
 /* AUTO REFRESH EVERY 60 SECONDS */
 
 setInterval(()=>{
-  if(auth.currentUser){
+  if(auth.currentUser?.uid===ADMIN_UID){
     loadAdminGames().catch(console.error);
   }
 },60000);
