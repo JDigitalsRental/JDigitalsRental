@@ -222,6 +222,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .priority-item button{flex-shrink:0;border:1px solid #377ac3;border-radius:8px;background:#103b70;color:white;padding:9px;font-weight:700}
 .priority-empty{color:#a9d9c7;font-size:13px}
 @media(min-width:700px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* RENTAL ACTIVITY HISTORY V3 */
+.history-panel{background:linear-gradient(145deg,#081a3d,#041027);border:1px solid #24518d;border-radius:15px;padding:16px;margin:20px 0}
+.history-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.history-head h3{margin:0;font-size:17px}
+.history-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.history-controls select,.history-controls button{background:#0b2145;border:1px solid #28558e;border-radius:9px;color:white;padding:10px;font-size:12px}
+.history-item{padding:12px 0;border-top:1px solid #193963}
+.history-item strong{display:block;font-size:13px;line-height:1.5}
+.history-item small{display:block;color:#9eb2d3;font-size:11px;margin-top:5px;line-height:1.6;overflow-wrap:anywhere}
+.history-empty{color:#a9d9c7;font-size:13px;line-height:1.6}
 </style>
 </head>
 
@@ -256,6 +266,23 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <section class="priority-panel" aria-live="polite">
     <h3>🚨 Priority Rental Alerts</h3>
     <div id="priorityAlerts">Loading rental alerts...</div>
+  </section>
+
+  <section class="history-panel" aria-label="Rental Activity History">
+    <div class="history-head"><h3>📋 Rental Activity History</h3><span class="eyebrow">V3</span></div>
+    <div class="history-controls">
+      <select id="historyFilter" aria-label="Filter activity">
+        <option value="all">All Activities</option>
+        <option value="extension">Extensions</option>
+        <option value="return">Returns</option>
+        <option value="status">Status Changes</option>
+        <option value="price">Price Updates</option>
+        <option value="game">Game Changes</option>
+      </select>
+      <button id="refreshHistory" type="button">↻ Refresh</button>
+    </div>
+    <div id="historyList" aria-live="polite">Loading history...</div>
+    <button id="moreHistory" type="button" style="display:none;margin-top:10px" class="manage">Show More</button>
   </section>
 
   <h2 class="section-title">🎮 Game Management</h2>
@@ -294,6 +321,30 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <div>
         <label>🎮 Non-Trophy Weekly</label>
         <input id="newWeeklyNonTrophy" type="number" min="0" value="300">
+      </div>
+    </div>
+
+    <h3 class="form-heading">🎮 1 Month — Single Game Only (No Swap)</h3>
+    <div class="form-grid">
+      <div>
+        <label>🏆 Trophy Single Game Monthly</label>
+        <input id="newSingleMonthlyTrophy" type="number" min="0" value="500">
+      </div>
+      <div>
+        <label>🎮 Non-Trophy Single Game Monthly</label>
+        <input id="newSingleMonthlyNonTrophy" type="number" min="0" value="400">
+      </div>
+    </div>
+
+    <h3 class="form-heading">🎮 1 Month — Single Game Only (No Swap)</h3>
+    <div class="form-grid">
+      <div>
+        <label>🏆 Trophy Single Game Monthly</label>
+        <input id="manageSingleMonthlyTrophy" type="number" min="0" value="500">
+      </div>
+      <div>
+        <label>🎮 Non-Trophy Single Game Monthly</label>
+        <input id="manageSingleMonthlyNonTrophy" type="number" min="0" value="400">
       </div>
     </div>
 
@@ -503,7 +554,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
   getFirestore,collection,doc,getDocs,
-  setDoc,updateDoc,deleteDoc
+  setDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig={
@@ -522,6 +573,86 @@ const db=getFirestore(app);
 const $=id=>document.getElementById(id);
 let gameCache=new Map();
 let selectedGameId=null;
+let historyItems=[];
+let historyVisible=15;
+
+function gameName(g){return g?.name||g?.title||"Untitled Game"}
+function activityData(type,gameId,g,details,slot=""){
+  return {type,gameId,gameName:gameName(g),slot,details,
+    actor:auth.currentUser?.email||auth.currentUser?.uid||"Admin",
+    createdAt:serverTimestamp()};
+}
+// Save the game mutation and its activity record together.
+// Firestore rules must permit writes to rentalActivity.
+async function commitActivity(kind,gameId,g,details,operation,slot=""){
+  const batch=writeBatch(db);
+  const gameRef=doc(db,"games",gameId);
+  if(operation.action==="update")batch.update(gameRef,operation.data);
+  else if(operation.action==="create")batch.set(gameRef,operation.data);
+  else if(operation.action==="delete")batch.delete(gameRef);
+  batch.set(doc(collection(db,"rentalActivity")),activityData(kind,gameId,g,details,slot));
+  await batch.commit();
+}
+function changeDetails(before,after){
+  const changes=[];
+  for(const slot of ["trophy","nonTrophy"]){
+    const fields=slotFields(slot);
+    const oldStatus=getSlotStatus(before,slot);
+    const newStatus=getSlotStatus(after,slot);
+    const label=slot==="trophy"?"Trophy":"Non-Trophy";
+    if(oldStatus!==newStatus)changes.push(`${label}: ${oldStatus} → ${newStatus}`);
+    const oldDate=dateToInput(before[fields.date]);
+    const newDate=dateToInput(after[fields.date]);
+    if(oldDate!==newDate)changes.push(`${label} return: ${oldDate||"Not set"} → ${newDate||"Not set"}`);
+  }
+  if(before.status!==after.status)changes.push(`Game: ${before.status||"Not set"} → ${after.status}`);
+  if(dateToInput(before.availableDate)!==dateToInput(after.availableDate))changes.push("Release date changed");
+  return changes;
+}
+function priceDetails(before,after){
+  const a=getPrices(before),b=getPrices(after),changes=[];
+  for(const [key,label] of [["weeklyTrophy","Trophy weekly"],["weeklyNonTrophy","Non-Trophy weekly"],["monthlyTrophy","Trophy UNLI SWAP"],["monthlyNonTrophy","Non-Trophy UNLI SWAP"],["singleMonthlyTrophy","Trophy single-game monthly"],["singleMonthlyNonTrophy","Non-Trophy single-game monthly"]]){
+    if(a[key]!==b[key])changes.push(`${label}: ${money(a[key])} → ${money(b[key])}`);
+  }
+  return changes;
+}
+function renderHistory(){
+  const filter=$("historyFilter").value;
+  const selected=historyItems.filter(a=>filter==="all"||a.type===filter||filter==="game"&&["game-added","game-deleted"].includes(a.type));
+  const box=$("historyList");box.replaceChildren();
+  if(!selected.length){
+    const p=document.createElement("p");p.className="history-empty";
+    p.textContent="No recorded activities for this filter yet.";box.appendChild(p);
+  }
+  const icons={extension:"📅",return:"✅",status:"🔄",price:"💰","game-added":"➕","game-deleted":"🗑️"};
+  for(const a of selected.slice(0,historyVisible)){
+    const item=document.createElement("div");item.className="history-item";
+    const heading=document.createElement("strong");
+    const titles={extension:"Rental Extended",return:"Rental Returned",status:"Status Updated",price:"Prices Updated","game-added":"Game Added","game-deleted":"Game Deleted"};
+    heading.textContent=`${icons[a.type]||"📝"} ${titles[a.type]||"Activity"} — ${a.gameName||"Unknown Game"}`;
+    const detail=document.createElement("small");
+    detail.textContent=(a.slot?a.slot+" • ":"")+(a.details||"");
+    const meta=document.createElement("small");
+    const dt=a.createdAt?.toDate?.();
+    meta.textContent=(dt?dt.toLocaleString("en-PH",{timeZone:"Asia/Manila"}):"Time pending")+" • "+(a.actor||"Admin");
+    item.append(heading,detail,meta);box.appendChild(item);
+  }
+  $("moreHistory").style.display=selected.length>historyVisible?"block":"none";
+}
+async function loadActivityHistory(){
+  try{
+    const snapshot=await getDocs(collection(db,"rentalActivity"));
+    historyItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+    historyItems.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    renderHistory();
+  }catch(err){
+    console.error("Activity history:",err);
+    $("historyList").textContent="History unavailable. Check Firestore rentalActivity read permissions.";
+  }
+}
+$("historyFilter").addEventListener("change",()=>{historyVisible=15;renderHistory()});
+$("refreshHistory").addEventListener("click",loadActivityHistory);
+$("moreHistory").addEventListener("click",()=>{historyVisible+=15;renderHistory()});
 
 const money=n=>"₱"+Number(n||0).toLocaleString("en-PH");
 
@@ -617,7 +748,7 @@ function numberFrom(id){
   const raw=$(id).value.trim();
 
   if(raw==="")
-    throw Error("Please complete all four price fields.");
+    throw Error("Please complete all six price fields.");
 
   const n=Number(raw);
 
@@ -632,12 +763,16 @@ function pricesFromForm(prefix){
   const weeklyNonTrophy=numberFrom(prefix+"WeeklyNonTrophy");
   const monthlyTrophy=numberFrom(prefix+"MonthlyTrophy");
   const monthlyNonTrophy=numberFrom(prefix+"MonthlyNonTrophy");
+  const singleMonthlyTrophy=numberFrom(prefix+"SingleMonthlyTrophy");
+  const singleMonthlyNonTrophy=numberFrom(prefix+"SingleMonthlyNonTrophy");
 
   return {
     weeklyTrophy,
     weeklyNonTrophy,
     monthlyTrophy,
     monthlyNonTrophy,
+    singleMonthlyTrophy,
+    singleMonthlyNonTrophy,
     weekly:weeklyTrophy,
     monthly:monthlyTrophy
   };
@@ -648,7 +783,9 @@ function getPrices(g){
     weeklyTrophy:Number(g.weeklyTrophy??g.weekly??350),
     weeklyNonTrophy:Number(g.weeklyNonTrophy??300),
     monthlyTrophy:Number(g.monthlyTrophy??800),
-    monthlyNonTrophy:Number(g.monthlyNonTrophy??700)
+    monthlyNonTrophy:Number(g.monthlyNonTrophy??700),
+    singleMonthlyTrophy:Number(g.singleMonthlyTrophy??500),
+    singleMonthlyNonTrophy:Number(g.singleMonthlyNonTrophy??400)
   };
 }
 
@@ -819,12 +956,20 @@ async function loadAdminGames(){
           <strong>${money(p.weeklyNonTrophy)}</strong>
         </div>
         <div class="price-box">
-          <small>🏆 Monthly Trophy</small>
+          <small>🏆 Monthly UNLI Trophy</small>
           <strong>${money(p.monthlyTrophy)}</strong>
         </div>
         <div class="price-box">
-          <small>🎮 Monthly Non-Trophy</small>
+          <small>🎮 Monthly UNLI Non-Trophy</small>
           <strong>${money(p.monthlyNonTrophy)}</strong>
+        </div>
+        <div class="price-box">
+          <small>🏆 1 Month Single Game — Trophy</small>
+          <strong>${money(p.singleMonthlyTrophy)}</strong>
+        </div>
+        <div class="price-box">
+          <small>🎮 1 Month Single Game — Non-Trophy</small>
+          <strong>${money(p.singleMonthlyNonTrophy)}</strong>
         </div>
       </div>
 
@@ -929,7 +1074,7 @@ function openManage(id){
   $("manageStatus").value=g.status==="upcoming"?"upcoming":
     overallStatus(g)==="available"?"available":"currently-rented";
 
-  for(const key of ["WeeklyTrophy","WeeklyNonTrophy","MonthlyTrophy","MonthlyNonTrophy"]){
+  for(const key of ["WeeklyTrophy","WeeklyNonTrophy","MonthlyTrophy","MonthlyNonTrophy","SingleMonthlyTrophy","SingleMonthlyNonTrophy"]){
     const field=key.charAt(0).toLowerCase()+key.slice(1);
     $("manage"+key).value=p[field];
   }
@@ -987,9 +1132,17 @@ $("saveGameChanges").addEventListener("click",async()=>{
   try{
     const updates=formGameData("manage");
     btn.disabled=true;
-    await updateDoc(doc(db,"games",selectedGameId),updates);
+    const previous=gameCache.get(selectedGameId);
+    const next={...previous,...updates};
+    const statusChanges=changeDetails(previous,next);
+    const priceChanges=priceDetails(previous,next);
+    const batch=writeBatch(db);
+    batch.update(doc(db,"games",selectedGameId),updates);
+    if(statusChanges.length)batch.set(doc(collection(db,"rentalActivity")),activityData("status",selectedGameId,previous,statusChanges.join(" | ")));
+    if(priceChanges.length)batch.set(doc(collection(db,"rentalActivity")),activityData("price",selectedGameId,previous,priceChanges.join(" | ")));
+    await batch.commit();
     closeModal("manageModal");
-    await loadAdminGames();
+    await loadAdminGames();await loadActivityHistory();
     alert("Game and slot statuses updated successfully! 🎮");
   }catch(error){
     console.error(error);
@@ -1032,9 +1185,11 @@ async function confirmReturn(slot){
         g.status
       )
     };
-    await updateDoc(doc(db,"games",selectedGameId),updates);
+    await commitActivity("return",selectedGameId,g,
+      `Previous return: ${g[fields.date]||"Not set"} → Available Now`,
+      {action:"update",data:updates},label);
     closeModal("manageModal");
-    await loadAdminGames();
+    await loadAdminGames();await loadActivityHistory();
     alert("✅ "+label+" return confirmed! Slot is now available.");
   }catch(error){
     console.error(error);
@@ -1154,9 +1309,11 @@ async function extendRental(slot){
         game.status
       )
     };
-    await updateDoc(doc(db,"games",selectedGameId),updates);
+    await commitActivity("extension",selectedGameId,game,
+      `${duration}: ${dateToText(oldDate)} → ${dateToText(newDate)}`,
+      {action:"update",data:updates},label);
     closeModal("manageModal");
-    await loadAdminGames();
+    await loadAdminGames();await loadActivityHistory();
     alert("✅ Rental extended successfully!\n\n"+
       label+" Slot\nNew Return Date: "+dateToText(newDate));
   }catch(error){
@@ -1218,9 +1375,9 @@ $("saveNewGame").addEventListener("click",async()=>{
     };
 
     btn.disabled=true;
-    await setDoc(doc(db,"games",gameId),game);
+    await commitActivity("game-added",gameId,game,"New game added",{action:"create",data:game});
     closeModal("addGameModal");
-    await loadAdminGames();
+    await loadAdminGames();await loadActivityHistory();
     alert("New game added successfully! 🎮");
   }catch(error){
     console.error(error);
@@ -1237,10 +1394,11 @@ $("deleteGame").addEventListener("click",async()=>{
   if(!confirm("Delete this game permanently?"))return;
 
   try{
-    await deleteDoc(doc(db,"games",selectedGameId));
+    const oldGame=gameCache.get(selectedGameId);
+    await commitActivity("game-deleted",selectedGameId,oldGame,"Game removed from catalog",{action:"delete"});
     selectedGameId=null;
     closeModal("manageModal");
-    await loadAdminGames();
+    await loadAdminGames();await loadActivityHistory();
     alert("Game deleted successfully.");
   }catch(error){
     console.error(error);
@@ -1404,6 +1562,7 @@ onAuthStateChanged(auth,user=>{
     location.href="admin-login.html";
     return;
   }
+  loadActivityHistory();
   loadAdminGames().catch(error=>{
     console.error(error);
     alert("Unable to load admin games. Check Firebase access.");
