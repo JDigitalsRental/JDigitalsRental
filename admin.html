@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -222,6 +221,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .priority-item button{flex-shrink:0;border:1px solid #377ac3;border-radius:8px;background:#103b70;color:white;padding:9px;font-weight:700}
 .priority-empty{color:#a9d9c7;font-size:13px}
 @media(min-width:700px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 /* RENTAL ACTIVITY HISTORY V3 */
 .history-panel{background:linear-gradient(145deg,#081a3d,#041027);border:1px solid #24518d;border-radius:15px;padding:16px;margin:20px 0}
 .history-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -256,20 +256,56 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </p>
 
   <section class="stats" aria-label="Rental overview">
-    <div class="stat"><span>TOTAL GAMES</span><strong id="totalGames">—</strong></div>
-    <div class="stat"><span>ACTIVE RENTAL SLOTS</span><strong id="activeSlots">—</strong></div>
-    <div class="stat good"><span>AVAILABLE SLOTS</span><strong id="availableSlots">—</strong></div>
-    <div class="stat warning"><span>DUE TODAY</span><strong id="dueToday">—</strong></div>
-    <div class="stat alert"><span>OVERDUE SLOTS</span><strong id="overdueSlots">—</strong></div>
-    <div class="stat" id="waitingListCard" style="cursor:pointer" role="button" tabindex="0"><span>WAITING LIST ↗</span><strong id="waitingGames">—</strong></div>
+    <div class="stat">
+      <span>TOTAL GAMES</span>
+      <strong id="totalGames">—</strong>
+    </div>
+
+    <div class="stat">
+      <span>ACTIVE RENTAL SLOTS</span>
+      <strong id="activeSlots">—</strong>
+    </div>
+
+    <div class="stat good">
+      <span>AVAILABLE SLOTS</span>
+      <strong id="availableSlots">—</strong>
+    </div>
+
+    <div class="stat warning">
+      <span>DUE TODAY</span>
+      <strong id="dueToday">—</strong>
+    </div>
+
+    <div class="stat alert">
+      <span>OVERDUE SLOTS</span>
+      <strong id="overdueSlots">—</strong>
+    </div>
+
+    <div
+      class="stat"
+      id="waitingListCard"
+      style="cursor:pointer"
+      role="button"
+      tabindex="0"
+    >
+      <span>WAITING LIST ↗</span>
+      <strong id="waitingGames">—</strong>
+    </div>
   </section>
+
   <section class="priority-panel" aria-live="polite">
     <h3>🚨 Priority Rental Alerts</h3>
-    <div id="priorityAlerts">Loading rental alerts...</div>
+    <div id="priorityAlerts">
+      Loading rental alerts...
+    </div>
   </section>
 
   <section class="history-panel" aria-label="Rental Activity History">
-    <div class="history-head"><h3>📋 Rental Activity History</h3><span class="eyebrow">V3</span></div>
+    <div class="history-head">
+      <h3>📋 Rental Activity History</h3>
+      <span class="eyebrow">V3</span>
+    </div>
+
     <div class="history-controls">
       <select id="historyFilter" aria-label="Filter activity">
         <option value="all">All Activities</option>
@@ -279,84 +315,145 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <option value="price">Price Updates</option>
         <option value="game">Game Changes</option>
       </select>
-      <button id="refreshHistory" type="button">↻ Refresh</button>
+
+      <button id="refreshHistory" type="button">
+        ↻ Refresh
+      </button>
     </div>
-    <div id="historyList" aria-live="polite">Loading history...</div>
-    <button id="moreHistory" type="button" style="display:none;margin-top:10px" class="manage">Show More</button>
+
+    <div id="historyList" aria-live="polite">
+      Loading history...
+    </div>
+
+    <button
+      id="moreHistory"
+      type="button"
+      style="display:none;margin-top:10px"
+      class="manage"
+    >
+      Show More
+    </button>
   </section>
 
   <h2 class="section-title">🎮 Game Management</h2>
-  <button id="addGameButton" class="manage">➕ Add New Game</button>
+
+  <button id="addGameButton" class="manage">
+    ➕ Add New Game
+  </button>
+
   <section class="game-grid" id="gameGrid"></section>
 
   <div class="note">
-    🟡 Due Today means the expected return date is today. 🔴 Overdue means the expected return date has passed.
+    🟡 Due Today means the expected return date is today.
+    🔴 Overdue means the expected return date has passed.
+
     The slot stays rented until you confirm the renter has disabled
     the account.
+
     <br><br>
+
     📅 Rental extensions update the expected return date only.
     Record payments separately.
   </div>
 </main>
 
 <!-- ADD GAME -->
+
 <div id="addGameModal" class="manage-modal">
   <div class="manage-modal-card">
-    <button class="manage-close" id="closeAddGameModal">×</button>
+
+    <button class="manage-close" id="closeAddGameModal">
+      ×
+    </button>
+
     <p class="eyebrow">NEW GAME</p>
     <h2>➕ Add New Game</h2>
 
     <label>Game Title</label>
-    <input id="newGameTitle" placeholder="Game title">
+    <input
+      id="newGameTitle"
+      placeholder="Game title"
+    >
 
     <label>Genre</label>
-    <input id="newGameGenre" placeholder="Action, RPG, Adventure">
+    <input
+      id="newGameGenre"
+      placeholder="Action, RPG, Adventure"
+    >
 
     <h3 class="form-heading">📅 Weekly Prices</h3>
+
     <div class="form-grid">
       <div>
         <label>🏆 Trophy Weekly</label>
-        <input id="newWeeklyTrophy" type="number" min="0" value="350">
+        <input
+          id="newWeeklyTrophy"
+          type="number"
+          min="0"
+          value="350"
+        >
       </div>
+
       <div>
         <label>🎮 Non-Trophy Weekly</label>
-        <input id="newWeeklyNonTrophy" type="number" min="0" value="300">
+        <input
+          id="newWeeklyNonTrophy"
+          type="number"
+          min="0"
+          value="300"
+        >
       </div>
     </div>
 
-    <h3 class="form-heading">🎮 1 Month — Single Game Only (No Swap)</h3>
+    <h3 class="form-heading">
+      🎮 1 Month — Single Game Only (No Swap)
+    </h3>
+
     <div class="form-grid">
       <div>
         <label>🏆 Trophy Single Game Monthly</label>
-        <input id="newSingleMonthlyTrophy" type="number" min="0" value="500">
+        <input
+          id="newSingleMonthlyTrophy"
+          type="number"
+          min="0"
+          value="500"
+        >
       </div>
+
       <div>
         <label>🎮 Non-Trophy Single Game Monthly</label>
-        <input id="newSingleMonthlyNonTrophy" type="number" min="0" value="400">
+        <input
+          id="newSingleMonthlyNonTrophy"
+          type="number"
+          min="0"
+          value="400"
+        >
       </div>
     </div>
 
-    <h3 class="form-heading">🎮 1 Month — Single Game Only (No Swap)</h3>
-    <div class="form-grid">
-      <div>
-        <label>🏆 Trophy Single Game Monthly</label>
-        <input id="manageSingleMonthlyTrophy" type="number" min="0" value="500">
-      </div>
-      <div>
-        <label>🎮 Non-Trophy Single Game Monthly</label>
-        <input id="manageSingleMonthlyNonTrophy" type="number" min="0" value="400">
-      </div>
-    </div>
+    <h3 class="form-heading">
+      ♾️ Monthly UNLI SWAP
+    </h3>
 
-    <h3 class="form-heading">♾️ Monthly UNLI SWAP</h3>
     <div class="form-grid">
       <div>
         <label>🏆 Trophy Monthly</label>
-        <input id="newMonthlyTrophy" type="number" min="0" value="800">
+        <input
+          id="newMonthlyTrophy"
+          type="number"
+          min="0"
+          value="800"
+        >
       </div>
+
       <div>
         <label>🎮 Non-Trophy Monthly</label>
-        <input id="newMonthlyNonTrophy" type="number" min="0" value="700">
+        <input
+          id="newMonthlyNonTrophy"
+          type="number"
+          min="0"
+          value="700"
+        >
       </div>
     </div>
 
@@ -368,43 +465,63 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </select>
 
     <label>📅 Upcoming Release Date</label>
-    <input id="newGameAvailableDate" type="date">
+    <input
+      id="newGameAvailableDate"
+      type="date"
+    >
 
     <div class="slot-panel">
       <h3>🏆 Trophy Slot</h3>
+
       <label>Slot Status</label>
       <select id="newTrophyStatus">
         <option value="available">Available</option>
         <option value="currently-rented">Currently Rented</option>
       </select>
+
       <label>Expected Return Date</label>
       <input id="newGameTrophyDate" type="date">
     </div>
 
     <div class="slot-panel">
       <h3>🎮 Non-Trophy Slot</h3>
+
       <label>Slot Status</label>
       <select id="newNonTrophyStatus">
         <option value="available">Available</option>
         <option value="currently-rented">Currently Rented</option>
       </select>
+
       <label>Expected Return Date</label>
       <input id="newGameNonTrophyDate" type="date">
     </div>
 
     <label>Game Image Path</label>
-    <input id="newGameImage" placeholder="assets/game-name.jpg">
+    <input
+      id="newGameImage"
+      placeholder="assets/game-name.jpg"
+    >
 
-    <button id="saveNewGame" class="save-game" style="margin-top:20px">
+    <button
+      id="saveNewGame"
+      class="save-game"
+      style="margin-top:20px"
+    >
       ➕ Add Game
     </button>
+
   </div>
 </div>
 
 <!-- MANAGE GAME -->
+
 <div id="manageModal" class="manage-modal">
   <div class="manage-modal-card">
-    <button class="manage-close" id="closeManageModal">×</button>
+
+    <button class="manage-close" id="closeManageModal">
+      ×
+    </button>
+
     <p class="eyebrow">GAME MANAGEMENT</p>
     <h2 id="manageGameName">Manage Game</h2>
 
@@ -416,37 +533,91 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </select>
 
     <h3 class="form-heading">📅 Weekly Prices</h3>
+
     <div class="form-grid">
       <div>
         <label>🏆 Trophy Weekly</label>
-        <input id="manageWeeklyTrophy" type="number" min="0">
+        <input
+          id="manageWeeklyTrophy"
+          type="number"
+          min="0"
+        >
       </div>
+
       <div>
         <label>🎮 Non-Trophy Weekly</label>
-        <input id="manageWeeklyNonTrophy" type="number" min="0">
+        <input
+          id="manageWeeklyNonTrophy"
+          type="number"
+          min="0"
+        >
       </div>
     </div>
 
-    <h3 class="form-heading">♾️ Monthly UNLI SWAP</h3>
+    <h3 class="form-heading">
+      🎮 1 Month — Single Game Only (No Swap)
+    </h3>
+
+    <div class="form-grid">
+      <div>
+        <label>🏆 Trophy Single Game Monthly</label>
+        <input
+          id="manageSingleMonthlyTrophy"
+          type="number"
+          min="0"
+          value="500"
+        >
+      </div>
+
+      <div>
+        <label>🎮 Non-Trophy Single Game Monthly</label>
+        <input
+          id="manageSingleMonthlyNonTrophy"
+          type="number"
+          min="0"
+          value="400"
+        >
+      </div>
+    </div>
+
+    <h3 class="form-heading">
+      ♾️ Monthly UNLI SWAP
+    </h3>
+
     <div class="form-grid">
       <div>
         <label>🏆 Trophy Monthly</label>
-        <input id="manageMonthlyTrophy" type="number" min="0">
+        <input
+          id="manageMonthlyTrophy"
+          type="number"
+          min="0"
+        >
       </div>
+
       <div>
         <label>🎮 Non-Trophy Monthly</label>
-        <input id="manageMonthlyNonTrophy" type="number" min="0">
+        <input
+          id="manageMonthlyNonTrophy"
+          type="number"
+          min="0"
+        >
       </div>
     </div>
 
     <label>📅 Upcoming Release Date</label>
     <input id="manageAvailableDate" type="date">
 
+    <!-- TROPHY SLOT -->
+
     <div class="slot-panel">
       <h3>🏆 Trophy Slot</h3>
+
       <div class="slot-row">
         <span>Current Status</span>
-        <span id="manageTrophyBadge" class="slot-badge available">
+        <span
+          id="manageTrophyBadge"
+          class="slot-badge available"
+        >
           AVAILABLE
         </span>
       </div>
@@ -472,25 +643,42 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <option value="month">+1 Month</option>
         </select>
 
-        <div id="trophyExtensionPreview" class="extension-preview">
+        <div
+          id="trophyExtensionPreview"
+          class="extension-preview"
+        >
           Select a rented game.
         </div>
 
-        <button id="extendTrophy" class="extension-button" type="button">
+        <button
+          id="extendTrophy"
+          class="extension-button"
+          type="button"
+        >
           📅 Confirm Trophy Extension
         </button>
       </div>
 
-      <button id="confirmTrophyReturn" class="confirm-return" type="button">
+      <button
+        id="confirmTrophyReturn"
+        class="confirm-return"
+        type="button"
+      >
         ✅ Confirm Trophy Return
       </button>
     </div>
 
+    <!-- NON-TROPHY SLOT -->
+
     <div class="slot-panel">
       <h3>🎮 Non-Trophy Slot</h3>
+
       <div class="slot-row">
         <span>Current Status</span>
-        <span id="manageNonTrophyBadge" class="slot-badge available">
+        <span
+          id="manageNonTrophyBadge"
+          class="slot-badge available"
+        >
           AVAILABLE
         </span>
       </div>
@@ -516,39 +704,67 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <option value="month">+1 Month</option>
         </select>
 
-        <div id="nonTrophyExtensionPreview" class="extension-preview">
+        <div
+          id="nonTrophyExtensionPreview"
+          class="extension-preview"
+        >
           Select a rented game.
         </div>
 
-        <button id="extendNonTrophy" class="extension-button" type="button">
+        <button
+          id="extendNonTrophy"
+          class="extension-button"
+          type="button"
+        >
           📅 Confirm Non-Trophy Extension
         </button>
       </div>
 
-      <button id="confirmNonTrophyReturn" class="confirm-return" type="button">
+      <button
+        id="confirmNonTrophyReturn"
+        class="confirm-return"
+        type="button"
+      >
         ✅ Confirm Non-Trophy Return
       </button>
     </div>
 
-    <button id="saveGameChanges" class="save-game" style="margin-top:20px">
+    <button
+      id="saveGameChanges"
+      class="save-game"
+      style="margin-top:20px"
+    >
       💾 Save Changes
     </button>
+
     <button id="deleteGame" class="delete-game">
       🗑️ Delete Game
     </button>
+
   </div>
 </div>
 
 <!-- WAITING LIST -->
+
 <div id="waitingListModal" class="manage-modal">
   <div class="manage-modal-card">
-    <button class="manage-close" id="closeWaitingListModal">×</button>
+
+    <button
+      class="manage-close"
+      id="closeWaitingListModal"
+    >
+      ×
+    </button>
+
     <p class="eyebrow">RESERVATIONS</p>
     <h2>📋 Waiting List</h2>
-    <div id="waitingListContainer">Loading...</div>
+
+    <div id="waitingListContainer">
+      Loading...
+    </div>
+
   </div>
 </div>
-
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -577,82 +793,177 @@ let historyItems=[];
 let historyVisible=15;
 
 function gameName(g){return g?.name||g?.title||"Untitled Game"}
+
 function activityData(type,gameId,g,details,slot=""){
-  return {type,gameId,gameName:gameName(g),slot,details,
+  return {
+    type,gameId,gameName:gameName(g),slot,details,
     actor:auth.currentUser?.email||auth.currentUser?.uid||"Admin",
-    createdAt:serverTimestamp()};
+    createdAt:serverTimestamp()
+  };
 }
-// Save the game mutation and its activity record together.
-// Firestore rules must permit writes to rentalActivity.
+
 async function commitActivity(kind,gameId,g,details,operation,slot=""){
   const batch=writeBatch(db);
   const gameRef=doc(db,"games",gameId);
+
   if(operation.action==="update")batch.update(gameRef,operation.data);
   else if(operation.action==="create")batch.set(gameRef,operation.data);
   else if(operation.action==="delete")batch.delete(gameRef);
-  batch.set(doc(collection(db,"rentalActivity")),activityData(kind,gameId,g,details,slot));
+
+  batch.set(
+    doc(collection(db,"rentalActivity")),
+    activityData(kind,gameId,g,details,slot)
+  );
+
   await batch.commit();
 }
+
 function changeDetails(before,after){
   const changes=[];
+
   for(const slot of ["trophy","nonTrophy"]){
     const fields=slotFields(slot);
     const oldStatus=getSlotStatus(before,slot);
     const newStatus=getSlotStatus(after,slot);
     const label=slot==="trophy"?"Trophy":"Non-Trophy";
-    if(oldStatus!==newStatus)changes.push(`${label}: ${oldStatus} → ${newStatus}`);
+
+    if(oldStatus!==newStatus)
+      changes.push(`${label}: ${oldStatus} → ${newStatus}`);
+
     const oldDate=dateToInput(before[fields.date]);
     const newDate=dateToInput(after[fields.date]);
-    if(oldDate!==newDate)changes.push(`${label} return: ${oldDate||"Not set"} → ${newDate||"Not set"}`);
+
+    if(oldDate!==newDate)
+      changes.push(`${label} return: ${oldDate||"Not set"} → ${newDate||"Not set"}`);
   }
-  if(before.status!==after.status)changes.push(`Game: ${before.status||"Not set"} → ${after.status}`);
-  if(dateToInput(before.availableDate)!==dateToInput(after.availableDate))changes.push("Release date changed");
+
+  if(before.status!==after.status)
+    changes.push(`Game: ${before.status||"Not set"} → ${after.status}`);
+
+  if(dateToInput(before.availableDate)!==dateToInput(after.availableDate))
+    changes.push("Release date changed");
+
   return changes;
 }
+
 function priceDetails(before,after){
-  const a=getPrices(before),b=getPrices(after),changes=[];
-  for(const [key,label] of [["weeklyTrophy","Trophy weekly"],["weeklyNonTrophy","Non-Trophy weekly"],["monthlyTrophy","Trophy UNLI SWAP"],["monthlyNonTrophy","Non-Trophy UNLI SWAP"],["singleMonthlyTrophy","Trophy single-game monthly"],["singleMonthlyNonTrophy","Non-Trophy single-game monthly"]]){
-    if(a[key]!==b[key])changes.push(`${label}: ${money(a[key])} → ${money(b[key])}`);
+  const a=getPrices(before);
+  const b=getPrices(after);
+  const changes=[];
+
+  const fields=[
+    ["weeklyTrophy","Trophy weekly"],
+    ["weeklyNonTrophy","Non-Trophy weekly"],
+    ["monthlyTrophy","Trophy UNLI SWAP"],
+    ["monthlyNonTrophy","Non-Trophy UNLI SWAP"],
+    ["singleMonthlyTrophy","Trophy single-game monthly"],
+    ["singleMonthlyNonTrophy","Non-Trophy single-game monthly"]
+  ];
+
+  for(const [key,label] of fields){
+    if(a[key]!==b[key])
+      changes.push(`${label}: ${money(a[key])} → ${money(b[key])}`);
   }
+
   return changes;
 }
+
 function renderHistory(){
   const filter=$("historyFilter").value;
-  const selected=historyItems.filter(a=>filter==="all"||a.type===filter||filter==="game"&&["game-added","game-deleted"].includes(a.type));
-  const box=$("historyList");box.replaceChildren();
+
+  const selected=historyItems.filter(a=>
+    filter==="all"||
+    a.type===filter||
+    (filter==="game"&&["game-added","game-deleted"].includes(a.type))
+  );
+
+  const box=$("historyList");
+  box.replaceChildren();
+
   if(!selected.length){
-    const p=document.createElement("p");p.className="history-empty";
-    p.textContent="No recorded activities for this filter yet.";box.appendChild(p);
+    const p=document.createElement("p");
+    p.className="history-empty";
+    p.textContent="No recorded activities for this filter yet.";
+    box.appendChild(p);
   }
-  const icons={extension:"📅",return:"✅",status:"🔄",price:"💰","game-added":"➕","game-deleted":"🗑️"};
+
+  const icons={
+    extension:"📅",
+    return:"✅",
+    status:"🔄",
+    price:"💰",
+    "game-added":"➕",
+    "game-deleted":"🗑️"
+  };
+
+  const titles={
+    extension:"Rental Extended",
+    return:"Rental Returned",
+    status:"Status Updated",
+    price:"Prices Updated",
+    "game-added":"Game Added",
+    "game-deleted":"Game Deleted"
+  };
+
   for(const a of selected.slice(0,historyVisible)){
-    const item=document.createElement("div");item.className="history-item";
+    const item=document.createElement("div");
+    item.className="history-item";
+
     const heading=document.createElement("strong");
-    const titles={extension:"Rental Extended",return:"Rental Returned",status:"Status Updated",price:"Prices Updated","game-added":"Game Added","game-deleted":"Game Deleted"};
-    heading.textContent=`${icons[a.type]||"📝"} ${titles[a.type]||"Activity"} — ${a.gameName||"Unknown Game"}`;
+    heading.textContent=
+      `${icons[a.type]||"📝"} ${titles[a.type]||"Activity"} — ${a.gameName||"Unknown Game"}`;
+
     const detail=document.createElement("small");
     detail.textContent=(a.slot?a.slot+" • ":"")+(a.details||"");
+
     const meta=document.createElement("small");
     const dt=a.createdAt?.toDate?.();
-    meta.textContent=(dt?dt.toLocaleString("en-PH",{timeZone:"Asia/Manila"}):"Time pending")+" • "+(a.actor||"Admin");
-    item.append(heading,detail,meta);box.appendChild(item);
+
+    meta.textContent=
+      (dt?dt.toLocaleString("en-PH",{timeZone:"Asia/Manila"}):"Time pending")+
+      " • "+(a.actor||"Admin");
+
+    item.append(heading,detail,meta);
+    box.appendChild(item);
   }
-  $("moreHistory").style.display=selected.length>historyVisible?"block":"none";
+
+  $("moreHistory").style.display=
+    selected.length>historyVisible?"block":"none";
 }
+
 async function loadActivityHistory(){
   try{
     const snapshot=await getDocs(collection(db,"rentalActivity"));
-    historyItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-    historyItems.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+
+    historyItems=snapshot.docs.map(d=>({
+      id:d.id,
+      ...d.data()
+    }));
+
+    historyItems.sort((a,b)=>
+      (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)
+    );
+
     renderHistory();
   }catch(err){
     console.error("Activity history:",err);
-    $("historyList").textContent="History unavailable. Check Firestore rentalActivity read permissions.";
+
+    $("historyList").textContent=
+      "History unavailable. Check Firestore rentalActivity read permissions.";
   }
 }
-$("historyFilter").addEventListener("change",()=>{historyVisible=15;renderHistory()});
+
+$("historyFilter").addEventListener("change",()=>{
+  historyVisible=15;
+  renderHistory();
+});
+
 $("refreshHistory").addEventListener("click",loadActivityHistory);
-$("moreHistory").addEventListener("click",()=>{historyVisible+=15;renderHistory()});
+
+$("moreHistory").addEventListener("click",()=>{
+  historyVisible+=15;
+  renderHistory();
+});
 
 const money=n=>"₱"+Number(n||0).toLocaleString("en-PH");
 
@@ -664,18 +975,25 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
   "'":"&#39;"
 }[c]));
 
-function openModal(id){$(id).classList.add("active")}
-function closeModal(id){$(id).classList.remove("active")}
+function openModal(id){
+  $(id).classList.add("active");
+}
+
+function closeModal(id){
+  $(id).classList.remove("active");
+}
 
 function dateToInput(value){
-  if(!value||/available now/i.test(String(value)))return "";
+  if(!value||/available now/i.test(String(value)))
+    return "";
 
   if(/^\d{4}-\d{2}-\d{2}$/.test(value))
     return value;
 
   const d=new Date(value);
 
-  if(Number.isNaN(d.getTime()))return "";
+  if(Number.isNaN(d.getTime()))
+    return "";
 
   return [
     d.getFullYear(),
@@ -726,7 +1044,6 @@ function addWeek(iso){
 
 function addMonth(iso){
   const [y,m,d]=iso.split("-").map(Number);
-
   const target=new Date(y,m,1);
 
   const lastDay=new Date(
@@ -802,12 +1119,18 @@ function normalizedSlotStatus(value){
   const text=String(value??"").toLowerCase().trim();
 
   if([
-    "currently-rented","currently rented","rented","true"
+    "currently-rented",
+    "currently rented",
+    "rented",
+    "true"
   ].includes(text))
     return "currently-rented";
 
   if([
-    "available","available now","false","open"
+    "available",
+    "available now",
+    "false",
+    "open"
   ].includes(text))
     return "available";
 
@@ -832,7 +1155,8 @@ function getSlotStatus(game,slot){
 }
 
 function slotState(game,slot){
-  if(game.status==="upcoming")return "upcoming";
+  if(game.status==="upcoming")
+    return "upcoming";
 
   if(getSlotStatus(game,slot)==="available")
     return "available";
@@ -850,7 +1174,8 @@ function slotText(state){
 }
 
 function overallStatus(game){
-  if(game.status==="upcoming")return "upcoming";
+  if(game.status==="upcoming")
+    return "upcoming";
 
   const a=slotState(game,"trophy");
   const b=slotState(game,"nonTrophy");
@@ -865,7 +1190,8 @@ function overallStatus(game){
 }
 
 function derivedGameStatus(trophy,nonTrophy,currentStatus){
-  if(currentStatus==="upcoming")return "upcoming";
+  if(currentStatus==="upcoming")
+    return "upcoming";
 
   return trophy==="currently-rented"||
     nonTrophy==="currently-rented"
@@ -903,7 +1229,11 @@ async function loadAdminGames(){
   gameCache.clear();
   $("gameGrid").innerHTML="";
 
-  let active=0, availableSlots=0, dueToday=0, overdue=0;
+  let active=0;
+  let availableSlots=0;
+  let dueToday=0;
+  let overdue=0;
+
   const alerts=[];
   const today=todayISO();
 
@@ -916,17 +1246,27 @@ async function loadAdminGames(){
         const state=slotState(g,slot);
         const label=slot==="trophy"?"🏆 Trophy":"🎮 Non-Trophy";
         const name=g.name||g.title||"Untitled Game";
-        if(state==="available") availableSlots++;
-        else {
+
+        if(state==="available"){
+          availableSlots++;
+        }else{
           active++;
+
           const raw=g[slotFields(slot).date];
           const iso=dateToInput(raw);
+
           if(iso===today){
             dueToday++;
-            alerts.push({id:gameDoc.id,name,label,iso,kind:"Due Today",rank:1});
-          }else if(iso && iso<today){
+            alerts.push({
+              id:gameDoc.id,name,label,iso,
+              kind:"Due Today",rank:1
+            });
+          }else if(iso&&iso<today){
             overdue++;
-            alerts.push({id:gameDoc.id,name,label,iso,kind:"Overdue",rank:0});
+            alerts.push({
+              id:gameDoc.id,name,label,iso,
+              kind:"Overdue",rank:0
+            });
           }
         }
       }
@@ -951,22 +1291,27 @@ async function loadAdminGames(){
           <small>🏆 Weekly Trophy</small>
           <strong>${money(p.weeklyTrophy)}</strong>
         </div>
+
         <div class="price-box">
           <small>🎮 Weekly Non-Trophy</small>
           <strong>${money(p.weeklyNonTrophy)}</strong>
         </div>
+
         <div class="price-box">
           <small>🏆 Monthly UNLI Trophy</small>
           <strong>${money(p.monthlyTrophy)}</strong>
         </div>
+
         <div class="price-box">
           <small>🎮 Monthly UNLI Non-Trophy</small>
           <strong>${money(p.monthlyNonTrophy)}</strong>
         </div>
+
         <div class="price-box">
           <small>🏆 1 Month Single Game — Trophy</small>
           <strong>${money(p.singleMonthlyTrophy)}</strong>
         </div>
+
         <div class="price-box">
           <small>🎮 1 Month Single Game — Non-Trophy</small>
           <strong>${money(p.singleMonthlyNonTrophy)}</strong>
@@ -1004,30 +1349,48 @@ async function loadAdminGames(){
 
   const alertBox=$("priorityAlerts");
   alertBox.replaceChildren();
-  alerts.sort((a,b)=>a.rank-b.rank||a.iso.localeCompare(b.iso));
+
+  alerts.sort((a,b)=>
+    a.rank-b.rank||a.iso.localeCompare(b.iso)
+  );
 
   if(!alerts.length){
     const empty=document.createElement("p");
     empty.className="priority-empty";
-    empty.textContent="✅ No due or overdue rental slots right now.";
+    empty.textContent=
+      "✅ No due or overdue rental slots right now.";
+
     alertBox.appendChild(empty);
   }
 
   for(const item of alerts){
     const row=document.createElement("div");
     row.className="priority-item";
+
     const info=document.createElement("div");
     const title=document.createElement("strong");
-    title.textContent=(item.rank===0?"🔴 ":"🟡 ")+item.kind+" — "+item.name;
+
+    title.textContent=
+      (item.rank===0?"🔴 ":"🟡 ")+
+      item.kind+" — "+item.name;
 
     const detail=document.createElement("small");
-    detail.textContent=item.label+" • Expected return: "+dateToText(item.iso)+" • Awaiting confirmed return";
+
+    detail.textContent=
+      item.label+
+      " • Expected return: "+
+      dateToText(item.iso)+
+      " • Awaiting confirmed return";
+
     info.append(title,detail);
 
     const button=document.createElement("button");
     button.type="button";
     button.textContent="Manage";
-    button.addEventListener("click",()=>openManage(item.id));
+
+    button.addEventListener("click",()=>{
+      openManage(item.id);
+    });
 
     row.append(info,button);
     alertBox.appendChild(row);
@@ -1041,13 +1404,23 @@ function updateManageSlotUI(slot){
   const prefix=slot==="trophy"?"manageTrophy":"manageNonTrophy";
   const status=$(prefix+"Status").value;
   const date=$(prefix+"Date").value;
-  const state=status==="available"?"available":isDue(date)?"due":"rented";
+
+  const state=
+    status==="available"?"available":
+    isDue(date)?"due":"rented";
+
   const badge=$(prefix+"Badge");
+
   badge.className="slot-badge "+state;
   badge.textContent=slotText(state);
 
   const notice=$(prefix+"Notice");
-  const confirmButton=$(slot==="trophy"?"confirmTrophyReturn":"confirmNonTrophyReturn");
+
+  const confirmButton=$(
+    slot==="trophy"
+      ?"confirmTrophyReturn"
+      :"confirmNonTrophyReturn"
+  );
 
   if($("manageStatus").value==="upcoming"){
     notice.textContent="This game is still upcoming.";
@@ -1059,44 +1432,76 @@ function updateManageSlotUI(slot){
     notice.textContent=state==="due"
       ?"Return date reached. Check the renter's disable video before confirming."
       :"Currently rented. Confirm return only after checking proof.";
+
     confirmButton.disabled=false;
   }
+
   updateExtensionPreview(slot);
 }
 
 function openManage(id){
   const g=gameCache.get(id);
   if(!g)return;
+
   selectedGameId=id;
+
   const p=getPrices(g);
 
-  $("manageGameName").textContent=g.name||g.title||"Manage Game";
-  $("manageStatus").value=g.status==="upcoming"?"upcoming":
-    overallStatus(g)==="available"?"available":"currently-rented";
+  $("manageGameName").textContent=
+    g.name||g.title||"Manage Game";
 
-  for(const key of ["WeeklyTrophy","WeeklyNonTrophy","MonthlyTrophy","MonthlyNonTrophy","SingleMonthlyTrophy","SingleMonthlyNonTrophy"]){
+  $("manageStatus").value=
+    g.status==="upcoming"
+      ?"upcoming"
+      :overallStatus(g)==="available"
+        ?"available"
+        :"currently-rented";
+
+  for(const key of [
+    "WeeklyTrophy",
+    "WeeklyNonTrophy",
+    "MonthlyTrophy",
+    "MonthlyNonTrophy",
+    "SingleMonthlyTrophy",
+    "SingleMonthlyNonTrophy"
+  ]){
     const field=key.charAt(0).toLowerCase()+key.slice(1);
     $("manage"+key).value=p[field];
   }
 
-  $("manageAvailableDate").value=dateToInput(g.availableDate);
-  $("manageTrophyStatus").value=getSlotStatus(g,"trophy");
-  $("manageNonTrophyStatus").value=getSlotStatus(g,"nonTrophy");
-  $("manageTrophyDate").value=dateToInput(g.trophyDate);
-  $("manageNonTrophyDate").value=dateToInput(g.nonTrophyDate);
+  $("manageAvailableDate").value=
+    dateToInput(g.availableDate);
+
+  $("manageTrophyStatus").value=
+    getSlotStatus(g,"trophy");
+
+  $("manageNonTrophyStatus").value=
+    getSlotStatus(g,"nonTrophy");
+
+  $("manageTrophyDate").value=
+    dateToInput(g.trophyDate);
+
+  $("manageNonTrophyDate").value=
+    dateToInput(g.nonTrophyDate);
+
   $("trophyExtensionPeriod").value="week";
   $("nonTrophyExtensionPeriod").value="week";
 
   updateManageSlotUI("trophy");
   updateManageSlotUI("nonTrophy");
+
   openModal("manageModal");
 }
-
 function readSlot(prefix){
   const status=$(prefix+"Status").value;
   const date=$(prefix+"Date").value;
-  if(status==="currently-rented"&&!date)
-    throw Error("Please enter an expected return date for every rented slot.");
+
+  if(status==="currently-rented"&&!date){
+    throw Error(
+      "Please enter an expected return date for every rented slot."
+    );
+  }
+
   return {
     status,
     date:status==="available"?"Available Now":dateToText(date)
@@ -1105,19 +1510,36 @@ function readSlot(prefix){
 
 function formGameData(prefix){
   const prices=pricesFromForm(prefix);
-  const trophy=readSlot(prefix==="new"?"newTrophy":"manageTrophy");
-  const nonTrophy=readSlot(prefix==="new"?"newNonTrophy":"manageNonTrophy");
-  const selectedStatus=$(prefix==="new"?"newGameStatus":"manageStatus").value;
-  const availableDate=dateToText(
-    $(prefix==="new"?"newGameAvailableDate":"manageAvailableDate").value
+
+  const trophy=readSlot(
+    prefix==="new"?"newTrophy":"manageTrophy"
   );
 
-  if(selectedStatus==="upcoming"&&!availableDate)
+  const nonTrophy=readSlot(
+    prefix==="new"?"newNonTrophy":"manageNonTrophy"
+  );
+
+  const selectedStatus=$(
+    prefix==="new"?"newGameStatus":"manageStatus"
+  ).value;
+
+  const availableDate=dateToText(
+    $(prefix==="new"
+      ?"newGameAvailableDate"
+      :"manageAvailableDate").value
+  );
+
+  if(selectedStatus==="upcoming"&&!availableDate){
     throw Error("Please select the upcoming release date.");
+  }
 
   return {
     ...prices,
-    status:derivedGameStatus(trophy.status,nonTrophy.status,selectedStatus),
+    status:derivedGameStatus(
+      trophy.status,
+      nonTrophy.status,
+      selectedStatus
+    ),
     availableDate:selectedStatus==="upcoming"?availableDate:"",
     trophyStatus:trophy.status,
     nonTrophyStatus:nonTrophy.status,
@@ -1126,24 +1548,64 @@ function formGameData(prefix){
   };
 }
 
+/* SAVE GAME CHANGES */
+
 $("saveGameChanges").addEventListener("click",async()=>{
   if(!selectedGameId)return;
+
   const btn=$("saveGameChanges");
+
   try{
     const updates=formGameData("manage");
+
     btn.disabled=true;
+
     const previous=gameCache.get(selectedGameId);
     const next={...previous,...updates};
+
     const statusChanges=changeDetails(previous,next);
     const priceChanges=priceDetails(previous,next);
+
     const batch=writeBatch(db);
-    batch.update(doc(db,"games",selectedGameId),updates);
-    if(statusChanges.length)batch.set(doc(collection(db,"rentalActivity")),activityData("status",selectedGameId,previous,statusChanges.join(" | ")));
-    if(priceChanges.length)batch.set(doc(collection(db,"rentalActivity")),activityData("price",selectedGameId,previous,priceChanges.join(" | ")));
+
+    batch.update(
+      doc(db,"games",selectedGameId),
+      updates
+    );
+
+    if(statusChanges.length){
+      batch.set(
+        doc(collection(db,"rentalActivity")),
+        activityData(
+          "status",
+          selectedGameId,
+          previous,
+          statusChanges.join(" | ")
+        )
+      );
+    }
+
+    if(priceChanges.length){
+      batch.set(
+        doc(collection(db,"rentalActivity")),
+        activityData(
+          "price",
+          selectedGameId,
+          previous,
+          priceChanges.join(" | ")
+        )
+      );
+    }
+
     await batch.commit();
+
     closeModal("manageModal");
-    await loadAdminGames();await loadActivityHistory();
+
+    await loadAdminGames();
+    await loadActivityHistory();
+
     alert("Game and slot statuses updated successfully! 🎮");
+
   }catch(error){
     console.error(error);
     alert(error.message||"Unable to save changes.");
@@ -1152,9 +1614,13 @@ $("saveGameChanges").addEventListener("click",async()=>{
   }
 });
 
+/* CONFIRM RENTAL RETURN */
+
 async function confirmReturn(slot){
   if(!selectedGameId)return;
+
   const g=gameCache.get(selectedGameId);
+
   if(!g||g.status==="upcoming")return;
 
   const label=slot==="trophy"?"Trophy":"Non-Trophy";
@@ -1167,15 +1633,24 @@ async function confirmReturn(slot){
 
   if(!confirm(
     "Have you checked the renter's disable video?\n\n"+
-    "Confirm return of "+label+" slot for "+(g.name||g.title)+"?"
+    "Confirm return of "+label+" slot for "+
+    (g.name||g.title)+"?"
   ))return;
 
-  const btn=$(slot==="trophy"?"confirmTrophyReturn":"confirmNonTrophyReturn");
+  const btn=$(
+    slot==="trophy"
+      ?"confirmTrophyReturn"
+      :"confirmNonTrophyReturn"
+  );
+
   btn.disabled=true;
 
   try{
-    const otherSlot=slot==="trophy"?"nonTrophy":"trophy";
+    const otherSlot=
+      slot==="trophy"?"nonTrophy":"trophy";
+
     const otherStatus=getSlotStatus(g,otherSlot);
+
     const updates={
       [fields.status]:"available",
       [fields.date]:"Available Now",
@@ -1185,12 +1660,26 @@ async function confirmReturn(slot){
         g.status
       )
     };
-    await commitActivity("return",selectedGameId,g,
+
+    await commitActivity(
+      "return",
+      selectedGameId,
+      g,
       `Previous return: ${g[fields.date]||"Not set"} → Available Now`,
-      {action:"update",data:updates},label);
+      {action:"update",data:updates},
+      label
+    );
+
     closeModal("manageModal");
-    await loadAdminGames();await loadActivityHistory();
-    alert("✅ "+label+" return confirmed! Slot is now available.");
+
+    await loadAdminGames();
+    await loadActivityHistory();
+
+    alert(
+      "✅ "+label+
+      " return confirmed! Slot is now available."
+    );
+
   }catch(error){
     console.error(error);
     alert("Unable to confirm return.");
@@ -1199,85 +1688,138 @@ async function confirmReturn(slot){
   }
 }
 
-$("confirmTrophyReturn").addEventListener("click",()=>confirmReturn("trophy"));
-$("confirmNonTrophyReturn").addEventListener("click",()=>confirmReturn("nonTrophy"));
+$("confirmTrophyReturn").addEventListener(
+  "click",
+  ()=>confirmReturn("trophy")
+);
+
+$("confirmNonTrophyReturn").addEventListener(
+  "click",
+  ()=>confirmReturn("nonTrophy")
+);
 
 /* RENTAL EXTENSION */
 
 function extensionElements(slot){
   const trophy=slot==="trophy";
+
   return {
-    date:$(trophy?"manageTrophyDate":"manageNonTrophyDate"),
-    status:$(trophy?"manageTrophyStatus":"manageNonTrophyStatus"),
-    period:$(trophy?"trophyExtensionPeriod":"nonTrophyExtensionPeriod"),
-    preview:$(trophy?"trophyExtensionPreview":"nonTrophyExtensionPreview"),
-    button:$(trophy?"extendTrophy":"extendNonTrophy")
+    date:$(
+      trophy?"manageTrophyDate":"manageNonTrophyDate"
+    ),
+    status:$(
+      trophy?"manageTrophyStatus":"manageNonTrophyStatus"
+    ),
+    period:$(
+      trophy?"trophyExtensionPeriod":"nonTrophyExtensionPeriod"
+    ),
+    preview:$(
+      trophy?"trophyExtensionPreview":"nonTrophyExtensionPreview"
+    ),
+    button:$(
+      trophy?"extendTrophy":"extendNonTrophy"
+    )
   };
 }
 
 function getExtendedDate(iso,period){
   if(!iso)return "";
-  return period==="month"?addMonth(iso):addWeek(iso);
+
+  return period==="month"
+    ?addMonth(iso)
+    :addWeek(iso);
 }
 
 function updateExtensionPreview(slot){
   const el=extensionElements(slot);
   const game=gameCache.get(selectedGameId);
   const fields=slotFields(slot);
-  const savedDate=game?dateToInput(game[fields.date]):"";
+
+  const savedDate=game
+    ?dateToInput(game[fields.date])
+    :"";
+
   const shownDate=el.date.value;
 
   if($("manageStatus").value==="upcoming"){
-    el.preview.textContent="Upcoming games cannot be extended.";
-    el.button.disabled=true;
-    return;
-  }
-  if(el.status.value!=="currently-rented"){
-    el.preview.textContent="This slot is available. Extension is not needed.";
-    el.button.disabled=true;
-    return;
-  }
-  if(!shownDate){
-    el.preview.textContent="Please enter an expected return date.";
-    el.button.disabled=true;
-    return;
-  }
-  if(!savedDate||savedDate!==shownDate){
-    el.preview.textContent="The return date has unsaved changes. Save Changes first, then reopen this game.";
+    el.preview.textContent=
+      "Upcoming games cannot be extended.";
+
     el.button.disabled=true;
     return;
   }
 
-  const next=getExtendedDate(savedDate,el.period.value);
+  if(el.status.value!=="currently-rented"){
+    el.preview.textContent=
+      "This slot is available. Extension is not needed.";
+
+    el.button.disabled=true;
+    return;
+  }
+
+  if(!shownDate){
+    el.preview.textContent=
+      "Please enter an expected return date.";
+
+    el.button.disabled=true;
+    return;
+  }
+
+  if(!savedDate||savedDate!==shownDate){
+    el.preview.textContent=
+      "The return date has unsaved changes. Save Changes first, then reopen this game.";
+
+    el.button.disabled=true;
+    return;
+  }
+
+  const next=getExtendedDate(
+    savedDate,
+    el.period.value
+  );
+
   el.preview.innerHTML=`
-    <div>Current Return: <strong>${esc(dateToText(savedDate))}</strong></div>
+    <div>
+      Current Return:
+      <strong>${esc(dateToText(savedDate))}</strong>
+    </div>
+
     <div style="color:#70ffb1;margin-top:6px">
-      New Return: <strong>${esc(dateToText(next))}</strong>
+      New Return:
+      <strong>${esc(dateToText(next))}</strong>
     </div>
   `;
+
   el.button.disabled=false;
 }
 
 async function extendRental(slot){
   if(!selectedGameId)return;
+
   const game=gameCache.get(selectedGameId);
   const el=extensionElements(slot);
+
   if(!game||game.status==="upcoming")return;
 
   const fields=slotFields(slot);
+
   if(getSlotStatus(game,slot)!=="currently-rented"){
     alert("This slot is not currently rented.");
     return;
   }
 
   const oldDate=dateToInput(game[fields.date]);
+
   if(!oldDate||oldDate!==el.date.value){
-    alert("Please save or reload the current return date before extending.");
+    alert(
+      "Please save or reload the current return date before extending."
+    );
     return;
   }
 
   const period=el.period.value;
   const newDate=getExtendedDate(oldDate,period);
+
   if(!newDate){
     alert("Invalid return date.");
     return;
@@ -1297,25 +1839,47 @@ async function extendRental(slot){
   ))return;
 
   el.button.disabled=true;
+
   try{
-    const otherSlot=slot==="trophy"?"nonTrophy":"trophy";
+    const otherSlot=
+      slot==="trophy"?"nonTrophy":"trophy";
+
     const otherStatus=getSlotStatus(game,otherSlot);
+
     const updates={
       [fields.status]:"currently-rented",
       [fields.date]:dateToText(newDate),
       status:derivedGameStatus(
-        slot==="trophy"?"currently-rented":otherStatus,
-        slot==="nonTrophy"?"currently-rented":otherStatus,
+        slot==="trophy"
+          ?"currently-rented"
+          :otherStatus,
+        slot==="nonTrophy"
+          ?"currently-rented"
+          :otherStatus,
         game.status
       )
     };
-    await commitActivity("extension",selectedGameId,game,
+
+    await commitActivity(
+      "extension",
+      selectedGameId,
+      game,
       `${duration}: ${dateToText(oldDate)} → ${dateToText(newDate)}`,
-      {action:"update",data:updates},label);
+      {action:"update",data:updates},
+      label
+    );
+
     closeModal("manageModal");
-    await loadAdminGames();await loadActivityHistory();
-    alert("✅ Rental extended successfully!\n\n"+
-      label+" Slot\nNew Return Date: "+dateToText(newDate));
+
+    await loadAdminGames();
+    await loadActivityHistory();
+
+    alert(
+      "✅ Rental extended successfully!\n\n"+
+      label+" Slot\nNew Return Date: "+
+      dateToText(newDate)
+    );
+
   }catch(error){
     console.error(error);
     alert("Unable to save rental extension.");
@@ -1324,14 +1888,33 @@ async function extendRental(slot){
   }
 }
 
-$("extendTrophy").addEventListener("click",()=>extendRental("trophy"));
-$("extendNonTrophy").addEventListener("click",()=>extendRental("nonTrophy"));
+$("extendTrophy").addEventListener(
+  "click",
+  ()=>extendRental("trophy")
+);
+
+$("extendNonTrophy").addEventListener(
+  "click",
+  ()=>extendRental("nonTrophy")
+);
 
 for(const slot of ["trophy","nonTrophy"]){
   const el=extensionElements(slot);
-  el.period.addEventListener("change",()=>updateExtensionPreview(slot));
-  el.date.addEventListener("change",()=>updateManageSlotUI(slot));
-  el.status.addEventListener("change",()=>updateManageSlotUI(slot));
+
+  el.period.addEventListener(
+    "change",
+    ()=>updateExtensionPreview(slot)
+  );
+
+  el.date.addEventListener(
+    "change",
+    ()=>updateManageSlotUI(slot)
+  );
+
+  el.status.addEventListener(
+    "change",
+    ()=>updateManageSlotUI(slot)
+  );
 }
 
 $("manageStatus").addEventListener("change",()=>{
@@ -1341,28 +1924,43 @@ $("manageStatus").addEventListener("change",()=>{
 
 /* ADD NEW GAME */
 
-$("addGameButton").addEventListener("click",()=>openModal("addGameModal"));
+$("addGameButton").addEventListener("click",()=>{
+  openModal("addGameModal");
+});
 
 $("saveNewGame").addEventListener("click",async()=>{
   const btn=$("saveNewGame");
+
   try{
     const title=$("newGameTitle").value.trim();
     const genre=$("newGameGenre").value.trim();
     const image=$("newGameImage").value.trim();
 
-    if(!title||!genre||!image)
-      throw Error("Please enter title, genre, and image.");
+    if(!title||!genre||!image){
+      throw Error(
+        "Please enter title, genre, and image."
+      );
+    }
 
     const data=formGameData("new");
+
     const gameId=title.toLowerCase()
       .replace(/[^a-z0-9]+/g,"-")
       .replace(/^-|-$/g,"");
 
-    if(!gameId)throw Error("Invalid game title.");
+    if(!gameId){
+      throw Error("Invalid game title.");
+    }
 
-    const existing=await getDocs(collection(db,"games"));
-    if(existing.docs.some(d=>d.id===gameId))
-      throw Error("A game with this title already exists.");
+    const existing=await getDocs(
+      collection(db,"games")
+    );
+
+    if(existing.docs.some(d=>d.id===gameId)){
+      throw Error(
+        "A game with this title already exists."
+      );
+    }
 
     const game={
       title,
@@ -1375,10 +1973,22 @@ $("saveNewGame").addEventListener("click",async()=>{
     };
 
     btn.disabled=true;
-    await commitActivity("game-added",gameId,game,"New game added",{action:"create",data:game});
+
+    await commitActivity(
+      "game-added",
+      gameId,
+      game,
+      "New game added",
+      {action:"create",data:game}
+    );
+
     closeModal("addGameModal");
-    await loadAdminGames();await loadActivityHistory();
+
+    await loadAdminGames();
+    await loadActivityHistory();
+
     alert("New game added successfully! 🎮");
+
   }catch(error){
     console.error(error);
     alert(error.message||"Unable to add game.");
@@ -1391,15 +2001,31 @@ $("saveNewGame").addEventListener("click",async()=>{
 
 $("deleteGame").addEventListener("click",async()=>{
   if(!selectedGameId)return;
-  if(!confirm("Delete this game permanently?"))return;
+
+  if(!confirm("Delete this game permanently?")){
+    return;
+  }
 
   try{
     const oldGame=gameCache.get(selectedGameId);
-    await commitActivity("game-deleted",selectedGameId,oldGame,"Game removed from catalog",{action:"delete"});
+
+    await commitActivity(
+      "game-deleted",
+      selectedGameId,
+      oldGame,
+      "Game removed from catalog",
+      {action:"delete"}
+    );
+
     selectedGameId=null;
+
     closeModal("manageModal");
-    await loadAdminGames();await loadActivityHistory();
+
+    await loadAdminGames();
+    await loadActivityHistory();
+
     alert("Game deleted successfully.");
+
   }catch(error){
     console.error(error);
     alert("Unable to delete game.");
@@ -1410,33 +2036,54 @@ $("deleteGame").addEventListener("click",async()=>{
 
 async function loadWaitingList(){
   const container=$("waitingListContainer");
+
   container.textContent="Loading reservations...";
 
   try{
-    const snapshot=await getDocs(collection(db,"waitingList"));
-    const reservations=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+    const snapshot=await getDocs(
+      collection(db,"waitingList")
+    );
+
+    const reservations=snapshot.docs.map(d=>({
+      id:d.id,
+      ...d.data()
+    }));
 
     reservations.sort((a,b)=>
-      (a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)
+      (a.createdAt?.seconds||0)-
+      (b.createdAt?.seconds||0)
     );
 
     if(!reservations.length){
-      container.textContent="No reservations yet. 🎮";
+      container.textContent=
+        "No reservations yet. 🎮";
       return;
     }
 
     const groups={};
+
     for(const r of reservations){
-      const name=r.gameName||r.gameId||"Unknown Game";
-      if(!groups[name])groups[name]={trophy:[],nonTrophy:[]};
+      const name=
+        r.gameName||
+        r.gameId||
+        "Unknown Game";
 
-      const account=String(r.accountType||"")
-        .toLowerCase().replace(/[\s-]/g,"");
+      if(!groups[name]){
+        groups[name]={
+          trophy:[],
+          nonTrophy:[]
+        };
+      }
 
-      if(account.includes("non"))
+      const account=String(
+        r.accountType||""
+      ).toLowerCase().replace(/[\s-]/g,"");
+
+      if(account.includes("non")){
         groups[name].nonTrophy.push(r);
-      else
+      }else{
         groups[name].trophy.push(r);
+      }
     }
 
     container.innerHTML="";
@@ -1447,9 +2094,12 @@ async function loadWaitingList(){
 
       const toggle=document.createElement("button");
       toggle.className="waiting-toggle";
-      toggle.textContent=`🎮 ${name} — ${
-        lists.trophy.length+lists.nonTrophy.length
-      } Waiting`;
+
+      toggle.textContent=
+        `🎮 ${name} — ${
+          lists.trophy.length+
+          lists.nonTrophy.length
+        } Waiting`;
 
       const panel=document.createElement("div");
       panel.className="waiting-panel";
@@ -1463,7 +2113,10 @@ async function loadWaitingList(){
       ]){
         const column=document.createElement("div");
         const heading=document.createElement("h4");
-        heading.textContent=`${slot} (${items.length})`;
+
+        heading.textContent=
+          `${slot} (${items.length})`;
+
         column.appendChild(heading);
 
         if(!items.length){
@@ -1484,20 +2137,31 @@ async function loadWaitingList(){
           number.textContent=`WAITING #${index+1}`;
 
           const customer=document.createElement("strong");
-          customer.textContent=r.customerName||"Unknown Customer";
+          customer.textContent=
+            r.customerName||"Unknown Customer";
 
           const details=document.createElement("div");
-          details.textContent=`${r.rentalPeriod||"N/A"} • ${date}`;
+          details.textContent=
+            `${r.rentalPeriod||"N/A"} • ${date}`;
 
           const remove=document.createElement("button");
           remove.textContent="🗑 Delete";
+
           remove.addEventListener("click",async()=>{
-            if(!confirm("Delete this waiting-list reservation?"))return;
+            if(!confirm(
+              "Delete this waiting-list reservation?"
+            ))return;
+
             try{
               remove.disabled=true;
-              await deleteDoc(doc(db,"waitingList",r.id));
+
+              await deleteDoc(
+                doc(db,"waitingList",r.id)
+              );
+
               await loadWaitingList();
               await loadAdminGames();
+
             }catch(error){
               console.error(error);
               alert("Unable to delete reservation.");
@@ -1505,7 +2169,13 @@ async function loadWaitingList(){
             }
           });
 
-          card.append(number,customer,details,remove);
+          card.append(
+            number,
+            customer,
+            details,
+            remove
+          );
+
           column.appendChild(card);
         });
 
@@ -1513,16 +2183,22 @@ async function loadWaitingList(){
       }
 
       panel.appendChild(columns);
+
       toggle.addEventListener("click",()=>{
-        panel.style.display=panel.style.display==="block"?"none":"block";
+        panel.style.display=
+          panel.style.display==="block"
+            ?"none"
+            :"block";
       });
 
       group.append(toggle,panel);
       container.appendChild(group);
     }
+
   }catch(error){
     console.error(error);
-    container.textContent="Unable to load reservations.";
+    container.textContent=
+      "Unable to load reservations.";
   }
 }
 
@@ -1531,7 +2207,11 @@ async function showWaitingList(){
   await loadWaitingList();
 }
 
-$("waitingListCard").addEventListener("click",showWaitingList);
+$("waitingListCard").addEventListener(
+  "click",
+  showWaitingList
+);
+
 $("waitingListCard").addEventListener("keydown",e=>{
   if(e.key==="Enter"||e.key===" "){
     e.preventDefault();
@@ -1546,28 +2226,44 @@ for(const [button,modal] of [
   ["closeManageModal","manageModal"],
   ["closeWaitingListModal","waitingListModal"]
 ]){
-  $(button).addEventListener("click",()=>closeModal(modal));
+  $(button).addEventListener(
+    "click",
+    ()=>closeModal(modal)
+  );
+
   $(modal).addEventListener("click",event=>{
-    if(event.target===$(modal))closeModal(modal);
+    if(event.target===$(modal)){
+      closeModal(modal);
+    }
   });
 }
+
+/* LOGOUT */
 
 $("logoutButton").addEventListener("click",async()=>{
   await signOut(auth);
   location.href="admin-login.html";
 });
 
+/* FIREBASE AUTHENTICATION */
+
 onAuthStateChanged(auth,user=>{
   if(!user){
     location.href="admin-login.html";
     return;
   }
+
   loadActivityHistory();
+
   loadAdminGames().catch(error=>{
     console.error(error);
-    alert("Unable to load admin games. Check Firebase access.");
+    alert(
+      "Unable to load admin games. Check Firebase access."
+    );
   });
 });
+
+/* AUTO REFRESH EVERY 60 SECONDS */
 
 setInterval(()=>{
   if(auth.currentUser){
