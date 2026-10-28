@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1657,7 +1656,8 @@ import {
   getFirestore,
   collection,
   onSnapshot,
-  addDoc,
+  doc,
+  writeBatch,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
@@ -1695,31 +1695,28 @@ window.saveWaitingList =
 
     try {
 
-      await addDoc(
-        collection(db, "waitingList"),
-        {
-          gameId:
-            gameId || "",
-
-          gameName:
-            gameName || "Unknown Game",
-
-          customerName:
-            customerName || "",
-
-          accountType:
-            accountType || "",
-
-          rentalPeriod:
-            rentalPeriod || "",
-
-          status:
-            "waiting",
-
-          createdAt:
-            serverTimestamp()
-        }
-      );
+      const reservationRef = doc(collection(db, "waitingList"));
+      const publicRef = doc(db, "publicWaitingList", reservationRef.id);
+      const safeGameId = String(gameId || "");
+      const safeGameName = String(gameName || "Unknown Game");
+      const safeAccountType = String(accountType || "");
+      const batch = writeBatch(db);
+      batch.set(reservationRef, {
+        gameId: safeGameId,
+        gameName: safeGameName,
+        customerName: customerName || "",
+        accountType: safeAccountType,
+        rentalPeriod: rentalPeriod || "",
+        status: "waiting",
+        createdAt: serverTimestamp()
+      });
+      // Public copy contains no customer name or personal details.
+      batch.set(publicRef, {
+        gameId: safeGameId,
+        gameName: safeGameName,
+        accountType: safeAccountType
+      });
+      await batch.commit();
 
       return true;
 
@@ -1861,7 +1858,7 @@ onSnapshot(
 window.waitingListCounts = {};
 
 onSnapshot(
-  collection(db, "waitingList"),
+  collection(db, "publicWaitingList"),
 
   (querySnapshot) => {
 
