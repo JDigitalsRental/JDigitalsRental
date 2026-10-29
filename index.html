@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- PHASE 5: Installable JDigitalsRental App -->
+<meta name="theme-color" content="#071329">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JDigitalsRental">
+<link rel="manifest" href="manifest.webmanifest?v=1">
+<link rel="apple-touch-icon" href="assets/jdigitals-logo.png">
 
 <title>JDigitalsRental | PS5 Game Rentals</title>
 
@@ -2136,5 +2143,14 @@ onSnapshot(
 </div>
 
 <script src="details.js?v=3"></script>
+<!-- PHASE 5: Register service worker on the public customer website only -->
+<script>
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .catch(function (error) { console.warn('App installation support:', error); });
+  });
+}
+</script>
 </body>
 </html>
