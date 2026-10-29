@@ -39,8 +39,71 @@
       gallery.appendChild(button);
     }
   };
+  // Embedded YouTube player; all media remains within the existing game details popup.
+  const trailerLink = $('jdrDetailsTrailer');
+  const trailerBox = document.createElement('section');
+  trailerBox.id = 'jdrTrailerPlayer';
+  trailerBox.hidden = true;
+  trailerBox.style.cssText = 'margin-top:14px;padding:12px;border:1px solid #285c9a;border-radius:12px;background:#07162e';
+  const trailerHead = document.createElement('div');
+  trailerHead.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px';
+  const trailerTitle = document.createElement('strong');
+  trailerTitle.textContent = '🎬 Official Game Trailer';
+  const stopButton = document.createElement('button');
+  stopButton.type = 'button';
+  stopButton.textContent = '✕ Close Video';
+  stopButton.style.cssText = 'border:1px solid #467cb9;border-radius:8px;background:#122c4f;color:white;padding:8px;cursor:pointer';
+  trailerHead.append(trailerTitle,stopButton);
+  const trailerFrameWrap = document.createElement('div');
+  trailerFrameWrap.style.cssText = 'width:100%;aspect-ratio:16/9;background:#000;border-radius:9px;overflow:hidden';
+  const fallback = document.createElement('a');
+  fallback.target = '_blank';
+  fallback.rel = 'noopener noreferrer';
+  fallback.textContent = '↗ If video cannot play, watch on YouTube';
+  fallback.style.cssText = 'display:inline-block;color:#a5d6ff;margin-top:9px;font-size:12px';
+  trailerBox.append(trailerHead,trailerFrameWrap,fallback);
+  trailerLink.closest('.jdr-details-actions').insertAdjacentElement('afterend',trailerBox);
+  const note = overlay.querySelector('.jdr-details-note');
+  if(note) note.textContent = 'Official trailers play here when a YouTube link is added in Admin Dashboard. Some videos do not permit embedding.';
+  function trailerVideoId(urlText) {
+    try {
+      const url = new URL(urlText);
+      if(url.protocol !== 'https:') return '';
+      const host = url.hostname.toLowerCase();
+      if(!['youtube.com','www.youtube.com','m.youtube.com','youtu.be','www.youtu.be','youtube-nocookie.com','www.youtube-nocookie.com'].includes(host)) return '';
+      let id = '';
+      if(host === 'youtu.be' || host === 'www.youtu.be') id = url.pathname.split('/')[1];
+      else if(url.pathname === '/watch') id = url.searchParams.get('v');
+      else if(/^\/(embed|shorts|live)\//.test(url.pathname)) id = url.pathname.split('/')[2];
+      return /^[A-Za-z0-9_-]{11}$/.test(id || '') ? id : '';
+    } catch { return ''; }
+  }
+  function stopTrailer() {
+    trailerFrameWrap.replaceChildren(); // Removes iframe and stops playback.
+    trailerBox.hidden = true;
+  }
+  stopButton.addEventListener('click', stopTrailer);
+  trailerLink.addEventListener('click', event => {
+    if(!currentGame) return;
+    const videoId = trailerVideoId(currentGame.trailerUrl);
+    if(!videoId) return; // No configured trailer: retain YouTube search link.
+    event.preventDefault();
+    if(!trailerBox.hidden) { stopTrailer(); return; }
+    const frame = document.createElement('iframe');
+    frame.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0';
+    frame.title = currentGame.name + ' Official Trailer';
+    frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.style.cssText = 'width:100%;height:100%;border:0;display:block';
+    trailerFrameWrap.replaceChildren(frame);
+    fallback.href = 'https://www.youtube.com/watch?v=' + videoId;
+    trailerBox.hidden = false;
+    trailerBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
   function open(game) {
     if (!game) return;
+    stopTrailer();
     currentGame = game;
     previousFocus = document.activeElement;
     $('jdrDetailsTitle').textContent = escapeText(game.name);
@@ -63,15 +126,16 @@
     const rented = typeof slotIsRented === 'function' && slotIsRented(game,'trophy') && slotIsRented(game,'nonTrophy');
     $('jdrDetailsRent').textContent = rented ? 'Join Waiting List ↗' : 'Rent Now ↗';
     const trailer = $('jdrDetailsTrailer');
-    const validTrailer = typeof game.trailerUrl === 'string' && /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(game.trailerUrl);
+    const validTrailer = !!trailerVideoId(game.trailerUrl);
     trailer.href = validTrailer ? game.trailerUrl : 'https://www.youtube.com/results?search_query=' + encodeURIComponent(game.name + ' official game trailer');
-    trailer.textContent = validTrailer ? '▶ Watch Trailer ↗' : '▶ Find Game Trailer ↗';
+    trailer.textContent = validTrailer ? '▶ Watch Official Trailer' : '▶ Find Game Trailer ↗';
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     $('jdrDetailsClose').focus();
   }
   function close() {
+    stopTrailer();
     overlay.classList.remove('open');
     overlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
