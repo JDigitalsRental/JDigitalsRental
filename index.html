@@ -11,7 +11,7 @@
   content="Affordable PS5 digital game rentals. Weekly rentals and monthly UNLI SWAP packages at JDigitalsRental."
 >
 
-<link rel="stylesheet" href="styles.css?v=30">
+<link rel="stylesheet" href="styles.css?v=31">
 
 <style>
 /* ==========================================
@@ -1935,7 +1935,37 @@ onSnapshot(
      MAIN APP SCRIPT
      ========================================== -->
 
-<script src="app.js?v=30"></script>
+<script src="app.js?v=31"></script>
+<script src="details.js?v=1"></script>
+
+
+
+<!-- PHASE 2: Game Details popup -->
+<div id="jdrDetails" class="jdr-details-overlay" aria-hidden="true">
+  <section class="jdr-details-panel" role="dialog" aria-modal="true" aria-labelledby="jdrDetailsTitle">
+    <button type="button" class="jdr-details-close" id="jdrDetailsClose" aria-label="Close details">×</button>
+    <div class="jdr-details-layout">
+      <div class="jdr-details-visual">
+        <img id="jdrDetailsImage" alt="Game cover">
+        <div class="jdr-details-gallery" id="jdrDetailsGallery"></div>
+      </div>
+      <div class="jdr-details-content">
+        <div class="jdr-details-kicker">🎮 PS5 DIGITAL GAME RENTAL</div>
+        <h2 id="jdrDetailsTitle"></h2>
+        <p id="jdrDetailsGenre" class="jdr-details-muted"></p>
+        <p id="jdrDetailsDescription"></p>
+        <div class="jdr-details-availability" id="jdrDetailsAvailability"></div>
+        <h3>💰 Rental Prices</h3>
+        <div id="jdrDetailsPrices" class="jdr-details-prices"></div>
+        <div class="jdr-details-actions">
+          <button type="button" id="jdrDetailsRent" class="jdr-details-primary">Rent Now ↗</button>
+          <a id="jdrDetailsTrailer" class="jdr-details-secondary" target="_blank" rel="noopener noreferrer">▶ Find Game Trailer ↗</a>
+        </div>
+        <p class="jdr-details-note">Trailers open a YouTube search unless a verified trailer URL has been configured. Additional screenshots appear when added to game data.</p>
+      </div>
+    </div>
+  </section>
+</div>
 
 </body>
 </html>
