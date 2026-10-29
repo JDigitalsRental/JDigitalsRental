@@ -1660,6 +1660,8 @@ import {
 import {
   getFirestore,
   collection,
+  query,
+  where,
   onSnapshot,
   doc,
   writeBatch,
@@ -1690,7 +1692,7 @@ const db = getFirestore(app);
    ========================================== */
 const reviewGrid = document.getElementById("jdrReviewGrid");
 if (reviewGrid) {
-  onSnapshot(collection(db, "reviews"), snapshot => {
+  onSnapshot(query(collection(db, "reviews"), where("published", "==", true)), snapshot => {
     const reviews = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
       .filter(r => r.published === true || r.isPublished === true || r.status === "published")
       .sort((a,b) => {
