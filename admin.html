@@ -333,6 +333,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <button id="refreshHistory" type="button">
         ↻ Refresh
       </button>
+      <button id="clearHistory" type="button" style="border-color:#b84758;background:#3b1422;color:#ffd3d9">
+        🗑️ Clear History
+      </button>
     </div>
 
     <div id="historyList" aria-live="polite">
@@ -1028,6 +1031,49 @@ $("historyFilter").addEventListener("change",()=>{
 });
 
 $("refreshHistory").addEventListener("click",loadActivityHistory);
+
+$("clearHistory").addEventListener("click",async()=>{
+  const button=$("clearHistory");
+  if(!auth.currentUser||auth.currentUser.uid!==ADMIN_UID){
+    alert("Admin access is required.");
+    return;
+  }
+  const approved=confirm(
+    "PERMANENTLY DELETE ALL Rental Activity History?\n\n"+
+    "This removes activity log records from Firebase and cannot be undone.\n"+
+    "Games, rental slots, waiting list, and prices will NOT be deleted.\n\n"+
+    "Press OK to delete, or Cancel to keep your history."
+  );
+  if(!approved)return;
+  button.disabled=true;
+  const original=button.textContent;
+  button.textContent="Clearing history...";
+  let deleted=0;
+  try{
+    // Delete only rentalActivity documents, in safe batches under Firestore limits.
+    const snapshot=await getDocs(collection(db,"rentalActivity"));
+    const docs=snapshot.docs;
+    for(let i=0;i<docs.length;i+=400){
+      const batch=writeBatch(db);
+      for(const item of docs.slice(i,i+400))batch.delete(item.ref);
+      await batch.commit();
+      deleted+=Math.min(400,docs.length-i);
+    }
+    historyVisible=15;
+    await loadActivityHistory();
+    alert(deleted?`✅ Cleared ${deleted} activity records.`:"Activity History is already empty.");
+  }catch(error){
+    console.error("Clear history failed:",error);
+    await loadActivityHistory();
+    alert("Unable to clear all activity history. " +
+      (error.code==="permission-denied"?"Firestore delete permission is not enabled. No rules were changed.":error.message||"Please retry.")+
+      (deleted?`\n${deleted} records were already deleted before the error.`:""));
+  }finally{
+    button.disabled=false;
+    button.textContent=original;
+  }
+});
+
 
 $("moreHistory").addEventListener("click",()=>{
   historyVisible+=15;
