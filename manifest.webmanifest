@@ -1,10 +1,10 @@
 {
-  "id": "/JDigitalsRental/",
+  "id": "./",
   "name": "JDigitalsRental — PS5 Game Rentals",
   "short_name": "JDigitalsRental",
   "description": "Affordable PS5 digital game rentals, weekly plans, and monthly UNLI SWAP.",
-  "start_url": "/JDigitalsRental/",
-  "scope": "/JDigitalsRental/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#050914",
   "theme_color": "#071329",
