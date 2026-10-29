@@ -1884,3 +1884,44 @@ nav a:hover { text-shadow:0 0 12px #168cffaa; }
   #gameGrid .price span:nth-child(7) { padding:6px !important; font-size:9px !important; }
   #gameGrid .rent { min-height:40px !important; font-size:10px !important; }
 }
+
+
+/* ========== PHASE 2: GAME DETAILS ========== */
+#gameGrid .cover-wrap, #upcomingGames .cover-wrap { cursor:pointer; }
+#gameGrid .cover-wrap:focus-visible, #upcomingGames .cover-wrap:focus-visible { outline:3px solid #54b5ff; outline-offset:2px; }
+.jdr-details-overlay { position:fixed; inset:0; z-index:100100; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(2,7,20,.88); backdrop-filter:blur(12px); }
+.jdr-details-overlay.open { display:flex; }
+.jdr-details-panel { position:relative; width:min(920px,100%); max-height:92dvh; overflow:auto; color:#f1f7ff; border:1px solid rgba(75,166,255,.55); border-radius:20px; background:linear-gradient(145deg,#112447,#050d20 70%); box-shadow:0 30px 95px #000b,0 0 30px #168cff22; }
+.jdr-details-close { position:sticky; top:12px; float:right; margin:12px 12px -48px 0; z-index:2; width:38px; height:38px; border-radius:50%; border:1px solid #7297c2; background:#08162be8; color:white; font-size:28px; cursor:pointer; }
+.jdr-details-layout { display:grid; grid-template-columns:minmax(0,38%) minmax(0,62%); }
+.jdr-details-visual { padding:22px; background:#071329; }
+#jdrDetailsImage { display:block; width:100%; max-height:460px; object-fit:contain; border-radius:12px; }
+.jdr-details-gallery { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.jdr-details-gallery button { width:65px; height:68px; padding:2px; border-radius:8px; background:#132d53; border:2px solid #2473b9; cursor:pointer; }
+.jdr-details-gallery img { width:100%; height:100%; object-fit:cover; border-radius:5px; }
+.jdr-details-content { padding:30px 26px; min-width:0; }
+.jdr-details-kicker { font-size:11px; font-weight:800; color:#60baff; letter-spacing:1.2px; }
+#jdrDetailsTitle { margin:9px 0; font-size:clamp(22px,3vw,33px); line-height:1.16; }
+.jdr-details-muted,.jdr-details-note { color:#a7c2df; font-size:12px; }
+#jdrDetailsDescription { color:#d4e5fa; line-height:1.65; font-size:14px; }
+.jdr-details-availability { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:15px 0; }
+.jdr-details-availability .availability { margin:0 !important; font-size:11px; overflow-wrap:anywhere; }
+.jdr-details-prices { display:grid; gap:8px; }
+.jdr-details-price { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; padding:10px 12px; border:1px solid #27527e; border-radius:10px; background:#071b35; font-size:12px; }
+.jdr-details-price strong { color:#82c8ff; }
+.jdr-details-price.unli { border-color:#8550d4; background:#281345; }
+.jdr-details-price.unli strong { color:#d9b0ff; }
+.jdr-details-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+.jdr-details-primary,.jdr-details-secondary { flex:1; min-width:155px; text-align:center; padding:13px 12px; border-radius:10px; font-weight:800; font-size:13px; text-decoration:none; cursor:pointer; }
+.jdr-details-primary { color:white; border:0; background:linear-gradient(120deg,#168cff,#0754d9); }
+.jdr-details-secondary { color:#d7eaff; border:1px solid #4287c6; background:#122c4f; }
+@media(max-width:640px) {
+ .jdr-details-overlay { padding:8px; align-items:flex-end; }
+ .jdr-details-panel { max-height:95dvh; border-radius:18px 18px 0 0; }
+ .jdr-details-layout { grid-template-columns:1fr; }
+ .jdr-details-visual { padding:12px; }
+ #jdrDetailsImage { max-height:220px; }
+ .jdr-details-content { padding:18px 15px 24px; }
+ .jdr-details-availability { grid-template-columns:1fr; }
+ .jdr-details-gallery button { width:49px; height:53px; }
+}
