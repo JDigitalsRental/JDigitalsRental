@@ -271,7 +271,10 @@
 
 /* FEATURED AVAILABLE GAMES — AUTO SLIDESHOW */
 .jdr-featured-slider{position:relative;isolation:isolate;overflow:hidden;background:#071329!important;min-height:320px}
-.jdr-featured-photo{position:absolute;inset:0;z-index:-2;background-position:center;background-size:cover;background-repeat:no-repeat;transition:opacity .35s ease;opacity:1}
+.jdr-featured-photo{position:absolute;inset:0;z-index:-2;background-position:center;background-size:contain;background-repeat:no-repeat;background-color:#071329;transition:opacity .35s ease;opacity:1}
+/* Keep full artwork visible; blurred fill avoids empty side bars on tall covers. */
+.jdr-featured-photo::before{content:"";position:absolute;inset:-18px;z-index:-1;background-image:inherit;background-position:center;background-size:cover;background-repeat:no-repeat;filter:blur(20px) brightness(.45);opacity:.8}
+.jdr-featured-photo{isolation:isolate}
 .jdr-featured-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(2,9,26,.9),rgba(2,9,26,.05) 68%),linear-gradient(90deg,rgba(2,9,26,.4),transparent 75%)}
 .jdr-featured-slider .orb{display:none!important}
 .jdr-featured-info{position:absolute;left:22px;bottom:47px;max-width:65%;display:flex;flex-direction:column;gap:7px;z-index:2;text-shadow:0 2px 10px #000}
@@ -387,7 +390,7 @@
     <div class="jdr-featured-photo" id="jdrFeaturedPhoto" aria-hidden="true"></div>
     <div class="jdr-featured-shade" aria-hidden="true"></div>
     <div class="jdr-featured-info" id="jdrFeaturedInfo" aria-live="off">
-      <span class="jdr-featured-label">🟢 AVAILABLE TO RENT</span>
+      <span class="jdr-featured-label" id="jdrFeaturedAvailability">🎮 GAME SHOWCASE</span>
       <strong id="jdrFeaturedTitle">Discover PS5 Games</strong>
       <span id="jdrFeaturedSubtitle">Browse our available games</span>
     </div>
@@ -2334,6 +2337,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   const photo=document.getElementById('jdrFeaturedPhoto');
   const title=document.getElementById('jdrFeaturedTitle');
   const subtitle=document.getElementById('jdrFeaturedSubtitle');
+  const availability=document.getElementById('jdrFeaturedAvailability');
   const dots=document.getElementById('jdrFeaturedDots');
   const prev=document.getElementById('jdrFeaturedPrev');
   const next=document.getElementById('jdrFeaturedNext');
@@ -2344,14 +2348,16 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   // Do not filter by slot availability: rented titles are featured too.
   const isRented=g=>{
     const status=String(g.status||'').trim().toLowerCase();
-    if(status==='currently-rented'||status==='rented')return true;
     const rentedSlot=v=>{
       const x=String(v??'').trim().toLowerCase();
       if(/rented|unavailable|reserved|booked/.test(x))return true;
       const date=new Date(x);
       return !!x&&!Number.isNaN(date.getTime())&&date.getTime()>Date.now();
     };
-    return rentedSlot(g.trophyDate)&&rentedSlot(g.nonTrophyDate);
+    const trophy=String(g.trophyDate??'').trim();
+    const nonTrophy=String(g.nonTrophyDate??'').trim();
+    if(trophy&&nonTrophy)return rentedSlot(trophy)&&rentedSlot(nonTrophy);
+    return status==='currently-rented'||status==='rented';
   };
   // Include only games released within the last two calendar months.
   // Use the actual game release date, never the rental slot availability date.
@@ -2393,6 +2399,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
       photo.style.backgroundImage='none';
       title.textContent='Latest PS5 Releases';
       subtitle.textContent='Browse our game library for newly released titles';
+      if(availability){availability.textContent='🎮 GAME SHOWCASE';availability.style.color='#a8d6ff';}
     }else{
       const src=String(game.image||'').trim();
       // Only http(s) and same-site relative image URLs are allowed.
@@ -2401,7 +2408,12 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
       photo.style.backgroundImage=safe?'url('+JSON.stringify(safe)+')':'none';
       title.textContent=game.name||'PS5 Game';
       const prefix=usingFallback?'From our Game Library':'Recent release';
-      subtitle.textContent=prefix+(isRented(game)?' • Currently Rented':' • Available Now');
+      const rented=isRented(game);
+      subtitle.textContent=prefix+(rented?' • Currently Rented':' • Available Now');
+      if(availability){
+        availability.textContent=rented?'🔴 CURRENTLY RENTED':'🟢 AVAILABLE TO RENT';
+        availability.style.color=rented?'#ff8585':'#80ffb7';
+      }
     }
     dots.replaceChildren();
     slides.forEach((g,i)=>{
