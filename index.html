@@ -2338,7 +2338,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   const prev=document.getElementById('jdrFeaturedPrev');
   const next=document.getElementById('jdrFeaturedNext');
   if(!slider||!photo||!title||!dots)return;
-  let slides=[],index=0,timer=null;
+  let slides=[],index=0,timer=null,usingFallback=false;
   // The Firestore games collection loader puts upcoming titles in
   // window.upcomingGames, and regular library titles in window.firestoreGames.
   // Do not filter by slot availability: rented titles are featured too.
@@ -2400,7 +2400,8 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
       try{const u=new URL(src,location.href);if(['https:','http:'].includes(u.protocol))safe=u.href;}catch(e){}
       photo.style.backgroundImage=safe?'url('+JSON.stringify(safe)+')':'none';
       title.textContent=game.name||'PS5 Game';
-      subtitle.textContent=isRented(game)?'Recent release • Currently Rented':'Recent release • Available Now';
+      const prefix=usingFallback?'From our Game Library':'Recent release';
+      subtitle.textContent=prefix+(isRented(game)?' • Currently Rented':' • Available Now');
     }
     dots.replaceChildren();
     slides.forEach((g,i)=>{
@@ -2415,8 +2416,11 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   function update(){
     const games=Array.isArray(window.firestoreGames)?window.firestoreGames:[];
     const current=slides[index]?.id;
-    slides=games.filter(g=>g&&String(g.status||'').toLowerCase()!=='upcoming'&&releasedInLastTwoMonths(g)&&String(g.image||'').trim());
-    slides.sort((a,b)=>releaseDateOf(b)-releaseDateOf(a));
+    const library=games.filter(g=>g&&String(g.status||'').toLowerCase()!=='upcoming'&&String(g.image||'').trim());
+    const recent=library.filter(releasedInLastTwoMonths);
+    usingFallback=recent.length===0;
+    slides=usingFallback?library:recent;
+    slides.sort((a,b)=>(releaseDateOf(b)?.getTime()||0)-(releaseDateOf(a)?.getTime()||0));
     const keep=slides.findIndex(g=>g.id===current);index=keep>=0?keep:0;
     render();restart();
   }
