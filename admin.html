@@ -232,6 +232,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .history-item strong{display:block;font-size:13px;line-height:1.5}
 .history-item small{display:block;color:#9eb2d3;font-size:11px;margin-top:5px;line-height:1.6;overflow-wrap:anywhere}
 .history-empty{color:#a9d9c7;font-size:13px;line-height:1.6}
+
+.media-panel{margin:18px 0;padding:15px;border:1px solid #31558d;border-radius:12px;background:#091a38}
+.media-panel textarea{width:100%;min-height:110px;resize:vertical;padding:12px;border:1px solid #254b83;border-radius:9px;background:#020817;color:white;font:inherit}
+.media-panel .media-hint{color:#9eb2d3;font-size:11px;line-height:1.6}
 </style>
 </head>
 
@@ -501,6 +505,25 @@ button:disabled{opacity:.5;cursor:not-allowed}
       placeholder="assets/game-name.jpg"
     >
 
+
+    <section class="media-panel">
+      <h3 class="form-heading">🎬 Premium Game Details</h3>
+      <label for="newDescription">📖 Game Description</label>
+      <textarea id="newDescription" placeholder="Story, gameplay and features..."></textarea>
+      <label for="newTrailerUrl">▶️ Official YouTube Trailer URL</label>
+      <input id="newTrailerUrl" type="url" placeholder="https://www.youtube.com/watch?v=...">
+      <p class="media-hint">Use a public YouTube watch, youtu.be, Shorts, or embed link. The video must allow embedding.</p>
+      <label for="newScreenshots">🖼️ Screenshot URLs (one per line, maximum 8)</label>
+      <textarea id="newScreenshots" placeholder="https://example.com/screenshot-1.jpg&#10;https://example.com/screenshot-2.jpg"></textarea>
+      <p class="media-hint">Use direct HTTPS image links. No image upload required.</p>
+      <label for="newDeveloper">🎮 Developer</label>
+      <input id="newDeveloper" placeholder="Game developer">
+      <label for="newPublisher">🏢 Publisher</label>
+      <input id="newPublisher" placeholder="Game publisher">
+      <label for="newReleaseDate">📅 Official Release Date</label>
+      <input id="newReleaseDate" type="date">
+    </section>
+
     <button
       id="saveNewGame"
       class="save-game"
@@ -727,6 +750,25 @@ button:disabled{opacity:.5;cursor:not-allowed}
         ✅ Confirm Non-Trophy Return
       </button>
     </div>
+
+
+    <section class="media-panel">
+      <h3 class="form-heading">🎬 Premium Game Details</h3>
+      <label for="manageDescription">📖 Game Description</label>
+      <textarea id="manageDescription" placeholder="Story, gameplay and features..."></textarea>
+      <label for="manageTrailerUrl">▶️ Official YouTube Trailer URL</label>
+      <input id="manageTrailerUrl" type="url" placeholder="https://www.youtube.com/watch?v=...">
+      <p class="media-hint">Use a public YouTube watch, youtu.be, Shorts, or embed link. The video must allow embedding.</p>
+      <label for="manageScreenshots">🖼️ Screenshot URLs (one per line, maximum 8)</label>
+      <textarea id="manageScreenshots" placeholder="https://example.com/screenshot-1.jpg&#10;https://example.com/screenshot-2.jpg"></textarea>
+      <p class="media-hint">Use direct HTTPS image links. No image upload required.</p>
+      <label for="manageDeveloper">🎮 Developer</label>
+      <input id="manageDeveloper" placeholder="Game developer">
+      <label for="managePublisher">🏢 Publisher</label>
+      <input id="managePublisher" placeholder="Game publisher">
+      <label for="manageReleaseDate">📅 Official Release Date</label>
+      <input id="manageReleaseDate" type="date">
+    </section>
 
     <button
       id="saveGameChanges"
@@ -1442,6 +1484,8 @@ function openManage(id){
 
   const p=getPrices(g);
 
+  fillMediaForm("manage",g);
+
   $("manageGameName").textContent=
     g.name||g.title||"Manage Game";
 
@@ -1543,6 +1587,51 @@ function formGameData(prefix){
   };
 }
 
+
+function safeHttpsUrl(value,kind){
+  const raw=String(value||"").trim();
+  if(!raw)return "";
+  let url;
+  try{url=new URL(raw)}catch{throw Error("Please enter a valid "+kind+" URL.");}
+  if(url.protocol!=="https:")throw Error(kind+" URL must use HTTPS.");
+  return url.href;
+}
+function youtubeTrailerUrl(value){
+  const href=safeHttpsUrl(value,"YouTube trailer");
+  if(!href)return "";
+  const url=new URL(href);
+  const host=url.hostname.toLowerCase();
+  const validHosts=["youtube.com","www.youtube.com","m.youtube.com","youtu.be","www.youtu.be","youtube-nocookie.com","www.youtube-nocookie.com"];
+  if(!validHosts.includes(host))throw Error("Trailer must be a YouTube link.");
+  let videoId="";
+  if(host.endsWith("youtu.be"))videoId=url.pathname.split("/")[1]||"";
+  else if(url.pathname==="/watch")videoId=url.searchParams.get("v")||"";
+  else if(url.pathname.startsWith("/embed/")||url.pathname.startsWith("/shorts/")||url.pathname.startsWith("/live/"))
+    videoId=url.pathname.split("/")[2]||"";
+  if(!/^[a-zA-Z0-9_-]{11}$/.test(videoId))throw Error("Invalid YouTube video ID. Please paste an official trailer link.");
+  return "https://www.youtube.com/watch?v="+videoId;
+}
+function mediaFromForm(prefix){
+  const screenshots=$(prefix+"Screenshots").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(screenshots.length>8)throw Error("Maximum 8 screenshots per game.");
+  return {
+    description:$(prefix+"Description").value.trim().slice(0,5000),
+    trailerUrl:youtubeTrailerUrl($(prefix+"TrailerUrl").value),
+    screenshots:screenshots.map(url=>safeHttpsUrl(url,"Screenshot")),
+    developer:$(prefix+"Developer").value.trim().slice(0,150),
+    publisher:$(prefix+"Publisher").value.trim().slice(0,150),
+    releaseDate:$(prefix+"ReleaseDate").value
+  };
+}
+function fillMediaForm(prefix,g){
+  $(prefix+"Description").value=g.description||"";
+  $(prefix+"TrailerUrl").value=g.trailerUrl||"";
+  $(prefix+"Screenshots").value=Array.isArray(g.screenshots)?g.screenshots.join("\n"):"";
+  $(prefix+"Developer").value=g.developer||"";
+  $(prefix+"Publisher").value=g.publisher||"";
+  $(prefix+"ReleaseDate").value=dateToInput(g.releaseDate);
+}
+
 /* SAVE GAME CHANGES */
 
 $("saveGameChanges").addEventListener("click",async()=>{
@@ -1551,7 +1640,7 @@ $("saveGameChanges").addEventListener("click",async()=>{
   const btn=$("saveGameChanges");
 
   try{
-    const updates=formGameData("manage");
+    const updates={...formGameData("manage"),...mediaFromForm("manage")};
 
     btn.disabled=true;
 
@@ -1930,6 +2019,7 @@ for(const prefix of ["newGameStatus","manageStatus"]){
 /* ADD NEW GAME */
 
 $("addGameButton").addEventListener("click",()=>{
+  fillMediaForm("new",{});
   openModal("addGameModal");
 });
 
@@ -1947,7 +2037,7 @@ $("saveNewGame").addEventListener("click",async()=>{
       );
     }
 
-    const data=formGameData("new");
+    const data={...formGameData("new"),...mediaFromForm("new")};
 
     const gameId=title.toLowerCase()
       .replace(/[^a-z0-9]+/g,"-")
