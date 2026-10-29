@@ -1741,3 +1741,62 @@ footer {
     font-size:9px !important;
   }
 }
+
+
+/* ==============================================
+   JDIGITALSRENTAL — PREMIUM SHOWCASE PHASE 1
+   Non-destructive visual upgrade, Oct 2026
+   ============================================== */
+:root { --premium-glow:#168cff; --purple:#8c35ed; }
+body { background-color:#030813; }
+.topbar { min-height:76px; padding:10px clamp(14px,3vw,44px); border-bottom:1px solid #1d3b6a; box-shadow:0 4px 28px #0008; }
+.brand { font-size:clamp(15px,1.8vw,22px); }
+.brand-logo { width:56px; height:56px; border:1px solid #258dff; box-shadow:0 0 18px #168cff66; }
+nav a { transition:color .2s; }
+nav a:hover { text-shadow:0 0 12px #168cffaa; }
+.hero { min-height:470px; padding:42px clamp(20px,5vw,75px); grid-template-columns:minmax(280px,.8fr) minmax(350px,1.2fr); gap:15px; background:radial-gradient(ellipse at 85% 50%,#0a38794d,transparent 55%),linear-gradient(100deg,#030813,#06122a); }
+.hero h1 { font-size:clamp(50px,6vw,88px); text-transform:none; letter-spacing:-3px; line-height:.99; text-shadow:0 5px 25px #000a; }
+.hero h1 span { background:linear-gradient(95deg,#71d8ff,#168cff,#3668ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.hero-text { color:#c8d8ef; max-width:480px; }
+.hero-art { min-height:380px; border:0; border-radius:22px; background:linear-gradient(90deg,#030813 0%,#03081322 25%,#07102233 100%),url('assets/final-fantasy-vii-rebirth.jpg') center 28%/cover no-repeat; box-shadow:inset 0 0 65px #030813,0 0 45px #006aff24; }
+.hero-art::before { inset:auto; width:210px; height:210px; right:-70px; bottom:-70px; border-color:#258dff22; box-shadow:0 0 0 30px #168cff08; }
+.hero-panel { width:auto; max-width:320px; aspect-ratio:auto; margin:auto 20px 18px auto; min-height:130px; padding:16px 20px; border:1px solid #5cb4ff7c; background:#031026c9; backdrop-filter:blur(7px); box-shadow:0 12px 30px #0009; }
+.hero-panel strong { font-size:clamp(24px,2.6vw,37px); }
+.hero-panel em { color:#65caff; }
+.hero-panel small { font-size:9px; }
+.btn.primary,.rent,.rent-button,.rent-btn,.waitlist-button,#upcomingGames .reserve-slot-button { background:linear-gradient(120deg,#1278ff,#0751d8); box-shadow:0 5px 16px #006eff38; }
+.section { border-top-color:#18385d; }
+.section-heading h2 { color:#f8fbff; }
+.game-card,.upcoming-game-card { border:1px solid #25599a; border-radius:17px; background:linear-gradient(180deg,#0b1b34,#050c1c); box-shadow:0 8px 22px #0009; }
+.cover-wrap { background:#071426; }
+.cover { transition:transform .35s; }
+.game-card:hover .cover,.upcoming-game-card:hover .cover { transform:scale(1.025); }
+.tag { background:#0b1b37e8; color:#bde9ff; border-color:#2c8cff; font-weight:800; }
+.game-info h3 { font-weight:850; color:#fff; }
+.waiting-list-count { border:1px solid #25558d !important; background:#07172b !important; color:#dceaff !important; }
+.mega-savings { background:#0b1b35 !important; border-color:#254979 !important; }
+/* Price sections: headings are spans 1, 4 and 7 in app.js. */
+#gameGrid .price span:nth-child(1),#gameGrid .price span:nth-child(4),
+#upcomingGames .price span:nth-child(1),#upcomingGames .price span:nth-child(4) { background:linear-gradient(90deg,#113c78,#092b5e) !important; color:#a8deff !important; border-bottom:1px solid #2364a8; font-weight:900 !important; }
+#gameGrid .price span:nth-child(7),#upcomingGames .price span:nth-child(7) { background:linear-gradient(95deg,#55229d,#7d2dd5,#4d188c) !important; color:#f7e6ff !important; padding:9px 10px !important; font-size:11px !important; font-weight:900 !important; border-top:1px solid #a457f4; border-bottom:1px solid #a457f4; }
+#gameGrid .price span:nth-child(8),#gameGrid .price span:nth-child(9),
+#upcomingGames .price span:nth-child(8),#upcomingGames .price span:nth-child(9) { background:#190f35 !important; color:#e4d4ff !important; }
+.price { border-color:#315da2; }
+.mega-filter { background:#091c39; border-color:#23569b; }
+.mega-filter.active { background:linear-gradient(110deg,#147aff,#0752d7); }
+#featuredGames .mega-featured-heading { color:#ffdba4; }
+#featuredGames .mega-featured-tags span { border-color:#a54d39; background:#381b24; }
+.steps article { background:linear-gradient(145deg,#0e2140,#071328); border-color:#2b5485; }
+#reviews .mega-info-panel,#tracking .mega-info-panel { border-color:#28599b; }
+@media(max-width:900px) { .hero { grid-template-columns:1fr; } .hero-art { min-height:300px; } }
+@media(max-width:600px) {
+  .topbar { padding:9px 4%; min-height:70px; }
+  .brand-logo { width:43px; height:43px; }
+  .hero { padding:34px 5% 25px; gap:20px; }
+  .hero h1 { font-size:clamp(47px,12vw,66px); }
+  .hero-art { min-height:230px; border-radius:16px; }
+  .hero-panel { min-height:100px; max-width:210px; margin:auto 10px 10px auto; padding:10px; }
+  .hero-panel strong { font-size:23px; }
+  #gameGrid .price span:nth-child(7),#upcomingGames .price span:nth-child(7) { padding:7px 6px !important; font-size:9px !important; }
+  .game-card,.upcoming-game-card { border-radius:14px; }
+}
