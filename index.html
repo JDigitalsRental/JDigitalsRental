@@ -268,6 +268,25 @@
 }
 @media(prefers-reduced-motion:reduce){.jdr-install-hero{transition:none}}
 
+
+/* FEATURED AVAILABLE GAMES — AUTO SLIDESHOW */
+.jdr-featured-slider{position:relative;isolation:isolate;overflow:hidden;background:#071329!important;min-height:320px}
+.jdr-featured-photo{position:absolute;inset:0;z-index:-2;background-position:center;background-size:cover;background-repeat:no-repeat;transition:opacity .35s ease;opacity:1}
+.jdr-featured-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(2,9,26,.9),rgba(2,9,26,.05) 68%),linear-gradient(90deg,rgba(2,9,26,.4),transparent 75%)}
+.jdr-featured-slider .orb{display:none!important}
+.jdr-featured-info{position:absolute;left:22px;bottom:47px;max-width:65%;display:flex;flex-direction:column;gap:7px;z-index:2;text-shadow:0 2px 10px #000}
+.jdr-featured-label{color:#80ffb7;font-size:11px;font-weight:900;letter-spacing:1px}
+.jdr-featured-info strong{font-size:clamp(19px,2.5vw,31px);color:white;line-height:1.12}
+.jdr-featured-info #jdrFeaturedSubtitle{color:#e3f0ff;font-size:12px;font-weight:600}
+.jdr-featured-slider .hero-panel{z-index:2;pointer-events:none}
+.jdr-featured-nav{position:absolute;z-index:4;top:50%;transform:translateY(-50%);width:38px;height:42px;border:1px solid #9bcaff80;border-radius:11px;background:#061a36bb;color:#fff;font-size:29px;cursor:pointer;display:grid;place-items:center}
+.jdr-featured-prev{left:12px}.jdr-featured-next{right:12px}
+.jdr-featured-nav:hover{background:#1464b8}
+.jdr-featured-dots{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);z-index:4;display:flex;gap:7px;align-items:center}
+.jdr-featured-dot{width:8px;height:8px;border:0;border-radius:99px;background:#d1e8ff8c;cursor:pointer;padding:0}
+.jdr-featured-dot.active{width:24px;background:#58b4ff}
+@media(max-width:650px){.jdr-featured-slider{min-height:270px}.jdr-featured-info{left:17px;bottom:44px;max-width:78%}.jdr-featured-slider .hero-panel{display:none}.jdr-featured-nav{width:30px;height:36px;font-size:23px}}
+@media(prefers-reduced-motion:reduce){.jdr-featured-photo{transition:none}}
 </style>
 
 </head>
@@ -364,10 +383,17 @@
 
   </div>
 
-  <div class="hero-art" aria-label="PS5 gaming showcase">
-
-    <div class="orb orb-one"></div>
-    <div class="orb orb-two"></div>
+  <div class="hero-art jdr-featured-slider" id="jdrFeaturedSlider" aria-label="Recently released PS5 games slideshow">
+    <div class="jdr-featured-photo" id="jdrFeaturedPhoto" aria-hidden="true"></div>
+    <div class="jdr-featured-shade" aria-hidden="true"></div>
+    <div class="jdr-featured-info" id="jdrFeaturedInfo" aria-live="off">
+      <span class="jdr-featured-label">🟢 AVAILABLE TO RENT</span>
+      <strong id="jdrFeaturedTitle">Discover PS5 Games</strong>
+      <span id="jdrFeaturedSubtitle">Browse our available games</span>
+    </div>
+    <button class="jdr-featured-nav jdr-featured-prev" id="jdrFeaturedPrev" type="button" aria-label="Previous featured game">‹</button>
+    <button class="jdr-featured-nav jdr-featured-next" id="jdrFeaturedNext" type="button" aria-label="Next featured game">›</button>
+    <div class="jdr-featured-dots" id="jdrFeaturedDots" aria-label="Featured game slides"></div>
 
     <div class="hero-panel">
       <span>PS5 DIGITAL RENTALS</span>
@@ -2300,5 +2326,108 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 })();
 </script>
 
+
+<!-- Featured carousel: recent releases (last 2 calendar months), including rented games; upcoming excluded -->
+<script>
+(function(){
+  const slider=document.getElementById('jdrFeaturedSlider');
+  const photo=document.getElementById('jdrFeaturedPhoto');
+  const title=document.getElementById('jdrFeaturedTitle');
+  const subtitle=document.getElementById('jdrFeaturedSubtitle');
+  const dots=document.getElementById('jdrFeaturedDots');
+  const prev=document.getElementById('jdrFeaturedPrev');
+  const next=document.getElementById('jdrFeaturedNext');
+  if(!slider||!photo||!title||!dots)return;
+  let slides=[],index=0,timer=null;
+  // The Firestore games collection loader puts upcoming titles in
+  // window.upcomingGames, and regular library titles in window.firestoreGames.
+  // Do not filter by slot availability: rented titles are featured too.
+  const isRented=g=>{
+    const status=String(g.status||'').trim().toLowerCase();
+    if(status==='currently-rented'||status==='rented')return true;
+    const rentedSlot=v=>{
+      const x=String(v??'').trim().toLowerCase();
+      if(/rented|unavailable|reserved|booked/.test(x))return true;
+      const date=new Date(x);
+      return !!x&&!Number.isNaN(date.getTime())&&date.getTime()>Date.now();
+    };
+    return rentedSlot(g.trophyDate)&&rentedSlot(g.nonTrophyDate);
+  };
+  // Include only games released within the last two calendar months.
+  // Use the actual game release date, never the rental slot availability date.
+  const releaseDateOf=g=>{
+    const raw=g.releaseDate??g.release_date??g.launchDate??g.launch_date;
+    if(!raw)return null;
+    if(typeof raw.toDate==='function')return raw.toDate(); // Firestore Timestamp
+    if(typeof raw==='object'&&typeof raw.seconds==='number')return new Date(raw.seconds*1000);
+    if(raw instanceof Date)return raw;
+    if(typeof raw==='string'){
+      const value=raw.trim();
+      const ymd=value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if(ymd){
+        const d=new Date(Number(ymd[1]),Number(ymd[2])-1,Number(ymd[3]));
+        return d.getFullYear()===Number(ymd[1])&&d.getMonth()===Number(ymd[2])-1&&d.getDate()===Number(ymd[3])?d:null;
+      }
+      const mdy=value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(mdy){
+        const d=new Date(Number(mdy[3]),Number(mdy[1])-1,Number(mdy[2]));
+        return d.getFullYear()===Number(mdy[3])&&d.getMonth()===Number(mdy[1])-1&&d.getDate()===Number(mdy[2])?d:null;
+      }
+    }
+    const d=new Date(raw);
+    return Number.isNaN(d.getTime())?null:d;
+  };
+  const releasedInLastTwoMonths=g=>{
+    const release=releaseDateOf(g);
+    if(!release||Number.isNaN(release.getTime()))return false;
+    const today=new Date();
+    const end=new Date(today.getFullYear(),today.getMonth(),today.getDate(),23,59,59,999);
+    const start=new Date(today.getFullYear(),today.getMonth()-2,today.getDate());
+    // Normalize month-end overflow (e.g. March 31 minus 2 months).
+    if(start.getDate()!==today.getDate())start.setDate(0);
+    return release>=start&&release<=end;
+  };
+  function render(){
+    const game=slides[index];
+    if(!game){
+      photo.style.backgroundImage='none';
+      title.textContent='Latest PS5 Releases';
+      subtitle.textContent='Browse our game library for newly released titles';
+    }else{
+      const src=String(game.image||'').trim();
+      // Only http(s) and same-site relative image URLs are allowed.
+      let safe='';
+      try{const u=new URL(src,location.href);if(['https:','http:'].includes(u.protocol))safe=u.href;}catch(e){}
+      photo.style.backgroundImage=safe?'url('+JSON.stringify(safe)+')':'none';
+      title.textContent=game.name||'PS5 Game';
+      subtitle.textContent=isRented(game)?'Recent release • Currently Rented':'Recent release • Available Now';
+    }
+    dots.replaceChildren();
+    slides.forEach((g,i)=>{
+      const b=document.createElement('button');b.type='button';b.className='jdr-featured-dot'+(i===index?' active':'');
+      b.setAttribute('aria-label','Show '+(g.name||'game'));b.setAttribute('aria-pressed',String(i===index));
+      b.addEventListener('click',()=>{index=i;render();restart();});dots.appendChild(b);
+    });
+    const multi=slides.length>1;prev.hidden=!multi;next.hidden=!multi;
+  }
+  function advance(step){if(slides.length<2)return;index=(index+step+slides.length)%slides.length;render();}
+  function restart(){clearInterval(timer);if(slides.length>1&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>{if(!document.hidden)advance(1);},2000);}
+  function update(){
+    const games=Array.isArray(window.firestoreGames)?window.firestoreGames:[];
+    const current=slides[index]?.id;
+    slides=games.filter(g=>g&&String(g.status||'').toLowerCase()!=='upcoming'&&releasedInLastTwoMonths(g)&&String(g.image||'').trim());
+    slides.sort((a,b)=>releaseDateOf(b)-releaseDateOf(a));
+    const keep=slides.findIndex(g=>g.id===current);index=keep>=0?keep:0;
+    render();restart();
+  }
+  prev.addEventListener('click',()=>{advance(-1);restart();});
+  next.addEventListener('click',()=>{advance(1);restart();});
+  slider.addEventListener('mouseenter',()=>clearInterval(timer));
+  slider.addEventListener('mouseleave',restart);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)restart();});
+  window.addEventListener('firestoreGamesLoaded',update);
+  update();
+})();
+</script>
 </body>
 </html>
