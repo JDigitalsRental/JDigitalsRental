@@ -216,6 +216,23 @@
 @media(max-width:600px){#reviews .jdr-review-card{flex-basis:100%}#reviews .jdr-carousel-controls{margin-top:5px}}
 @media(prefers-reduced-motion:reduce){#reviews .jdr-review-grid{scroll-behavior:auto}#reviews .jdr-carousel-arrow{transition:none}}
 
+
+/* JDIGITALSRENTAL — CUSTOMER INSTALL APP */
+.jdr-install-hero{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 17px;border:1px solid #55adff;border-radius:12px;background:linear-gradient(135deg,#123a76,#0965d7);color:#fff;font:800 14px inherit;cursor:pointer;box-shadow:0 8px 22px rgba(0,95,255,.24)}
+.jdr-install-banner{position:fixed;z-index:9000;left:16px;right:16px;bottom:18px;max-width:430px;margin:auto;display:none;align-items:center;gap:12px;padding:13px;background:linear-gradient(140deg,#102b58,#07152f);border:1px solid #377cce;border-radius:16px;color:#fff;box-shadow:0 16px 50px #0009}
+.jdr-install-banner.is-visible{display:flex}
+.jdr-install-banner img{width:43px;height:43px;object-fit:contain;border-radius:10px}
+.jdr-install-banner-copy{flex:1;min-width:0;font-size:12px;line-height:1.4;color:#bcd7fa}
+.jdr-install-banner-copy strong{display:block;color:#fff;font-size:14px}
+.jdr-install-banner-action{border:0;border-radius:9px;padding:10px 12px;background:#168cff;color:#fff;font-weight:800;cursor:pointer}
+.jdr-install-banner-close{align-self:flex-start;border:0;background:none;color:#c4d7f4;font-size:21px;cursor:pointer}
+.jdr-install-help{position:fixed;inset:0;z-index:10050;display:none;align-items:center;justify-content:center;padding:18px;background:#020817dc}
+.jdr-install-help.is-open{display:flex}
+.jdr-install-help-card{width:min(100%,390px);border:1px solid #3988db;border-radius:18px;padding:22px;background:#0d2043;color:#eaf3ff;line-height:1.7;box-shadow:0 20px 70px #000b}
+.jdr-install-help-card h2{margin:0 0 10px;font-size:22px;color:white}
+.jdr-install-help-card button{width:100%;border:0;border-radius:10px;background:#168cff;color:white;padding:12px;font-weight:800;margin-top:12px}
+@media(max-width:500px){.jdr-install-banner{bottom:12px;left:10px;right:10px}.jdr-install-hero{width:100%;box-sizing:border-box}}
+
 </style>
 
 </head>
@@ -290,6 +307,8 @@
       </a>
 
     </div>
+
+    <button type="button" id="jdrInstallHero" class="jdr-install-hero">📲 Install JDigitalsRental App</button>
 
     <div class="trust-row">
       <span>✦ Affordable Prices</span>
@@ -2152,5 +2171,67 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   });
 }
 </script>
+
+<!-- Customer app installation: no APK required -->
+<div id="jdrInstallBanner" class="jdr-install-banner" role="region" aria-label="Install JDigitalsRental">
+  <img src="assets/jdigitals-logo.png" alt="">
+  <div class="jdr-install-banner-copy"><strong>🎮 JDigitalsRental App</strong>Quick access to games, prices & availability.</div>
+  <button type="button" id="jdrInstallBannerAction" class="jdr-install-banner-action">Install</button>
+  <button type="button" id="jdrInstallBannerClose" class="jdr-install-banner-close" aria-label="Dismiss install banner">×</button>
+</div>
+<div id="jdrInstallHelp" class="jdr-install-help" role="dialog" aria-modal="true" aria-labelledby="jdrInstallHelpTitle">
+  <div class="jdr-install-help-card">
+    <h2 id="jdrInstallHelpTitle">📲 Install JDigitalsRental</h2>
+    <p id="jdrInstallHelpText"></p>
+    <button type="button" id="jdrInstallHelpClose">Got it 💙</button>
+  </div>
+</div>
+<script>
+(function () {
+  let installEvent = null;
+  const hero = document.getElementById('jdrInstallHero');
+  const banner = document.getElementById('jdrInstallBanner');
+  const help = document.getElementById('jdrInstallHelp');
+  const helpText = document.getElementById('jdrInstallHelpText');
+  const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const dismissed = () => sessionStorage.getItem('jdrInstallDismissed') === '1';
+  function refresh() {
+    const installed = isInstalled();
+    if (hero) hero.hidden = installed;
+    if (banner) banner.classList.toggle('is-visible', !installed && !dismissed());
+  }
+  function showHelp() {
+    helpText.textContent = isIOS
+      ? 'Open this website in Safari, tap Share (square with an up arrow), then choose Add to Home Screen.'
+      : 'Open this website in Google Chrome, tap the three-dot menu (⋮), then choose Install app or Add to Home screen. If offered Create shortcut, you can choose that instead. No APK download is needed.';
+    help.classList.add('is-open');
+  }
+  async function install() {
+    if (isInstalled()) { refresh(); return; }
+    if (installEvent) {
+      const event = installEvent;
+      installEvent = null;
+      try { await event.prompt(); await event.userChoice; } catch (e) { showHelp(); }
+      refresh();
+    } else showHelp();
+  }
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault(); installEvent = e; refresh();
+  });
+  window.addEventListener('appinstalled', function () {
+    installEvent = null; refresh();
+  });
+  hero?.addEventListener('click', install);
+  document.getElementById('jdrInstallBannerAction')?.addEventListener('click', install);
+  document.getElementById('jdrInstallBannerClose')?.addEventListener('click', function () {
+    sessionStorage.setItem('jdrInstallDismissed', '1'); refresh();
+  });
+  document.getElementById('jdrInstallHelpClose')?.addEventListener('click', () => help.classList.remove('is-open'));
+  help?.addEventListener('click', e => { if (e.target === help) help.classList.remove('is-open'); });
+  refresh();
+})();
+</script>
+
 </body>
 </html>
