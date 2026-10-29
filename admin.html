@@ -236,6 +236,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .media-panel{margin:18px 0;padding:15px;border:1px solid #31558d;border-radius:12px;background:#091a38}
 .media-panel textarea{width:100%;min-height:110px;resize:vertical;padding:12px;border:1px solid #254b83;border-radius:9px;background:#020817;color:white;font:inherit}
 .media-panel .media-hint{color:#9eb2d3;font-size:11px;line-height:1.6}
+
+/* PHASE 3 — Smart Business Upgrade */
+.business-panel{margin:20px 0;padding:18px;background:linear-gradient(145deg,#081a3d,#041027);border:1px solid #24518d;border-radius:15px}
+.business-panel h3{margin:0 0 8px;font-size:18px}.business-muted{color:#a8bddc;font-size:12px;line-height:1.6}
+.business-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.business-metric{background:#06142e;border:1px solid #21457d;border-radius:10px;padding:12px;min-width:0}
+.business-metric small{color:#9eb2d3;display:block}.business-metric strong{display:block;font-size:23px;margin-top:6px}
+.business-row{padding:12px 0;border-top:1px solid #1b3b6c;font-size:13px;line-height:1.6}
+.business-row small{display:block;color:#a8bddc}.business-row button{margin-top:8px;border:1px solid #357bd2;background:#103c75;color:white;padding:9px 12px;border-radius:8px;font-weight:700}
+@media(min-width:700px){.business-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 </head>
 
@@ -337,6 +347,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
     >
       Show More
     </button>
+  </section>
+
+
+  <section class="business-panel" aria-label="Smart business overview">
+    <h3>🚀 Smart Business Overview</h3>
+    <p class="business-muted">Waiting-list requests are not confirmed rentals. Activity statistics are based on recorded admin events, not payments.</p>
+    <div class="business-grid">
+      <div class="business-metric"><small>Waiting Requests</small><strong id="bizWaiting">—</strong></div>
+      <div class="business-metric"><small>Games with Demand</small><strong id="bizDemandGames">—</strong></div>
+      <div class="business-metric"><small>Recorded Extensions</small><strong id="bizExtensions">—</strong></div>
+      <div class="business-metric"><small>Recorded Returns</small><strong id="bizReturns">—</strong></div>
+    </div>
+    <h3>🔔 Available Slots with Waiting Customers</h3>
+    <div id="bizAlerts" class="business-muted">Loading alerts...</div>
+    <h3 style="margin-top:22px">⭐ Most Requested Games</h3>
+    <div id="bizPopular" class="business-muted">Loading rankings...</div>
+    <p class="business-muted">🔒 Customer names remain in the admin waiting list. Notifications are admin reminders only; no automatic Messenger messages are sent.</p>
+    <button id="bizRefresh" type="button" class="manage">↻ Refresh Business Overview</button>
   </section>
 
   <h2 class="section-title">🎮 Game Management</h2>
@@ -2363,6 +2391,68 @@ $("logoutButton").addEventListener("click",async()=>{
   location.href="admin-login.html";
 });
 
+
+/* PHASE 3 — read-only business insights, no additional Firestore writes */
+async function loadBusinessOverview(){
+  const alertBox=$("bizAlerts"), popularBox=$("bizPopular");
+  try{
+    const [waitSnap,gameSnap,activitySnap]=await Promise.all([
+      getDocs(collection(db,"waitingList")),
+      getDocs(collection(db,"games")),
+      getDocs(collection(db,"rentalActivity"))
+    ]);
+    const games=gameSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const waiting=waitSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const activity=activitySnap.docs.map(d=>d.data());
+    const counts=new Map();
+    const norm=x=>String(x||"").trim().toLowerCase();
+    const accountSlot=x=>norm(x).replace(/[\s-]/g,"").includes("non")?"nonTrophy":"trophy";
+    for(const r of waiting){
+      const game=games.find(g=>r.gameId===g.id)||games.find(g=>norm(gameName(g))===norm(r.gameName));
+      const key=game?.id||norm(r.gameId||r.gameName)||"unknown";
+      if(!counts.has(key))counts.set(key,{game,gameLabel:game?gameName(game):String(r.gameName||r.gameId||"Unknown Game"),total:0,trophy:0,nonTrophy:0});
+      const item=counts.get(key);
+      item.total++;
+      item[accountSlot(r.accountType)]++;
+    }
+    $("bizWaiting").textContent=waiting.length;
+    $("bizDemandGames").textContent=counts.size;
+    $("bizExtensions").textContent=activity.filter(a=>a.type==="extension").length;
+    $("bizReturns").textContent=activity.filter(a=>a.type==="return").length;
+    const ranked=[...counts.values()].sort((a,b)=>b.total-a.total||a.gameLabel.localeCompare(b.gameLabel));
+    popularBox.replaceChildren();
+    if(!ranked.length)popularBox.textContent="No waiting-list requests yet.";
+    ranked.slice(0,10).forEach((r,i)=>{
+      const row=document.createElement("div");row.className="business-row";
+      const strong=document.createElement("strong");strong.textContent=`${i+1}. ${r.gameLabel} — ${r.total} request(s)`;
+      const small=document.createElement("small");small.textContent=`🏆 Trophy: ${r.trophy} • 🎮 Non-Trophy: ${r.nonTrophy}`;
+      row.append(strong,small);popularBox.append(row);
+    });
+    alertBox.replaceChildren();
+    let alerts=0;
+    for(const r of ranked){
+      if(!r.game||r.game.status==="upcoming")continue;
+      for(const slot of ["trophy","nonTrophy"]){
+        if(!r[slot]||getSlotStatus(r.game,slot)!=="available")continue;
+        alerts++;
+        const row=document.createElement("div");row.className="business-row";
+        const label=slot==="trophy"?"🏆 Trophy":"🎮 Non-Trophy";
+        const strong=document.createElement("strong");strong.textContent=`🟢 ${r.gameLabel} — ${label} AVAILABLE`;
+        const small=document.createElement("small");small.textContent=`${r[slot]} waiting request(s). Check queue order before contacting customers.`;
+        const btn=document.createElement("button");btn.type="button";btn.textContent="📋 Open Waiting List";
+        btn.addEventListener("click",()=>{openModal("waitingListModal");loadWaitingList().catch(console.error)});
+        row.append(strong,small,btn);alertBox.append(row);
+      }
+    }
+    if(!alerts)alertBox.textContent="✅ No available slots with waiting customers right now.";
+  }catch(error){
+    console.error("Business overview:",error);
+    alertBox.textContent="Unable to load business alerts. Check Firestore permissions.";
+    popularBox.textContent="Unable to load rankings.";
+  }
+}
+$("bizRefresh").addEventListener("click",loadBusinessOverview);
+
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -2378,6 +2468,7 @@ onAuthStateChanged(auth,user=>{
   }
 
   loadActivityHistory();
+  loadBusinessOverview();
   // Sync existing reservations once when admin opens dashboard.
   loadWaitingList().catch(error=>console.error("Counter sync:",error));
 
@@ -2394,6 +2485,7 @@ onAuthStateChanged(auth,user=>{
 setInterval(()=>{
   if(auth.currentUser?.uid===ADMIN_UID){
     loadAdminGames().catch(console.error);
+    loadBusinessOverview().catch(console.error);
   }
 },60000);
 
