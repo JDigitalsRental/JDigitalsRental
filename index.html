@@ -11,7 +11,7 @@
   content="Affordable PS5 digital game rentals. Weekly rentals and monthly UNLI SWAP packages at JDigitalsRental."
 >
 
-<link rel="stylesheet" href="styles.css?v=31">
+<link rel="stylesheet" href="styles.css?v=32">
 
 <style>
 /* ==========================================
@@ -168,6 +168,28 @@
   font-size: 12px !important;
   min-height: 18px;
 }
+
+/* PHASE 4 — FACEBOOK REVIEWS */
+#reviews .jdr-review-intro{display:flex;justify-content:space-between;align-items:end;gap:24px;margin:0 0 25px;flex-wrap:wrap}
+#reviews .jdr-review-intro h3{font-size:clamp(24px,3vw,36px);margin:9px 0;color:#fff}
+#reviews .jdr-review-intro p,#reviews .jdr-review-disclaimer{color:#a9bedb;line-height:1.6}
+#reviews .jdr-review-pill{color:#8fc7ff;letter-spacing:2px;font-size:11px;font-weight:800}
+#reviews .jdr-review-link{display:inline-flex;padding:12px 18px;border:1px solid #3773bb;border-radius:12px;color:#fff;text-decoration:none;background:rgba(18,77,156,.3);font-weight:700}
+#reviews .jdr-review-link:hover{background:rgba(29,115,226,.35)}
+#reviews .jdr-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+#reviews .jdr-review-card{min-width:0;border:1px solid rgba(79,150,244,.35);border-radius:18px;background:linear-gradient(150deg,#0c2249,#07132b);padding:23px;box-shadow:0 14px 32px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:15px}
+#reviews .jdr-review-top{display:flex;align-items:center;gap:12px}
+#reviews .jdr-review-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#168cff,#6d52d9);display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px;flex-shrink:0}
+#reviews .jdr-review-name{color:#fff;font-weight:800;overflow-wrap:anywhere}
+#reviews .jdr-review-badge{color:#79e8b0;font-size:11px;margin-top:4px}
+#reviews .jdr-review-quote{color:#d9e8ff;font-size:14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;flex:1}
+#reviews .jdr-review-source{font-size:12px;color:#91bff8;text-decoration:none;font-weight:700;align-self:flex-start}
+#reviews .jdr-review-source:hover{text-decoration:underline}
+#reviews .jdr-review-state{grid-column:1/-1;padding:28px;border:1px solid rgba(79,150,244,.25);border-radius:14px;color:#b4c9e7;text-align:center}
+#reviews .jdr-review-disclaimer{font-size:12px;margin-top:17px}
+@media(max-width:900px){#reviews .jdr-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#reviews .jdr-review-grid{grid-template-columns:1fr}#reviews .jdr-review-card{padding:19px}}
+
 </style>
 
 </head>
@@ -890,33 +912,17 @@
 
   </div>
 
-  <div class="mega-info-panel">
-
-    <h3>
-      Real gamers. Real feedback.
-    </h3>
-
-    <p>
-      Verified customer reviews
-      will appear here when
-      shared with permission.
-    </p>
-
-    <p>
-      We never publish
-      made-up ratings.
-    </p>
-
-    <a
-      class="mega-outline-link"
-      href="https://www.facebook.com/share/1DajrF4mTy/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      Visit our Facebook Page ↗
-    </a>
-
+  <div class="jdr-review-intro">
+    <div><span class="jdr-review-pill">✦ FACEBOOK RECOMMENDATIONS</span>
+      <h3>What our gamers say.</h3>
+      <p>Real recommendations shared by customers on our Facebook Page.</p>
+    </div>
+    <a class="jdr-review-link" href="https://www.facebook.com/profile.php?id=61592148244019&sk=reviews" target="_blank" rel="noopener noreferrer">View reviews on Facebook ↗</a>
   </div>
+  <div id="jdrReviewGrid" class="jdr-review-grid" aria-live="polite">
+    <p class="jdr-review-state">Loading customer recommendations…</p>
+  </div>
+  <p class="jdr-review-disclaimer">Reviews are customer Facebook recommendations, not numerical star ratings. Only reviews published by JDigitalsRental are displayed.</p>
 
 </section>
 
@@ -1680,6 +1686,55 @@ const app = initializeApp(
 const db = getFirestore(app);
 
 /* ==========================================
+   PHASE 4 — PUBLISHED FACEBOOK REVIEWS
+   ========================================== */
+const reviewGrid = document.getElementById("jdrReviewGrid");
+if (reviewGrid) {
+  onSnapshot(collection(db, "customerReviews"), snapshot => {
+    const reviews = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(r => r.published === true || r.isPublished === true || r.status === "published")
+      .sort((a,b) => {
+        const date = x => x?.toMillis?.() ?? (typeof x === "number" ? x : 0);
+        return date(b.createdAt || b.updatedAt) - date(a.createdAt || a.updatedAt);
+      });
+    reviewGrid.replaceChildren();
+    if (!reviews.length) {
+      const p = document.createElement("p");
+      p.className = "jdr-review-state";
+      p.textContent = "Customer recommendations will appear here soon. Visit our Facebook Page to read reviews.";
+      reviewGrid.appendChild(p);
+      return;
+    }
+    for (const review of reviews) {
+      const name = String(review.customerName || review.name || review.reviewerName || "Facebook customer").trim();
+      const quote = String(review.reviewText || review.review || review.text || review.message || review.content || "").trim();
+      if (!quote) continue;
+      const card = document.createElement("article"); card.className = "jdr-review-card";
+      const top = document.createElement("div"); top.className = "jdr-review-top";
+      const avatar = document.createElement("div"); avatar.className = "jdr-review-avatar";
+      avatar.textContent = (name.charAt(0) || "J").toUpperCase();
+      const identity = document.createElement("div");
+      const label = document.createElement("div"); label.className = "jdr-review-name"; label.textContent = name;
+      const badge = document.createElement("div"); badge.className = "jdr-review-badge"; badge.textContent = "✓ Recommends on Facebook";
+      identity.append(label, badge); top.append(avatar, identity);
+      const body = document.createElement("div"); body.className = "jdr-review-quote"; body.textContent = "“" + quote + "”";
+      const source = document.createElement("a"); source.className = "jdr-review-source";
+      const rawUrl = String(review.facebookUrl || review.sourceUrl || review.sourceLink || review.facebookLink || "");
+      source.href = /^https:\/\/(www\.)?(facebook\.com|fb\.com)\//i.test(rawUrl) ? rawUrl : "https://www.facebook.com/profile.php?id=61592148244019&sk=reviews";
+      source.target = "_blank"; source.rel = "noopener noreferrer"; source.textContent = "View on Facebook ↗";
+      card.append(top, body, source); reviewGrid.appendChild(card);
+    }
+    if (!reviewGrid.children.length) reviewGrid.textContent = "Customer reviews coming soon.";
+  }, error => {
+    console.error("Customer reviews loading error:", error);
+    reviewGrid.replaceChildren();
+    const p = document.createElement("p"); p.className = "jdr-review-state";
+    p.textContent = "Reviews are temporarily unavailable. You can read them on our Facebook Page.";
+    reviewGrid.appendChild(p);
+  });
+}
+
+/* ==========================================
    SAVE WAITING LIST
    ========================================== */
 
@@ -1935,7 +1990,7 @@ onSnapshot(
      MAIN APP SCRIPT
      ========================================== -->
 
-<script src="app.js?v=31"></script>
+<script src="app.js?v=32"></script>
 
 
 
