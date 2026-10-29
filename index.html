@@ -11,7 +11,7 @@
   content="Affordable PS5 digital game rentals. Weekly rentals and monthly UNLI SWAP packages at JDigitalsRental."
 >
 
-<link rel="stylesheet" href="styles.css?v=32">
+<link rel="stylesheet" href="styles.css?v=33">
 
 <style>
 /* ==========================================
@@ -189,6 +189,25 @@
 #reviews .jdr-review-disclaimer{font-size:12px;margin-top:17px}
 @media(max-width:900px){#reviews .jdr-review-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#reviews .jdr-review-grid{grid-template-columns:1fr}#reviews .jdr-review-card{padding:19px}}
+
+
+/* PHASE 4.1 — PREMIUM FACEBOOK REVIEWS CAROUSEL */
+#reviews .jdr-carousel-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 14px;flex-wrap:wrap}
+#reviews .jdr-carousel-hint{font-size:12px;color:#9fc6f8;letter-spacing:.3px}
+#reviews .jdr-carousel-buttons{display:flex;gap:9px}
+#reviews .jdr-carousel-arrow{height:39px;width:43px;border:1px solid rgba(93,165,255,.55);border-radius:11px;background:linear-gradient(145deg,#15386e,#0a1a39);color:#fff;font-size:21px;cursor:pointer;transition:background .2s,transform .2s}
+#reviews .jdr-carousel-arrow:hover:not(:disabled){background:#1766cb;transform:translateY(-2px)}
+#reviews .jdr-carousel-arrow:disabled{opacity:.35;cursor:not-allowed}
+#reviews .jdr-review-grid{display:flex;gap:17px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding:4px 2px 14px;touch-action:pan-x pan-y}
+#reviews .jdr-review-grid::-webkit-scrollbar{display:none}
+#reviews .jdr-review-card{box-sizing:border-box;flex:0 0 calc((100% - 34px)/3);scroll-snap-align:start;min-width:0}
+#reviews .jdr-review-state{flex:0 0 100%}
+#reviews .jdr-carousel-dots{display:flex;justify-content:center;align-items:center;gap:7px;margin:5px 0 8px;min-height:15px}
+#reviews .jdr-carousel-dot{width:7px;height:7px;border-radius:99px;border:0;background:#4c688f;padding:0;cursor:pointer;transition:width .25s,background .25s}
+#reviews .jdr-carousel-dot.active{width:24px;background:#3d9cff}
+@media(max-width:900px){#reviews .jdr-review-card{flex-basis:calc((100% - 17px)/2)}}
+@media(max-width:600px){#reviews .jdr-review-card{flex-basis:100%}#reviews .jdr-carousel-controls{margin-top:5px}}
+@media(prefers-reduced-motion:reduce){#reviews .jdr-review-grid{scroll-behavior:auto}#reviews .jdr-carousel-arrow{transition:none}}
 
 </style>
 
@@ -919,9 +938,17 @@
     </div>
     <a class="jdr-review-link" href="https://www.facebook.com/profile.php?id=61592148244019&sk=reviews" target="_blank" rel="noopener noreferrer">View reviews on Facebook ↗</a>
   </div>
+  <div class="jdr-carousel-controls" aria-label="Customer review carousel controls">
+    <span class="jdr-carousel-hint">✦ Real gamers. Real recommendations.</span>
+    <div class="jdr-carousel-buttons">
+      <button type="button" id="jdrReviewPrev" class="jdr-carousel-arrow" aria-label="Previous customer review">‹</button>
+      <button type="button" id="jdrReviewNext" class="jdr-carousel-arrow" aria-label="Next customer review">›</button>
+    </div>
+  </div>
   <div id="jdrReviewGrid" class="jdr-review-grid" aria-live="polite">
     <p class="jdr-review-state">Loading customer recommendations…</p>
   </div>
+  <div id="jdrReviewDots" class="jdr-carousel-dots" aria-label="Review positions"></div>
   <p class="jdr-review-disclaimer">Reviews are customer Facebook recommendations, not numerical star ratings. Only reviews published by JDigitalsRental are displayed.</p>
 
 </section>
@@ -1986,6 +2013,90 @@ onSnapshot(
   }
 );
 
+</script>
+
+
+<!-- PHASE 4.1: Reviews carousel; Firebase review loader above remains unchanged -->
+<script>
+(function () {
+  const track = document.getElementById('jdrReviewGrid');
+  const prev = document.getElementById('jdrReviewPrev');
+  const next = document.getElementById('jdrReviewNext');
+  const dots = document.getElementById('jdrReviewDots');
+  const section = document.getElementById('reviews');
+  if (!track || !prev || !next || !dots || !section) return;
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let timer = null;
+  let hovering = false;
+  let inView = false;
+  let current = 0;
+  let count = 0;
+
+  const cards = () => Array.from(track.querySelectorAll(':scope > .jdr-review-card'));
+  const visibleCount = () => window.matchMedia('(max-width: 600px)').matches ? 1 :
+    window.matchMedia('(max-width: 900px)').matches ? 2 : 3;
+  const maxIndex = () => Math.max(0, count - visibleCount());
+  const getStep = () => {
+    const card = cards()[0];
+    if (!card) return 0;
+    const gap = parseFloat(getComputedStyle(track).gap) || 0;
+    return card.getBoundingClientRect().width + gap;
+  };
+  function syncPosition() {
+    const step = getStep();
+    if (!step) return;
+    current = Math.max(0, Math.min(maxIndex(), Math.round(track.scrollLeft / step)));
+    dots.querySelectorAll('button').forEach((dot, index) => {
+      dot.classList.toggle('active', index === current);
+      dot.setAttribute('aria-current', index === current ? 'true' : 'false');
+    });
+  }
+  function goTo(index) {
+    current = index > maxIndex() ? 0 : index < 0 ? maxIndex() : index;
+    track.scrollTo({left: current * getStep(), behavior: reducedMotion.matches ? 'instant' : 'smooth'});
+    dots.querySelectorAll('button').forEach((dot, i) => dot.classList.toggle('active', i === current));
+  }
+  function stop() { if (timer !== null) clearInterval(timer); timer = null; }
+  function start() {
+    stop();
+    if (count <= visibleCount() || reducedMotion.matches || hovering || !inView || document.hidden) return;
+    timer = setInterval(() => goTo(current + 1), 4300);
+  }
+  function rebuild() {
+    count = cards().length;
+    dots.replaceChildren();
+    const pages = maxIndex() + 1;
+    prev.disabled = next.disabled = count <= visibleCount();
+    for (let i = 0; i < pages && count > visibleCount(); i++) {
+      const dot = document.createElement('button');
+      dot.type = 'button'; dot.className = 'jdr-carousel-dot';
+      dot.setAttribute('aria-label', 'Show review position ' + (i + 1));
+      dot.addEventListener('click', () => { goTo(i); start(); });
+      dots.appendChild(dot);
+    }
+    current = Math.min(current, maxIndex());
+    goTo(current);
+    start();
+  }
+  prev.addEventListener('click', () => { goTo(current - 1); start(); });
+  next.addEventListener('click', () => { goTo(current + 1); start(); });
+  track.addEventListener('scroll', () => { window.requestAnimationFrame(syncPosition); }, {passive:true});
+  section.addEventListener('mouseenter', () => { hovering = true; stop(); });
+  section.addEventListener('mouseleave', () => { hovering = false; start(); });
+  section.addEventListener('focusin', () => { hovering = true; stop(); });
+  section.addEventListener('focusout', event => {
+    if (!section.contains(event.relatedTarget)) { hovering = false; start(); }
+  });
+  document.addEventListener('visibilitychange', start);
+  window.addEventListener('resize', rebuild);
+  reducedMotion.addEventListener('change', start);
+  new IntersectionObserver(entries => {
+    inView = entries[0].isIntersecting; start();
+  }, {threshold:.15}).observe(section);
+  new MutationObserver(rebuild).observe(track, {childList:true});
+  rebuild();
+})();
 </script>
 
 <!-- ==========================================
