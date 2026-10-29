@@ -246,6 +246,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .business-row{padding:12px 0;border-top:1px solid #1b3b6c;font-size:13px;line-height:1.6}
 .business-row small{display:block;color:#a8bddc}.business-row button{margin-top:8px;border:1px solid #357bd2;background:#103c75;color:white;padding:9px 12px;border-radius:8px;font-weight:700}
 @media(min-width:700px){.business-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+.review-panel{margin-top:22px;padding:20px;border:1px solid #23508b;border-radius:15px;background:linear-gradient(135deg,#081a3a,#06112a)}
+.review-panel h3{margin:0 0 8px}.review-panel label{display:block;margin:12px 0 5px;color:#b8d5ff;font-size:12px}
+.review-panel input,.review-panel textarea{width:100%;padding:11px;border:1px solid #29518a;border-radius:9px;background:#030d23;color:#fff;font:inherit}
+.review-panel textarea{min-height:90px;resize:vertical}.review-panel .review-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.review-panel button{border:1px solid #3269b6;background:#103d7d;color:white;padding:10px 14px;border-radius:9px;cursor:pointer}
+.review-panel button.primary{background:#087aff}.review-panel button.danger{background:#661c32;border-color:#b94561}
+.review-panel .review-entry{padding:14px 0;border-top:1px solid #27416b}.review-panel .review-entry p{white-space:pre-wrap;overflow-wrap:anywhere}
+.review-panel .review-note{color:#a8bfdc;font-size:12px}.review-panel .review-badge{font-size:12px;color:#91f5c1}
 </style>
 </head>
 
@@ -390,6 +399,28 @@ button:disabled{opacity:.5;cursor:not-allowed}
     📅 Rental extensions update the expected return date only.
     Record payments separately.
   </div>
+
+<section id="reviewManagement" class="review-panel">
+ <h3>⭐ Facebook Customer Reviews — Phase 4</h3>
+ <p class="review-note">Manually add real recommendations from your Facebook Page. Only published reviews appear on the customer website once the customer-side integration is installed. Never invent ratings.</p>
+ <form id="reviewForm">
+  <input id="reviewEditId" type="hidden">
+  <label for="reviewCustomerName">Customer name *</label>
+  <input id="reviewCustomerName" maxlength="100" required placeholder="Name as shown on Facebook">
+  <label for="reviewText">Original Facebook recommendation *</label>
+  <textarea id="reviewText" maxlength="4000" required placeholder="Copy the customer's original wording"></textarea>
+  <label for="reviewSourceUrl">Facebook source link (optional)</label>
+  <input id="reviewSourceUrl" type="url" placeholder="https://www.facebook.com/...">
+  <label><input id="reviewPublished" type="checkbox" style="width:auto"> Publish this review</label>
+  <div class="review-actions">
+   <button type="submit" class="primary" id="reviewSaveBtn">💾 Save Review</button>
+   <button type="button" id="reviewCancelEdit">Clear Form</button>
+   <button type="button" id="reviewReload">↻ Refresh Reviews</button>
+  </div>
+ </form>
+ <p id="reviewMessage" class="review-note" role="status"></p>
+ <div id="reviewList"><p class="review-note">Loading reviews…</p></div>
+</section>
 </main>
 <!-- ADD GAME -->
 
@@ -2499,6 +2530,101 @@ async function loadBusinessOverview(){
 }
 $("bizRefresh").addEventListener("click",loadBusinessOverview);
 
+
+/* PHASE 4 — FACEBOOK RECOMMENDATIONS ADMIN */
+let reviewCache=new Map();
+const reviewMessage=(msg)=>{$("reviewMessage").textContent=msg;};
+function reviewReset(){
+  $("reviewForm").reset();
+  $("reviewEditId").value="";
+  $("reviewSaveBtn").textContent="💾 Save Review";
+}
+function reviewSafeUrl(value){
+  const raw=String(value||"").trim();
+  if(!raw)return "";
+  const url=new URL(raw);
+  if(url.protocol!=="https:" || !/(^|\.)facebook\.com$/.test(url.hostname.toLowerCase()) &&
+     !/(^|\.)fb\.com$/.test(url.hostname.toLowerCase()))
+    throw Error("Use an HTTPS Facebook review or Page URL.");
+  return url.href;
+}
+async function loadAdminReviews(){
+  const list=$("reviewList");
+  try{
+    const snap=await getDocs(collection(db,"reviews"));
+    const reviews=snap.docs.map(d=>({id:d.id,...d.data()}));
+    reviewCache=new Map(reviews.map(r=>[r.id,r]));
+    reviews.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    list.replaceChildren();
+    if(!reviews.length){list.textContent="No reviews added yet.";return;}
+    for(const r of reviews){
+      const row=document.createElement("div");row.className="review-entry";
+      const name=document.createElement("strong");name.textContent=r.customerName||"Unnamed";
+      const status=document.createElement("span");status.className="review-badge";
+      status.textContent=r.published?" · 🟢 Published":" · ⚪ Unpublished";
+      const body=document.createElement("p");body.textContent=r.text||"";
+      const actions=document.createElement("div");actions.className="review-actions";
+      const edit=document.createElement("button");edit.textContent="✏️ Edit";
+      edit.onclick=()=>{
+        $("reviewEditId").value=r.id;
+        $("reviewCustomerName").value=r.customerName||"";
+        $("reviewText").value=r.text||"";
+        $("reviewSourceUrl").value=r.sourceUrl||"";
+        $("reviewPublished").checked=r.published===true;
+        $("reviewSaveBtn").textContent="💾 Update Review";
+        $("reviewManagement").scrollIntoView({behavior:"smooth"});
+      };
+      const toggle=document.createElement("button");
+      toggle.textContent=r.published?"Unpublish":"Publish";
+      toggle.onclick=async()=>{
+        try{
+          toggle.disabled=true;
+          await updateDoc(doc(db,"reviews",r.id),{published:!r.published,updatedAt:serverTimestamp()});
+          await loadAdminReviews();
+        }catch(e){alert("Unable to update review: "+e.message);toggle.disabled=false;}
+      };
+      const del=document.createElement("button");del.className="danger";del.textContent="🗑️ Delete";
+      del.onclick=async()=>{
+        if(!confirm("Permanently delete this review by "+(r.customerName||"customer")+"?"))return;
+        try{del.disabled=true;await deleteDoc(doc(db,"reviews",r.id));reviewReset();await loadAdminReviews();}
+        catch(e){alert("Unable to delete review: "+e.message);del.disabled=false;}
+      };
+      actions.append(edit,toggle,del);
+      row.append(name,status,body,actions);
+      if(r.sourceUrl){
+        const link=document.createElement("a");link.href=r.sourceUrl;
+        link.target="_blank";link.rel="noopener noreferrer";link.textContent="↗ View on Facebook";
+        row.append(link);
+      }
+      list.append(row);
+    }
+  }catch(e){list.textContent="Unable to load reviews: "+e.message;}
+}
+$("reviewForm").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const button=$("reviewSaveBtn");
+  try{
+    if(auth.currentUser?.uid!=="4APTlwgwMTNSsdpp76jWwDiEZxp1")throw Error("Admin sign-in required.");
+    const customerName=$("reviewCustomerName").value.trim();
+    const reviewText=$("reviewText").value.trim();
+    if(!customerName||!reviewText)throw Error("Customer name and review text are required.");
+    const data={
+      customerName,text:reviewText,sourceUrl:reviewSafeUrl($("reviewSourceUrl").value),
+      published:$("reviewPublished").checked,source:"Facebook Recommendation",
+      updatedAt:serverTimestamp()
+    };
+    button.disabled=true;reviewMessage("Saving review…");
+    const id=$("reviewEditId").value;
+    if(id)await updateDoc(doc(db,"reviews",id),data);
+    else await setDoc(doc(collection(db,"reviews")),{...data,createdAt:serverTimestamp()});
+    reviewReset();reviewMessage("✅ Review saved successfully.");
+    await loadAdminReviews();
+  }catch(err){reviewMessage("❌ "+err.message);}
+  finally{button.disabled=false;}
+});
+$("reviewCancelEdit").addEventListener("click",reviewReset);
+$("reviewReload").addEventListener("click",loadAdminReviews);
+
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -2513,6 +2639,7 @@ onAuthStateChanged(auth,user=>{
     return;
   }
 
+  loadAdminReviews();
   loadActivityHistory();
   loadBusinessOverview();
   // Sync existing reservations once when admin opens dashboard.
