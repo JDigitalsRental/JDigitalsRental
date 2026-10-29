@@ -227,6 +227,15 @@
 @media(max-width:500px){.jdr-install-hero{width:100%;box-sizing:border-box}}
 
 
+/* Browser compatibility notice */
+.jdr-install-compat-notice {
+  width:min(100%,460px);box-sizing:border-box;margin:10px 0 0;
+  padding:12px 14px;border-radius:13px;
+  border:1px solid rgba(90,167,255,.45);
+  background:rgba(8,30,68,.72);color:#cce3ff;
+  font-size:12px;line-height:1.65;
+}
+.jdr-install-compat-notice strong {color:#fff}
 /* PREMIUM INSTALL BUTTON — logo from existing site asset */
 .jdr-install-hero {
   display:flex; align-items:center; justify-content:flex-start; gap:13px;
@@ -344,6 +353,8 @@
       </span>
       <span class="jdr-install-arrow" aria-hidden="true">↗</span>
     </button>
+
+    <p class="jdr-install-compat-notice" role="note">📱 <strong>Android phones only:</strong> To install the JDigitalsRental app, please use <strong>Google Chrome</strong> or <strong>Brave Browser</strong>. Installation through Samsung Internet and Safari is currently not supported by our setup. 💙</p>
 
     <div class="trust-row">
       <span>✦ Affordable Prices</span>
@@ -2222,13 +2233,11 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   const dialog = document.getElementById('jdrInstallHelp');
   const helpText = document.getElementById('jdrInstallHelpText');
   const ua = navigator.userAgent || '';
-  const ios = /iPad|iPhone|iPod/.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const android = /Android/i.test(ua);
   const samsung = /SamsungBrowser/i.test(ua);
-  const firefox = /Firefox|FxiOS/i.test(ua);
-  const edge = /EdgA|EdgiOS|Edg\//i.test(ua);
-  const brave = /Brave/i.test(ua);
-  const chrome = /Chrome|CriOS/i.test(ua) && !edge && !samsung;
+  const otherBrowser = /Firefox|FxiOS|EdgA|EdgiOS|Edg\/|OPR\/|Opera|UCBrowser/i.test(ua);
+  // Brave on Android can identify itself as Chrome in its user agent.
+  const chromeOrBrave = android && /Chrome\//i.test(ua) && !samsung && !otherBrowser;
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
 
@@ -2237,25 +2246,16 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   }
 
   function instructions() {
-    if (ios) {
-      return 'On iPhone or iPad: open this website in Safari, tap Share (square with an up arrow), then Add to Home Screen. Other iOS browsers may show their own Add to Home Screen option.';
+    if (!android) {
+      return '📱 JDigitalsRental app installation is currently supported through Google Chrome or Brave Browser on Android phones only. You can still browse our website normally on this device.';
     }
     if (samsung) {
-      return 'Samsung Internet: tap the menu (☰), then Add page to → Home screen (or Apps screen, if offered). If an app install is blocked, use a normal home-screen shortcut instead. Do not bypass Play Protect.';
+      return '⚠️ Samsung Internet is not supported for JDigitalsRental app installation right now. Please open our website in Google Chrome or Brave Browser on your Android phone. Do not bypass Google Play Protect warnings.';
     }
-    if (firefox) {
-      return 'Firefox: open the browser menu (⋮) and look for Install or Add to Home screen. Availability depends on your Firefox version.';
+    if (!chromeOrBrave) {
+      return '📱 To install JDigitalsRental on Android, please open our website in Google Chrome or Brave Browser. You can continue browsing normally here.';
     }
-    if (edge) {
-      return 'Microsoft Edge: open the menu (⋯), then look for Apps → Install this site as an app or Add to phone/Home screen. Menu names vary by version.';
-    }
-    if (brave) {
-      return 'Brave: open the menu (⋮), then choose Install app or Add to Home screen if available. If your phone blocks installation, create a shortcut instead. Do not disable Play Protect.';
-    }
-    if (chrome) {
-      return 'Google Chrome: tap the menu (⋮) → Add to Home screen → Install, or Install app if shown. If the browser offers Create shortcut, that also works.';
-    }
-    return 'Open your browser menu and look for Install app, Add to Home screen, or Create shortcut. Some browsers do not support web app installation; try Chrome, Edge, Brave, Samsung Internet, or Safari on iPhone.';
+    return '📲 In Google Chrome or Brave Browser on Android, open the browser menu (⋮) and choose Install app or Add to Home screen if offered. Installation depends on browser and device support.';
   }
 
   function showHelp() {
@@ -2266,7 +2266,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 
   async function install() {
     if (standalone()) { refresh(); return; }
-    if (!deferredPrompt) { showHelp(); return; }
+    if (!chromeOrBrave || !deferredPrompt) { showHelp(); return; }
     const prompt = deferredPrompt;
     deferredPrompt = null;
     try {
@@ -2281,6 +2281,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   }
 
   window.addEventListener('beforeinstallprompt', event => {
+    if (!chromeOrBrave) return;
     event.preventDefault();
     deferredPrompt = event;
     refresh();
