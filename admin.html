@@ -255,6 +255,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .review-panel button.primary{background:#087aff}.review-panel button.danger{background:#661c32;border-color:#b94561}
 .review-panel .review-entry{padding:14px 0;border-top:1px solid #27416b}.review-panel .review-entry p{white-space:pre-wrap;overflow-wrap:anywhere}
 .review-panel .review-note{color:#a8bfdc;font-size:12px}.review-panel .review-badge{font-size:12px;color:#91f5c1}
+
+/* Game cover uploader — local compression, no Firebase Storage required */
+.cover-upload{margin:15px 0;padding:14px;background:#081a34;border:1px solid #28548e;border-radius:12px}
+.cover-upload label{display:block;margin:0 0 9px}
+.cover-upload input[type=file]{width:100%;padding:11px;background:#020817;border:1px dashed #3e82c7;border-radius:9px;color:#d6eaff}
+.cover-preview{display:none;max-width:160px;max-height:210px;object-fit:contain;margin:12px auto 0;border:1px solid #28548e;border-radius:9px}
+.cover-hint{font-size:11px;color:#a8bfdc;line-height:1.6;margin:9px 0 0}
 </style>
 </head>
 
@@ -561,11 +568,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <input id="newNonTrophyDate" type="date">
     </div>
 
-    <label>Game Image Path</label>
-    <input
-      id="newGameImage"
-      placeholder="assets/game-name.jpg"
-    >
+    <section class="cover-upload">
+      <label for="newGameCover">📸 Upload Game Cover</label>
+      <input id="newGameCover" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+      <img id="newGameCoverPreview" class="cover-preview" alt="Game cover preview">
+      <p class="cover-hint" id="newGameCoverHint">Choose a photo. It will be resized automatically before saving.</p>
+      <details><summary style="cursor:pointer;color:#8fcaff">Or use an existing image path / URL</summary>
+        <input id="newGameImage" placeholder="assets/game-name.jpg or https://..." style="margin-top:8px">
+      </details>
+    </section>
 
 
     <section class="media-panel">
@@ -813,6 +824,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
       </button>
     </div>
 
+
+    <section class="cover-upload">
+      <label for="manageGameCover">📸 Change Game Cover (optional)</label>
+      <input id="manageGameCover" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+      <img id="manageGameCoverPreview" class="cover-preview" alt="Current game cover">
+      <p class="cover-hint" id="manageGameCoverHint">Leave empty to keep the current image.</p>
+    </section>
 
     <section class="media-panel">
       <h3 class="form-heading">🎬 Premium Game Details</h3>
@@ -1586,6 +1604,10 @@ function openManage(id){
   if(!g)return;
 
   selectedGameId=id;
+  coverData.manage=null;
+  $("manageGameCover").value="";
+  $("manageGameCoverHint").textContent="Leave empty to keep the current image.";
+  showCover("manage",g.image||"");
 
   const p=getPrices(g);
 
@@ -1737,6 +1759,53 @@ function fillMediaForm(prefix,g){
   $(prefix+"ReleaseDate").value=dateToInput(g.releaseDate);
 }
 
+
+/* IMAGE UPLOAD: compressed cover stored in the game's existing image field.
+   No Firebase Storage or billing setup needed. Keep images small: Firestore has
+   a 1 MiB document limit. */
+const coverData={new:null,manage:null};
+async function compressCover(file){
+  if(!file || !file.type.startsWith("image/"))throw Error("Please select an image file.");
+  if(file.size>12*1024*1024)throw Error("Image is too large. Please choose one under 12 MB.");
+  const bitmap=await createImageBitmap(file);
+  try{
+    for(const width of [600,480,360,280]){
+      const scale=Math.min(1,width/bitmap.width,800/bitmap.height);
+      const canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+      canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+      canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);
+      for(const quality of [.78,.65,.5,.35]){
+        const result=canvas.toDataURL("image/jpeg",quality);
+        if(result.length<160000)return result;
+      }
+    }
+    throw Error("Unable to compress this photo. Try a smaller image.");
+  }finally{bitmap.close();}
+}
+function showCover(prefix,src){
+  const img=$(prefix+"GameCoverPreview");
+  if(src){img.src=src;img.style.display="block";}
+  else{img.removeAttribute("src");img.style.display="none";}
+}
+for(const prefix of ["new","manage"]){
+  $(prefix+"GameCover").addEventListener("change",async e=>{
+    const file=e.target.files?.[0];
+    coverData[prefix]=null;
+    if(!file){showCover(prefix,prefix==="manage"?gameCache.get(selectedGameId)?.image:"");return;}
+    $(prefix+"GameCoverHint").textContent="⏳ Preparing photo...";
+    try{
+      coverData[prefix]=await compressCover(file);
+      showCover(prefix,coverData[prefix]);
+      $(prefix+"GameCoverHint").textContent="✅ Ready! Click Save to apply the cover.";
+    }catch(err){
+      e.target.value="";
+      $(prefix+"GameCoverHint").textContent="❌ "+err.message;
+      alert(err.message);
+    }
+  });
+}
+
 /* SAVE GAME CHANGES */
 
 $("saveGameChanges").addEventListener("click",async()=>{
@@ -1745,7 +1814,10 @@ $("saveGameChanges").addEventListener("click",async()=>{
   const btn=$("saveGameChanges");
 
   try{
+    if($("manageGameCover").files.length && !coverData.manage)
+      throw Error("Please wait for the cover to finish processing.");
     const updates={...formGameData("manage"),...mediaFromForm("manage")};
+    if(coverData.manage)updates.image=coverData.manage;
 
     btn.disabled=true;
 
@@ -2125,6 +2197,10 @@ for(const prefix of ["newGameStatus","manageStatus"]){
 
 $("addGameButton").addEventListener("click",()=>{
   fillMediaForm("new",{});
+  coverData.new=null;
+  $("newGameCover").value="";
+  $("newGameCoverHint").textContent="Choose a photo. It will be resized automatically before saving.";
+  showCover("new","");
   openModal("addGameModal");
 });
 
@@ -2134,7 +2210,9 @@ $("saveNewGame").addEventListener("click",async()=>{
   try{
     const title=$("newGameTitle").value.trim();
     const genre=$("newGameGenre").value.trim();
-    const image=$("newGameImage").value.trim();
+    if($("newGameCover").files.length && !coverData.new)
+      throw Error("Please wait for the cover to finish processing.");
+    const image=coverData.new||$("newGameImage").value.trim();
 
     if(!title||!genre||!image){
       throw Error(
