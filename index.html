@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JDigitalsRental">
-<link rel="manifest" href="manifest.webmanifest?v=1">
+<link rel="manifest" href="manifest.webmanifest?v=2">
 <link rel="apple-touch-icon" href="assets/jdigitals-logo.png">
 
 <title>JDigitalsRental | PS5 Game Rentals</title>
@@ -2217,40 +2217,84 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 </div>
 <script>
 (function () {
-  let installEvent = null;
+  let deferredPrompt = null;
   const hero = document.getElementById('jdrInstallHero');
-  const help = document.getElementById('jdrInstallHelp');
+  const dialog = document.getElementById('jdrInstallHelp');
   const helpText = document.getElementById('jdrInstallHelpText');
-  const isInstalled = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const ua = navigator.userAgent || '';
+  const ios = /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const samsung = /SamsungBrowser/i.test(ua);
+  const firefox = /Firefox|FxiOS/i.test(ua);
+  const edge = /EdgA|EdgiOS|Edg\//i.test(ua);
+  const brave = /Brave/i.test(ua);
+  const chrome = /Chrome|CriOS/i.test(ua) && !edge && !samsung;
+  const standalone = () => window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
   function refresh() {
-    const installed = isInstalled();
-    if (hero) hero.hidden = installed;
+    if (hero) hero.hidden = standalone();
   }
+
+  function instructions() {
+    if (ios) {
+      return 'On iPhone or iPad: open this website in Safari, tap Share (square with an up arrow), then Add to Home Screen. Other iOS browsers may show their own Add to Home Screen option.';
+    }
+    if (samsung) {
+      return 'Samsung Internet: tap the menu (☰), then Add page to → Home screen (or Apps screen, if offered). If an app install is blocked, use a normal home-screen shortcut instead. Do not bypass Play Protect.';
+    }
+    if (firefox) {
+      return 'Firefox: open the browser menu (⋮) and look for Install or Add to Home screen. Availability depends on your Firefox version.';
+    }
+    if (edge) {
+      return 'Microsoft Edge: open the menu (⋯), then look for Apps → Install this site as an app or Add to phone/Home screen. Menu names vary by version.';
+    }
+    if (brave) {
+      return 'Brave: open the menu (⋮), then choose Install app or Add to Home screen if available. If your phone blocks installation, create a shortcut instead. Do not disable Play Protect.';
+    }
+    if (chrome) {
+      return 'Google Chrome: tap the menu (⋮) → Add to Home screen → Install, or Install app if shown. If the browser offers Create shortcut, that also works.';
+    }
+    return 'Open your browser menu and look for Install app, Add to Home screen, or Create shortcut. Some browsers do not support web app installation; try Chrome, Edge, Brave, Samsung Internet, or Safari on iPhone.';
+  }
+
   function showHelp() {
-    helpText.textContent = isIOS
-      ? 'Open this website in Safari, tap Share (square with an up arrow), then choose Add to Home Screen.'
-      : 'Open this website in Google Chrome, tap the three-dot menu (⋮), then choose Install app or Add to Home screen. If offered Create shortcut, you can choose that instead. No APK download is needed.';
-    help.classList.add('is-open');
+    if (!dialog || !helpText) return;
+    helpText.textContent = instructions();
+    dialog.classList.add('is-open');
   }
+
   async function install() {
-    if (isInstalled()) { refresh(); return; }
-    if (installEvent) {
-      const event = installEvent;
-      installEvent = null;
-      try { await event.prompt(); await event.userChoice; } catch (e) { showHelp(); }
-      refresh();
-    } else showHelp();
+    if (standalone()) { refresh(); return; }
+    if (!deferredPrompt) { showHelp(); return; }
+    const prompt = deferredPrompt;
+    deferredPrompt = null;
+    try {
+      await prompt.prompt();
+      const choice = await prompt.userChoice;
+      if (choice?.outcome !== 'accepted') showHelp();
+    } catch (error) {
+      console.warn('Install prompt unavailable:', error);
+      showHelp();
+    }
+    refresh();
   }
-  window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault(); installEvent = e; refresh();
+
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredPrompt = event;
+    refresh();
   });
-  window.addEventListener('appinstalled', function () {
-    installEvent = null; refresh();
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    refresh();
   });
+  window.matchMedia('(display-mode: standalone)').addEventListener?.('change', refresh);
   hero?.addEventListener('click', install);
-  document.getElementById('jdrInstallHelpClose')?.addEventListener('click', () => help.classList.remove('is-open'));
-  help?.addEventListener('click', e => { if (e.target === help) help.classList.remove('is-open'); });
+  document.getElementById('jdrInstallHelpClose')?.addEventListener('click', () => dialog?.classList.remove('is-open'));
+  dialog?.addEventListener('click', event => {
+    if (event.target === dialog) dialog.classList.remove('is-open');
+  });
   refresh();
 })();
 </script>
