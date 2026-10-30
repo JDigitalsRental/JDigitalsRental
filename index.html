@@ -1946,6 +1946,39 @@ nav a:hover { text-shadow:0 0 12px #168cffaa; }
  .jdr-details-availability { grid-template-columns:1fr; }
  .jdr-details-gallery button { width:49px; height:53px; }
 }
+
+/* Dynamic monthly headings: robust even when Single Game rows are hidden. */
+#gameGrid .price .jdr-single-heading,
+#upcomingGames .price .jdr-single-heading {
+  display:block !important;
+  background:linear-gradient(90deg,#113c78,#092b5e) !important;
+  color:#a8deff !important;
+  padding:8px 10px !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  border-top:1px solid #315c89 !important;
+}
+#gameGrid .price .jdr-unli-heading,
+#upcomingGames .price .jdr-unli-heading {
+  display:block !important;
+  margin-top:4px !important;
+  background:linear-gradient(95deg,#55229d,#7d2dd5,#4d188c) !important;
+  color:#f7e6ff !important;
+  padding:9px 10px !important;
+  font-weight:900 !important;
+  border-top:1px solid #a457f4 !important;
+  border-bottom:1px solid #a457f4 !important;
+}
+#gameGrid .price .jdr-unli-price,
+#upcomingGames .price .jdr-unli-price {
+  background:#190f35 !important;
+  color:#e4d4ff !important;
+}
+
+#gameGrid .price .jdr-weekly-heading,#upcomingGames .price .jdr-weekly-heading {
+ background:linear-gradient(90deg,#113c78,#092b5e) !important; color:#a8deff !important; font-weight:900 !important;
+}
+#gameGrid .price .jdr-unli-price,#upcomingGames .price .jdr-unli-price {background:#190f35 !important;color:#e4d4ff !important;font-weight:700 !important;}
 </style>
 
 <style>
@@ -4425,6 +4458,41 @@ function gamePrices(game) {
   };
 }
 
+/* Hide duplicate Single Game prices only when they match UNLI SWAP.
+   Trophy and Non-Trophy are evaluated separately. */
+function singlePlanVisibility(game) {
+  const p = gamePrices(game);
+  return {
+    trophy: Number.isFinite(p.singleMonthlyTrophy) && p.singleMonthlyTrophy > 0 && p.singleMonthlyTrophy !== p.monthlyTrophy,
+    nonTrophy: Number.isFinite(p.singleMonthlyNonTrophy) && p.singleMonthlyNonTrophy > 0 && p.singleMonthlyNonTrophy !== p.monthlyNonTrophy
+  };
+}
+
+function singlePlanPriceRows(game) {
+  const p = gamePrices(game);
+  const visible = singlePlanVisibility(game);
+  if (!visible.trophy && !visible.nonTrophy) return "";
+  return `
+    <span class="jdr-single-heading">🎮 1 MONTH SINGLE GAME (NO SWAP)</span>
+    ${visible.trophy ? `<span>🏆 Trophy: ${money(p.singleMonthlyTrophy)}</span>` : ""}
+    ${visible.nonTrophy ? `<span>🎮 Non-Trophy: ${money(p.singleMonthlyNonTrophy)}</span>` : ""}
+  `;
+}
+
+function syncSinglePlanOption(modalId, game, account) {
+  const modal = document.getElementById(modalId);
+  if (!modal || !game) return false;
+  const single = modal.querySelector('[data-period="single"]');
+  if (!single) return false;
+  const visible = singlePlanVisibility(game);
+  const normalized = normalizedAccount(account);
+  const show = normalized === "trophy" ? visible.trophy : normalized === "nonTrophy" ? visible.nonTrophy : visible.trophy || visible.nonTrophy;
+  single.hidden = !show;
+  single.style.display = show ? "" : "none";
+  if (!show) single.classList.remove("active");
+  return !show;
+}
+
 function getRentalPrice(game, period, account) {
   if (!game || !period || !account) {
     return null;
@@ -4728,24 +4796,21 @@ function render() {
         <div class="mega-savings">
           🔄 Weekly: 1 game swap
           <br>
-          🎮 Monthly Single Game: No Swap
-          <br>
+          ${(singlePlanVisibility(game).trophy || singlePlanVisibility(game).nonTrophy) ? "🎮 Monthly Single Game: No Swap<br>" : ""}
           ♾️ Monthly UNLI SWAP: Max 1 swap/week
         </div>
 
         <div class="game-bottom">
           <div class="price">
-            <span>📅 WEEKLY</span>
+            <span class="jdr-weekly-heading">📅 WEEKLY</span>
             <span>🏆 Trophy: ${money(p.weeklyTrophy)}</span>
             <span>🎮 Non-Trophy: ${money(p.weeklyNonTrophy)}</span>
 
-            <span>🎮 1 MONTH SINGLE GAME (NO SWAP)</span>
-            <span>🏆 Trophy: ${money(p.singleMonthlyTrophy)}</span>
-            <span>🎮 Non-Trophy: ${money(p.singleMonthlyNonTrophy)}</span>
+            ${singlePlanPriceRows(game)}
 
-            <span>♾️ MONTHLY UNLI SWAP</span>
-            <span>🏆 Trophy: ${money(p.monthlyTrophy)}</span>
-            <span>🎮 Non-Trophy: ${money(p.monthlyNonTrophy)}</span>
+            <span class="jdr-unli-heading">♾️ MONTHLY UNLI SWAP</span>
+            <span class="jdr-unli-price">🏆 Trophy: ${money(p.monthlyTrophy)}</span>
+            <span class="jdr-unli-price">🎮 Non-Trophy: ${money(p.monthlyNonTrophy)}</span>
           </div>
 
           <button class="rent" type="button">
@@ -4853,6 +4918,7 @@ function openRentalModal(game) {
   selectedGame = game;
   selectedPeriod = "";
   selectedAccount = "";
+  syncSinglePlanOption("rentalModal", selectedGame, selectedAccount);
 
   if (modalTitle) {
     modalTitle.textContent = `Rent — ${game.name}`;
@@ -4893,6 +4959,9 @@ document.querySelectorAll("#rentalModal .account-option")
 
       button.classList.add("active");
       selectedAccount = button.dataset.account || "";
+      if (syncSinglePlanOption("rentalModal", selectedGame, selectedAccount) && normalizedPeriod(selectedPeriod) === "single") {
+        selectedPeriod = "";
+      }
 
       updateRentalPrice();
       updateRentalButton();
@@ -5093,24 +5162,21 @@ function renderUpcomingGames() {
         <div class="mega-savings">
           🔄 Weekly: 1 game swap
           <br>
-          🎮 Monthly Single Game: No Swap
-          <br>
+          ${(singlePlanVisibility(game).trophy || singlePlanVisibility(game).nonTrophy) ? "🎮 Monthly Single Game: No Swap<br>" : ""}
           ♾️ Monthly UNLI SWAP: Max 1 swap/week
         </div>
 
         <div class="game-bottom">
           <div class="price">
-            <span>📅 WEEKLY</span>
+            <span class="jdr-weekly-heading">📅 WEEKLY</span>
             <span>🏆 Trophy: ${money(p.weeklyTrophy)}</span>
             <span>🎮 Non-Trophy: ${money(p.weeklyNonTrophy)}</span>
 
-            <span>🎮 1 MONTH SINGLE GAME (NO SWAP)</span>
-            <span>🏆 Trophy: ${money(p.singleMonthlyTrophy)}</span>
-            <span>🎮 Non-Trophy: ${money(p.singleMonthlyNonTrophy)}</span>
+            ${singlePlanPriceRows(game)}
 
-            <span>♾️ MONTHLY UNLI SWAP</span>
-            <span>🏆 Trophy: ${money(p.monthlyTrophy)}</span>
-            <span>🎮 Non-Trophy: ${money(p.monthlyNonTrophy)}</span>
+            <span class="jdr-unli-heading">♾️ MONTHLY UNLI SWAP</span>
+            <span class="jdr-unli-price">🏆 Trophy: ${money(p.monthlyTrophy)}</span>
+            <span class="jdr-unli-price">🎮 Non-Trophy: ${money(p.monthlyNonTrophy)}</span>
           </div>
 
           <button class="reserve-slot-button" type="button">
@@ -5209,6 +5275,7 @@ function openUpcomingModal(game) {
   selectedUpcomingGame = game;
   selectedUpcomingPeriod = "";
   selectedUpcomingAccount = "";
+  syncSinglePlanOption("upcomingReservationModal", selectedUpcomingGame, selectedUpcomingAccount);
 
   if (upcomingTitle) {
     upcomingTitle.textContent = game.name;
@@ -5251,6 +5318,9 @@ document.querySelectorAll(
 
     button.classList.add("active");
     selectedUpcomingAccount = button.dataset.account || "";
+    if (syncSinglePlanOption("upcomingReservationModal", selectedUpcomingGame, selectedUpcomingAccount) && normalizedPeriod(selectedUpcomingPeriod) === "single") {
+      selectedUpcomingPeriod = "";
+    }
     updateUpcomingPrice();
   });
 });
