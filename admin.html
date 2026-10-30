@@ -280,6 +280,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .blacklist-entry{padding:14px 0;border-top:1px solid #29446f;overflow-wrap:anywhere}
 .blacklist-entry small{display:block;color:#a8bfdc;line-height:1.7;margin:5px 0}
 .blacklist-flag{color:#ff9999;font-weight:800}.blacklist-warn{color:#ffdc8b;font-weight:800}
+/* Compact dashboard management shortcuts */
+.management-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0}
+.management-shortcuts button{border:1px solid #3269b6;border-radius:13px;background:linear-gradient(135deg,#102e62,#071b3d);color:#fff;padding:19px 12px;text-align:left;cursor:pointer}
+.management-shortcuts strong{display:block;font-size:15px;margin-bottom:7px}
+.management-shortcuts small{color:#a9c9ed;line-height:1.5}
+.management-modal-card{max-width:850px;max-height:92vh;overflow-y:auto}
+.management-modal-card .review-panel,.management-modal-card .blacklist-panel{margin:0;border:0;background:transparent;padding:0}
+@media(max-width:550px){.management-shortcuts{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -426,6 +434,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
     Record payments separately.
   </div>
 
+<section class="management-shortcuts" aria-label="Customer management tools">
+<button id="openReviewsPanel" type="button"><strong>⭐ Facebook Customer Reviews ↗</strong><small>Open, add, edit and publish customer reviews</small></button>
+<button id="openBlacklistPanel" type="button"><strong>🛡️ Customer Safety & Blacklist ↗</strong><small>Open customer records, search, warnings and blacklist</small></button>
+</section>
+</main>
+<div id="reviewsManagementModal" class="manage-modal" role="dialog" aria-modal="true" aria-label="Facebook Customer Reviews">
+ <div class="manage-modal-card management-modal-card">
+ <button class="manage-close" id="closeReviewsPanel" type="button" aria-label="Close reviews">×</button>
 <section id="reviewManagement" class="review-panel">
  <h3>⭐ Facebook Customer Reviews — Phase 4</h3>
  <p class="review-note">Manually add real recommendations from your Facebook Page. Only published reviews appear on the customer website once the customer-side integration is installed. Never invent ratings.</p>
@@ -448,6 +464,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
  <div id="reviewList"><p class="review-note">Loading reviews…</p></div>
 </section>
 
+</div></div>
+<div id="blacklistManagementModal" class="manage-modal" role="dialog" aria-modal="true" aria-label="Customer Safety and Blacklist">
+ <div class="manage-modal-card management-modal-card">
+ <button class="manage-close" id="closeBlacklistPanel" type="button" aria-label="Close blacklist">×</button>
 <section id="blacklistManagement" class="blacklist-panel" aria-label="Private customer safety management">
 <h3>🛡️ Customer Safety — Blacklist Management</h3>
 <p>🔒 Admin only. Customer names and Facebook links are private. A name match is only a possible match; verify the person before taking action. Do not upload government IDs.</p>
@@ -467,7 +487,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <div id="blacklistMatches" aria-live="polite"></div>
 <div id="blacklistList">Loading customer records…</div>
 </section>
-</main>
+</div></div>
 <!-- ADD GAME -->
 
 <div id="addGameModal" class="manage-modal">
@@ -2559,12 +2579,17 @@ $("waitingListCard").addEventListener("keydown",e=>{
   }
 });
 
+/* Open compact customer management panels */
+$("openReviewsPanel").addEventListener("click",()=>openModal("reviewsManagementModal"));
+$("openBlacklistPanel").addEventListener("click",()=>openModal("blacklistManagementModal"));
 /* MODALS AND AUTH */
 
 for(const [button,modal] of [
   ["closeAddGameModal","addGameModal"],
   ["closeManageModal","manageModal"],
-  ["closeWaitingListModal","waitingListModal"]
+  ["closeWaitingListModal","waitingListModal"],
+  ["closeReviewsPanel","reviewsManagementModal"],
+  ["closeBlacklistPanel","blacklistManagementModal"]
 ]){
   $(button).addEventListener(
     "click",
@@ -2689,7 +2714,7 @@ async function loadAdminReviews(){
         $("reviewSourceUrl").value=r.sourceUrl||"";
         $("reviewPublished").checked=r.published===true;
         $("reviewSaveBtn").textContent="💾 Update Review";
-        $("reviewManagement").scrollIntoView({behavior:"smooth"});
+        openModal("reviewsManagementModal");$("reviewManagement").scrollIntoView({behavior:"smooth"});
       };
       const toggle=document.createElement("button");
       toggle.textContent=r.published?"Unpublish":"Publish";
@@ -2857,7 +2882,7 @@ async function refreshCustomerSafetyAlerts(){
       }
       const actions=document.createElement("div");actions.className="verify-actions";
       const view=document.createElement("button");view.type="button";view.textContent="🔎 View Record";
-      view.addEventListener("click",()=>{$("blacklistSearch").value=name;renderBlacklist();$("blacklistManagement").scrollIntoView({behavior:"smooth"});});
+      view.addEventListener("click",()=>{$("blacklistSearch").value=name;renderBlacklist();openModal("blacklistManagementModal");$("blacklistManagement").scrollIntoView({behavior:"smooth"});});
       const safe=document.createElement("button");safe.type="button";safe.className="verify-safe";safe.textContent="🟢 Different Person";
       const confirmBtn=document.createElement("button");confirmBtn.type="button";confirmBtn.className="verify-danger";confirmBtn.textContent="🔴 Confirm Match";
       for(const [button,value] of [[safe,"different"],[confirmBtn,"confirmed"]]){
@@ -2936,7 +2961,7 @@ function renderBlacklist(){
      $("blacklistStatus").value=r.status||"warning";$("blacklistReason").value=r.reason||"";
      $("blacklistEvidence").value=r.evidenceUrl||"";
      $("blacklistSave").textContent="💾 Update Record";
-     $("blacklistManagement").scrollIntoView({behavior:"smooth"});
+     openModal("blacklistManagementModal");$("blacklistManagement").scrollIntoView({behavior:"smooth"});
    };
    const del=document.createElement("button");del.type="button";del.textContent="🗑️ Delete";
    del.onclick=async()=>{
