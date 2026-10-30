@@ -2525,12 +2525,6 @@ nav a:hover { text-shadow:0 0 12px #168cffaa; }
     </div>
 
     <div
-      id="featuredGames"
-      class="mega-featured"
-      aria-live="polite"
-    ></div>
-
-    <div
       id="gameGrid"
       class="games-grid"
     ></div>
@@ -4787,45 +4781,6 @@ function render() {
     grid.appendChild(card);
   });
 
-  renderFeaturedGames();
-}
-
-function renderFeaturedGames() {
-  const container = $("featuredGames");
-  if (!container) return;
-
-  const counts = window.waitingListCounts || {};
-
-  const popular = games
-    .map(game => ({
-      name: game.name,
-      count:
-        Number(counts[game.name]?.trophy || 0) +
-        Number(counts[game.name]?.nonTrophy || 0)
-    }))
-    .filter(game => game.count > 0)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
-
-  container.innerHTML = "";
-
-  if (!popular.length) return;
-
-  const heading = document.createElement("div");
-  heading.className = "mega-featured-heading";
-  heading.textContent = "🔥 MOST REQUESTED";
-  container.appendChild(heading);
-
-  const tags = document.createElement("div");
-  tags.className = "mega-featured-tags";
-
-  popular.forEach(game => {
-    const tag = document.createElement("span");
-    tag.textContent = `${game.name} · ${game.count} waiting`;
-    tags.appendChild(tag);
-  });
-
-  container.appendChild(tags);
 }
 
 /* ==========================================
