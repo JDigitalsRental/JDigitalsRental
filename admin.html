@@ -263,6 +263,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .cover-preview{display:none;max-width:160px;max-height:210px;object-fit:contain;margin:12px auto 0;border:1px solid #28548e;border-radius:9px}
 .cover-hint{font-size:11px;color:#a8bfdc;line-height:1.6;margin:9px 0 0}
 
+/* Verification controls for individual waiting-list requests */
+.verify-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.verify-actions button{font-size:12px;padding:8px 10px;border-radius:8px;border:1px solid #3a72b8;background:#11417b;color:white}
+.verify-actions .verify-safe{background:#124b38;border-color:#27a774}
+.verify-actions .verify-danger{background:#642032;border-color:#d65a70}
+.verify-history{margin-top:8px;color:#b8d5ff;font-size:11px;line-height:1.6}
 /* Private customer safety / blacklist manager */
 .blacklist-panel{margin:22px 0;padding:20px;border:1px solid #385a91;border-radius:16px;background:linear-gradient(140deg,#091e42,#061127)}
 .blacklist-panel h3{margin:0 0 8px}.blacklist-panel p{color:#adc5e4;font-size:12px;line-height:1.6}
@@ -2737,20 +2743,64 @@ $("reviewCancelEdit").addEventListener("click",reviewReset);
 $("reviewReload").addEventListener("click",loadAdminReviews);
 
 
-/* AUTOMATIC CUSTOMER SAFETY ALERTS — exact-name matches require manual verification */
+/* CUSTOMER VERIFICATION — per waiting request + safety record; admin-only */
 let safetyAlertLoading=false;
+function verificationKey(waitId,safetyId){
+  // A stable, collision-resistant Firestore document ID for this specific pair.
+  return encodeURIComponent(waitId)+"__"+encodeURIComponent(safetyId);
+}
+function verificationTime(value){
+  return value?.toDate?.()?.toLocaleString("en-PH",{timeZone:"Asia/Manila"})||"Pending";
+}
+async function setCustomerVerification(request,record,decision){
+  if(auth.currentUser?.uid!==ADMIN_UID)throw Error("Admin sign-in required.");
+  const isConfirmed=decision==="confirmed";
+  const promptText=isConfirmed
+    ?"CONFIRMED MATCH: You have checked the Facebook profile or other reliable evidence and verified this is the same customer. Enter a brief verification reason:"
+    :"DIFFERENT PERSON: You have verified this waiting-list renter is NOT the person in the safety record. Enter a brief verification reason:";
+  const reason=prompt(promptText);
+  if(reason===null)return;
+  if(!reason.trim()||reason.trim().length<8){alert("Please enter a reason of at least 8 characters.");return;}
+  if(!confirm((isConfirmed?"Confirm identity match":"Mark as a different person")+" for this specific waiting-list request?\nThis will be recorded in private verification history."))return;
+  const key=verificationKey(request.id,record.id);
+  const ref=doc(db,"customerVerifications",key);
+  const existing=await getDoc(ref);
+  const batch=writeBatch(db);
+  batch.set(ref,{
+    waitingId:request.id,safetyId:record.id,
+    customerName:String(request.customerName||""),
+    safetyName:String(record.customerName||""),
+    gameName:String(request.gameName||request.gameId||""),
+    decision,reason:reason.trim().slice(0,1000),
+    verifiedBy:auth.currentUser.uid,
+    updatedAt:serverTimestamp(),
+    ...(!existing.exists()?{createdAt:serverTimestamp()}:{})
+  },{merge:true});
+  batch.set(doc(collection(db,"customerVerificationHistory")),{
+    waitingId:request.id,safetyId:record.id,
+    customerName:String(request.customerName||""),
+    decision,reason:reason.trim().slice(0,1000),
+    verifiedBy:auth.currentUser.uid,createdAt:serverTimestamp()
+  });
+  await batch.commit();
+  await refreshCustomerSafetyAlerts();
+}
 async function refreshCustomerSafetyAlerts(){
   if(safetyAlertLoading||auth.currentUser?.uid!==ADMIN_UID)return;
   safetyAlertLoading=true;
   const target=$("customerSafetyAlerts");
   try{
-    const [safetySnap,waitingSnap]=await Promise.all([
+    const [safetySnap,waitingSnap,verificationSnap,historySnap]=await Promise.all([
       getDocs(collection(db,"customerSafety")),
-      getDocs(collection(db,"waitingList"))
+      getDocs(collection(db,"waitingList")),
+      getDocs(collection(db,"customerVerifications")),
+      getDocs(collection(db,"customerVerificationHistory"))
     ]);
     const records=safetySnap.docs.map(d=>({id:d.id,...d.data()}))
       .filter(r=>["warning","blacklisted"].includes(r.status));
     const waiting=waitingSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const decisions=new Map(verificationSnap.docs.map(d=>[d.id,d.data()]));
+    const history=historySnap.docs.map(d=>d.data());
     const byName=new Map();
     for(const r of records){
       const key=normalizeCustomerName(r.customerName);
@@ -2763,45 +2813,80 @@ async function refreshCustomerSafetyAlerts(){
       const name=String(request.customerName||"").trim();
       if(!name)continue;
       for(const record of byName.get(normalizeCustomerName(name))||[]){
-        matches.push({request,record,name});
+        const key=verificationKey(request.id,record.id);
+        const decision=decisions.get(key);
+        // Re-verify if the request or safety-record name has changed.
+        const current=decision&&normalizeCustomerName(decision.customerName)===normalizeCustomerName(name)
+          &&normalizeCustomerName(decision.safetyName)===normalizeCustomerName(record.customerName);
+        matches.push({request,record,name,decision:current?decision:null});
       }
     }
-    matches.sort((a,b)=>(a.record.status==="blacklisted"?-1:1)-(b.record.status==="blacklisted"?-1:1));
+    matches.sort((a,b)=>{
+      const rank=m=>m.decision?.decision==="confirmed"?0:m.decision?.decision==="different"?2:1;
+      return rank(a)-rank(b)||(a.record.status==="blacklisted"?-1:1)-(b.record.status==="blacklisted"?-1:1);
+    });
     target.replaceChildren();
     if(!matches.length){
-      const p=document.createElement("p");
-      p.className="priority-empty";
+      const p=document.createElement("p");p.className="priority-empty";
       p.textContent="🛡️ No exact-name warning/blacklist matches in the waiting list.";
-      target.append(p);
-      return;
+      target.append(p);return;
     }
-    const summary=document.createElement("p");
-    summary.style.color="#ffda86";
-    summary.textContent=`🚨 ${matches.length} possible customer safety match(es) — verify identity before taking action.`;
+    const summary=document.createElement("p");summary.style.color="#ffda86";
+    const pending=matches.filter(m=>!m.decision).length;
+    const confirmed=matches.filter(m=>m.decision?.decision==="confirmed").length;
+    const different=matches.filter(m=>m.decision?.decision==="different").length;
+    summary.textContent=`🛡️ ${pending} unverified • ${confirmed} confirmed match(es) • ${different} verified different person(s).`;
     target.append(summary);
-    for(const {request,record,name} of matches){
+    for(const {request,record,name,decision} of matches){
       const row=document.createElement("div");row.className="priority-item";
       const info=document.createElement("div");
       const title=document.createElement("strong");
-      title.style.color=record.status==="blacklisted"?"#ff9b9b":"#ffda86";
-      title.textContent=(record.status==="blacklisted"?"🔴 POSSIBLE BLACKLIST MATCH":"🟡 POSSIBLE WARNING MATCH")+" — "+name;
+      const confirmedMatch=decision?.decision==="confirmed";
+      const differentPerson=decision?.decision==="different";
+      title.style.color=differentPerson?"#70ffb1":confirmedMatch?"#ff9292":record.status==="blacklisted"?"#ff9b9b":"#ffda86";
+      title.textContent=(differentPerson?"🟢 VERIFIED DIFFERENT PERSON":confirmedMatch?"🔴 CONFIRMED CUSTOMER MATCH":record.status==="blacklisted"?"🔴 POSSIBLE BLACKLIST MATCH":"🟡 POSSIBLE WARNING MATCH")+" — "+name;
       const detail=document.createElement("small");
       detail.textContent="Requested game: "+String(request.gameName||request.gameId||"Not specified")+
         " • Slot: "+String(request.accountType||"Not specified")+
-        " • Name match only. Check Facebook profile and incident details.";
+        " • Safety status: "+record.status+" • "+(differentPerson?"Verified as different individual.":confirmedMatch?"Identity confirmed by admin.":"Name match only; verify identity.");
       info.append(title,detail);
-      const button=document.createElement("button");button.type="button";
-      button.textContent="View Record";
-      button.addEventListener("click",()=>{
-        $("blacklistSearch").value=name;
-        renderBlacklist();
-        $("blacklistManagement").scrollIntoView({behavior:"smooth"});
-      });
-      row.append(info,button);target.append(row);
+      if(decision){
+        const meta=document.createElement("div");meta.className="verify-history";
+        meta.textContent="Latest verification: "+verificationTime(decision.updatedAt)+" • Reason: "+(decision.reason||"");
+        info.append(meta);
+      }
+      const actions=document.createElement("div");actions.className="verify-actions";
+      const view=document.createElement("button");view.type="button";view.textContent="🔎 View Record";
+      view.addEventListener("click",()=>{$("blacklistSearch").value=name;renderBlacklist();$("blacklistManagement").scrollIntoView({behavior:"smooth"});});
+      const safe=document.createElement("button");safe.type="button";safe.className="verify-safe";safe.textContent="🟢 Different Person";
+      const confirmBtn=document.createElement("button");confirmBtn.type="button";confirmBtn.className="verify-danger";confirmBtn.textContent="🔴 Confirm Match";
+      for(const [button,value] of [[safe,"different"],[confirmBtn,"confirmed"]]){
+        button.addEventListener("click",async()=>{
+          safe.disabled=confirmBtn.disabled=true;
+          try{await setCustomerVerification(request,record,value)}
+          catch(e){alert("Unable to save verification: "+e.message)}
+          finally{safe.disabled=confirmBtn.disabled=false}
+        });
+      }
+      actions.append(view,safe,confirmBtn);
+      row.append(info,actions);target.append(row);
     }
+    const historyHeading=document.createElement("details");
+    historyHeading.style.marginTop="12px";
+    const summaryEl=document.createElement("summary");summaryEl.textContent="📋 Verification History (latest 30)";
+    summaryEl.style.cursor="pointer";historyHeading.append(summaryEl);
+    history.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    if(!history.length){const empty=document.createElement("p");empty.textContent="No verification decisions yet.";historyHeading.append(empty)}
+    for(const entry of history.slice(0,30)){
+      const line=document.createElement("div");line.className="verify-history";
+      line.textContent=verificationTime(entry.createdAt)+" • "+(entry.customerName||"Customer")+" • "+
+        (entry.decision==="confirmed"?"Confirmed match":"Different person")+" • "+(entry.reason||"");
+      historyHeading.append(line);
+    }
+    target.append(historyHeading);
   }catch(error){
-    console.error("Customer safety alert check:",error);
-    target.textContent="⚠️ Unable to check customer safety matches. Please review the private customer list manually. "+(error.code||"");
+    console.error("Customer safety verification check:",error);
+    target.textContent="⚠️ Unable to load customer safety verification. Check Firestore permissions for customerVerifications and customerVerificationHistory. "+(error.code||"");
   }finally{safetyAlertLoading=false;}
 }
 
