@@ -262,6 +262,18 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .cover-upload input[type=file]{width:100%;padding:11px;background:#020817;border:1px dashed #3e82c7;border-radius:9px;color:#d6eaff}
 .cover-preview{display:none;max-width:160px;max-height:210px;object-fit:contain;margin:12px auto 0;border:1px solid #28548e;border-radius:9px}
 .cover-hint{font-size:11px;color:#a8bfdc;line-height:1.6;margin:9px 0 0}
+
+/* Private customer safety / blacklist manager */
+.blacklist-panel{margin:22px 0;padding:20px;border:1px solid #385a91;border-radius:16px;background:linear-gradient(140deg,#091e42,#061127)}
+.blacklist-panel h3{margin:0 0 8px}.blacklist-panel p{color:#adc5e4;font-size:12px;line-height:1.6}
+.blacklist-panel label{display:block;color:#b9d5ff;font-size:12px;margin:12px 0 5px}
+.blacklist-panel input,.blacklist-panel select,.blacklist-panel textarea{width:100%;background:#030d23;color:#fff;border:1px solid #31558d;border-radius:9px;padding:11px;font:inherit}
+.blacklist-panel textarea{min-height:75px;resize:vertical}
+.blacklist-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.blacklist-actions button,.blacklist-entry button{border:1px solid #3a72b8;border-radius:8px;background:#11417b;color:#fff;padding:10px 13px}
+.blacklist-entry{padding:14px 0;border-top:1px solid #29446f;overflow-wrap:anywhere}
+.blacklist-entry small{display:block;color:#a8bfdc;line-height:1.7;margin:5px 0}
+.blacklist-flag{color:#ff9999;font-weight:800}.blacklist-warn{color:#ffdc8b;font-weight:800}
 </style>
 </head>
 
@@ -427,6 +439,26 @@ button:disabled{opacity:.5;cursor:not-allowed}
  </form>
  <p id="reviewMessage" class="review-note" role="status"></p>
  <div id="reviewList"><p class="review-note">Loading reviews…</p></div>
+</section>
+
+<section id="blacklistManagement" class="blacklist-panel" aria-label="Private customer safety management">
+<h3>🛡️ Customer Safety — Blacklist Management</h3>
+<p>🔒 Admin only. Customer names and Facebook links are private. A name match is only a possible match; verify the person before taking action. Do not upload government IDs.</p>
+<form id="blacklistForm">
+<input id="blacklistEditId" type="hidden">
+<label for="blacklistName">Customer name *</label><input id="blacklistName" maxlength="100" required autocomplete="off" placeholder="Name used for rental">
+<label for="blacklistFacebook">Facebook profile link (optional)</label><input id="blacklistFacebook" type="url" maxlength="500" placeholder="https://www.facebook.com/...">
+<label for="blacklistGame">Game involved (optional)</label><input id="blacklistGame" maxlength="150">
+<label for="blacklistStatus">Customer status *</label>
+<select id="blacklistStatus"><option value="warning">🟡 Warning</option><option value="blacklisted">🔴 Blacklisted — admin review required</option><option value="good">🟢 Good standing</option></select>
+<label for="blacklistReason">Reason / documented incident *</label><textarea id="blacklistReason" maxlength="1500" required placeholder="Record specific facts, dates and rule violated."></textarea>
+<label for="blacklistEvidence">Evidence link (optional; only use access-restricted links)</label><input id="blacklistEvidence" type="url" maxlength="500" placeholder="https://...">
+<div class="blacklist-actions"><button type="submit" id="blacklistSave">💾 Save Customer Record</button><button type="button" id="blacklistReset">Clear Form</button><button type="button" id="blacklistReload">↻ Refresh</button></div>
+</form>
+<p id="blacklistMessage" role="status"></p>
+<label for="blacklistSearch">🔎 Search customers / check a new rental name</label><input id="blacklistSearch" maxlength="100" placeholder="Enter renter's name">
+<div id="blacklistMatches" aria-live="polite"></div>
+<div id="blacklistList">Loading customer records…</div>
 </section>
 </main>
 <!-- ADD GAME -->
@@ -2703,6 +2735,95 @@ $("reviewForm").addEventListener("submit",async(e)=>{
 $("reviewCancelEdit").addEventListener("click",reviewReset);
 $("reviewReload").addEventListener("click",loadAdminReviews);
 
+
+/* CUSTOMER SAFETY — ADMIN ONLY; manual review, no public access */
+let blacklistCache=[];
+const normalizeCustomerName = v=>String(v||"").normalize("NFKC").trim().toLocaleLowerCase().replace(/\s+/g," ");
+function safeBlacklistUrl(raw){
+ const v=String(raw||"").trim();if(!v)return "";
+ const u=new URL(v);
+ if(u.protocol!=="https:")throw Error("Only HTTPS links are allowed.");
+ return u.href;
+}
+function resetBlacklistForm(){
+ $("blacklistForm").reset();$("blacklistEditId").value="";
+ $("blacklistSave").textContent="💾 Save Customer Record";
+}
+function renderBlacklist(){
+ const list=$("blacklistList");list.replaceChildren();
+ const term=normalizeCustomerName($("blacklistSearch").value);
+ const filtered=blacklistCache.filter(r=>!term||normalizeCustomerName(r.customerName).includes(term));
+ const match=$("blacklistMatches");match.replaceChildren();
+ if(term){
+   const exact=blacklistCache.filter(r=>normalizeCustomerName(r.customerName)===term);
+   const message=document.createElement("p");
+   message.className=exact.some(r=>r.status==="blacklisted")?"blacklist-flag":"";
+   message.textContent=exact.length
+     ?`⚠️ ${exact.length} matching name record(s). Possible match only — verify Facebook profile and rental history.`
+     :"No exact name match. This does not verify identity or guarantee good standing.";
+   match.append(message);
+ }
+ if(!filtered.length){list.textContent="No matching customer records.";return;}
+ for(const r of filtered){
+   const row=document.createElement("article");row.className="blacklist-entry";
+   const title=document.createElement("strong");
+   title.className=r.status==="blacklisted"?"blacklist-flag":r.status==="warning"?"blacklist-warn":"";
+   title.textContent=({blacklisted:"🔴 BLACKLISTED",warning:"🟡 WARNING",good:"🟢 GOOD STANDING"}[r.status]||"Record")+" — "+r.customerName;
+   const info=document.createElement("small");info.textContent="Game: "+(r.gameName||"Not specified")+" • Reason: "+(r.reason||"Not specified");
+   const date=document.createElement("small");date.textContent="Last updated: "+(r.updatedAt?.toDate?.()?.toLocaleString("en-PH")||"Pending");
+   row.append(title,info,date);
+   if(r.facebookUrl){const link=document.createElement("a");link.href=r.facebookUrl;link.textContent="↗ Facebook profile";link.target="_blank";link.rel="noopener noreferrer";row.append(link);}
+   if(r.evidenceUrl){const link=document.createElement("a");link.href=r.evidenceUrl;link.textContent=" • ↗ Restricted evidence";link.target="_blank";link.rel="noopener noreferrer";row.append(link);}
+   const actions=document.createElement("div");actions.className="blacklist-actions";
+   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit";
+   edit.onclick=()=>{
+     $("blacklistEditId").value=r.id;$("blacklistName").value=r.customerName||"";
+     $("blacklistFacebook").value=r.facebookUrl||"";$("blacklistGame").value=r.gameName||"";
+     $("blacklistStatus").value=r.status||"warning";$("blacklistReason").value=r.reason||"";
+     $("blacklistEvidence").value=r.evidenceUrl||"";
+     $("blacklistSave").textContent="💾 Update Record";
+     $("blacklistManagement").scrollIntoView({behavior:"smooth"});
+   };
+   const del=document.createElement("button");del.type="button";del.textContent="🗑️ Delete";
+   del.onclick=async()=>{
+     if(!confirm("Permanently delete the private record for "+r.customerName+"?"))return;
+     try{del.disabled=true;await deleteDoc(doc(db,"customerSafety",r.id));await loadBlacklist();}
+     catch(e){alert("Delete failed: "+e.message);del.disabled=false;}
+   };
+   actions.append(edit,del);row.append(actions);list.append(row);
+ }
+}
+async function loadBlacklist(){
+ try{
+   const snap=await getDocs(collection(db,"customerSafety"));
+   blacklistCache=snap.docs.map(d=>({id:d.id,...d.data()}))
+     .sort((a,b)=>(b.updatedAt?.seconds||0)-(a.updatedAt?.seconds||0));
+   renderBlacklist();
+ }catch(e){$("blacklistList").textContent="Unable to load private records: "+e.message;}
+}
+$("blacklistForm").addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("blacklistSave");
+ try{
+   if(auth.currentUser?.uid!==ADMIN_UID)throw Error("Admin sign-in required.");
+   const customerName=$("blacklistName").value.trim(),reason=$("blacklistReason").value.trim();
+   if(!customerName||!reason)throw Error("Customer name and incident reason are required.");
+   const data={customerName,normalizedName:normalizeCustomerName(customerName),
+     facebookUrl:safeBlacklistUrl($("blacklistFacebook").value),
+     gameName:$("blacklistGame").value.trim(),status:$("blacklistStatus").value,
+     reason,evidenceUrl:safeBlacklistUrl($("blacklistEvidence").value),
+     updatedAt:serverTimestamp()};
+   const id=$("blacklistEditId").value;btn.disabled=true;
+   if(id)await updateDoc(doc(db,"customerSafety",id),data);
+   else await setDoc(doc(collection(db,"customerSafety")),{...data,createdAt:serverTimestamp()});
+   resetBlacklistForm();$("blacklistMessage").textContent="✅ Customer record saved privately.";
+   await loadBlacklist();
+ }catch(err){$("blacklistMessage").textContent="❌ "+err.message;}
+ finally{btn.disabled=false;}
+});
+$("blacklistReset").addEventListener("click",resetBlacklistForm);
+$("blacklistReload").addEventListener("click",loadBlacklist);
+$("blacklistSearch").addEventListener("input",renderBlacklist);
+
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -2718,6 +2839,7 @@ onAuthStateChanged(auth,user=>{
   }
 
   loadAdminReviews();
+  loadBlacklist();
   loadActivityHistory();
   loadBusinessOverview();
   // Sync existing reservations once when admin opens dashboard.
