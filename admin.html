@@ -337,6 +337,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
   <section class="priority-panel" aria-live="polite">
     <h3>🚨 Priority Rental Alerts</h3>
+    <div id="customerSafetyAlerts" aria-live="polite">Checking customer safety records...</div>
     <div id="priorityAlerts">
       Loading rental alerts...
     </div>
@@ -2736,6 +2737,74 @@ $("reviewCancelEdit").addEventListener("click",reviewReset);
 $("reviewReload").addEventListener("click",loadAdminReviews);
 
 
+/* AUTOMATIC CUSTOMER SAFETY ALERTS — exact-name matches require manual verification */
+let safetyAlertLoading=false;
+async function refreshCustomerSafetyAlerts(){
+  if(safetyAlertLoading||auth.currentUser?.uid!==ADMIN_UID)return;
+  safetyAlertLoading=true;
+  const target=$("customerSafetyAlerts");
+  try{
+    const [safetySnap,waitingSnap]=await Promise.all([
+      getDocs(collection(db,"customerSafety")),
+      getDocs(collection(db,"waitingList"))
+    ]);
+    const records=safetySnap.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(r=>["warning","blacklisted"].includes(r.status));
+    const waiting=waitingSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const byName=new Map();
+    for(const r of records){
+      const key=normalizeCustomerName(r.customerName);
+      if(!key)continue;
+      if(!byName.has(key))byName.set(key,[]);
+      byName.get(key).push(r);
+    }
+    const matches=[];
+    for(const request of waiting){
+      const name=String(request.customerName||"").trim();
+      if(!name)continue;
+      for(const record of byName.get(normalizeCustomerName(name))||[]){
+        matches.push({request,record,name});
+      }
+    }
+    matches.sort((a,b)=>(a.record.status==="blacklisted"?-1:1)-(b.record.status==="blacklisted"?-1:1));
+    target.replaceChildren();
+    if(!matches.length){
+      const p=document.createElement("p");
+      p.className="priority-empty";
+      p.textContent="🛡️ No exact-name warning/blacklist matches in the waiting list.";
+      target.append(p);
+      return;
+    }
+    const summary=document.createElement("p");
+    summary.style.color="#ffda86";
+    summary.textContent=`🚨 ${matches.length} possible customer safety match(es) — verify identity before taking action.`;
+    target.append(summary);
+    for(const {request,record,name} of matches){
+      const row=document.createElement("div");row.className="priority-item";
+      const info=document.createElement("div");
+      const title=document.createElement("strong");
+      title.style.color=record.status==="blacklisted"?"#ff9b9b":"#ffda86";
+      title.textContent=(record.status==="blacklisted"?"🔴 POSSIBLE BLACKLIST MATCH":"🟡 POSSIBLE WARNING MATCH")+" — "+name;
+      const detail=document.createElement("small");
+      detail.textContent="Requested game: "+String(request.gameName||request.gameId||"Not specified")+
+        " • Slot: "+String(request.accountType||"Not specified")+
+        " • Name match only. Check Facebook profile and incident details.";
+      info.append(title,detail);
+      const button=document.createElement("button");button.type="button";
+      button.textContent="View Record";
+      button.addEventListener("click",()=>{
+        $("blacklistSearch").value=name;
+        renderBlacklist();
+        $("blacklistManagement").scrollIntoView({behavior:"smooth"});
+      });
+      row.append(info,button);target.append(row);
+    }
+  }catch(error){
+    console.error("Customer safety alert check:",error);
+    target.textContent="⚠️ Unable to check customer safety matches. Please review the private customer list manually. "+(error.code||"");
+  }finally{safetyAlertLoading=false;}
+}
+
 /* CUSTOMER SAFETY — ADMIN ONLY; manual review, no public access */
 let blacklistCache=[];
 const normalizeCustomerName = v=>String(v||"").normalize("NFKC").trim().toLocaleLowerCase().replace(/\s+/g," ");
@@ -2787,7 +2856,7 @@ function renderBlacklist(){
    const del=document.createElement("button");del.type="button";del.textContent="🗑️ Delete";
    del.onclick=async()=>{
      if(!confirm("Permanently delete the private record for "+r.customerName+"?"))return;
-     try{del.disabled=true;await deleteDoc(doc(db,"customerSafety",r.id));await loadBlacklist();}
+     try{del.disabled=true;await deleteDoc(doc(db,"customerSafety",r.id));await loadBlacklist();await refreshCustomerSafetyAlerts();}
      catch(e){alert("Delete failed: "+e.message);del.disabled=false;}
    };
    actions.append(edit,del);row.append(actions);list.append(row);
@@ -2817,6 +2886,7 @@ $("blacklistForm").addEventListener("submit",async e=>{
    else await setDoc(doc(collection(db,"customerSafety")),{...data,createdAt:serverTimestamp()});
    resetBlacklistForm();$("blacklistMessage").textContent="✅ Customer record saved privately.";
    await loadBlacklist();
+   await refreshCustomerSafetyAlerts();
  }catch(err){$("blacklistMessage").textContent="❌ "+err.message;}
  finally{btn.disabled=false;}
 });
@@ -2840,6 +2910,7 @@ onAuthStateChanged(auth,user=>{
 
   loadAdminReviews();
   loadBlacklist();
+  refreshCustomerSafetyAlerts();
   loadActivityHistory();
   loadBusinessOverview();
   // Sync existing reservations once when admin opens dashboard.
@@ -2859,6 +2930,7 @@ setInterval(()=>{
   if(auth.currentUser?.uid===ADMIN_UID){
     loadAdminGames().catch(console.error);
     loadBusinessOverview().catch(console.error);
+    refreshCustomerSafetyAlerts().catch(console.error);
   }
 },60000);
 
