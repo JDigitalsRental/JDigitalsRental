@@ -2260,6 +2260,75 @@ nav a:hover { text-shadow:0 0 12px #168cffaa; }
 @media(max-width:700px){body{padding-bottom:78px}.jdr-dock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;left:9px;right:9px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:900;border:1px solid #448ad6;border-radius:19px;padding:7px 4px;background:#071a35f2;box-shadow:0 0 35px #000b;backdrop-filter:blur(18px)}.jdr-dock a{display:flex;flex-direction:column;align-items:center;gap:2px;color:#c7ddf6;font-size:10px;font-weight:750;padding:5px 2px;border-radius:12px}.jdr-dock a span{font-size:20px}.jdr-dock a:focus-visible,.jdr-dock a:hover{background:#1557a4;color:white}.jdr-trend-list{grid-template-columns:1fr}.jdr-trend-item img{width:49px;height:62px}.jdr-trend-title{font-size:18px}.jdr-cover-open{padding:7px 9px;font-size:10px}}@media(min-width:701px) and (max-width:1050px){.jdr-trend-list{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(prefers-reduced-motion:reduce){.game-card,.game-card .cover,.jdr-trend-item{transition:none!important}.jdr-details-panel{animation:none!important}}
 
 </style>
+<style>
+
+/* ==============================================================
+   JDIGITALSRENTAL 2.0 — CINEMATIC PREMIUM EDITION
+   Visual-only enhancement: original rental, Firebase and PWA logic kept.
+   ============================================================== */
+:root{--jdr-glow:#2e9dff;--jdr-mist:#cce7ff;--jdr-radius:22px}
+body{background-color:#030817;background-image:radial-gradient(ellipse 70% 36% at 83% 3%,rgba(10,87,207,.28),transparent 80%),radial-gradient(ellipse 65% 45% at 0% 36%,rgba(4,39,106,.23),transparent 85%),linear-gradient(180deg,#040916 0%,#061125 48%,#030817 100%);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.22;background-image:linear-gradient(rgba(77,160,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(77,160,255,.10) 1px,transparent 1px);background-size:72px 72px;mask-image:linear-gradient(180deg,transparent,#000 35%,transparent 90%)}
+.topbar{background:rgba(3,12,29,.87);border-bottom:1px solid rgba(85,158,255,.25);box-shadow:0 12px 35px rgba(0,0,0,.2);padding-inline:clamp(18px,5vw,82px)}
+.topbar .brand{font-size:clamp(15px,1.3vw,19px);letter-spacing:-.6px}
+.topbar .brand-logo{box-shadow:0 0 0 2px rgba(67,156,255,.35),0 0 24px rgba(0,112,255,.35)}
+.topbar nav a{position:relative;padding:8px 0;transition:color .2s}
+.topbar nav a::after{content:"";position:absolute;left:0;bottom:2px;width:0;height:2px;border-radius:4px;background:#5eb7ff;transition:width .25s}
+.topbar nav a:hover::after{width:100%}
+.mini-cta,.btn.primary,.rent,.jdr-details-primary{background:linear-gradient(110deg,#0869e7,#259cff 65%,#0760df);border-color:#79c4ff;box-shadow:0 6px 24px rgba(0,113,255,.28),inset 0 1px rgba(255,255,255,.18);transition:transform .22s,box-shadow .22s,filter .22s}
+.mini-cta:hover,.btn.primary:hover,.rent:hover,.jdr-details-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,113,255,.43)}
+.hero{min-height:min(740px,85vh);max-width:1600px;margin:auto;gap:clamp(24px,4vw,70px);padding-block:clamp(44px,6vw,100px)}
+.hero::before{content:"";position:absolute;left:-18%;top:6%;width:66%;height:90%;background:radial-gradient(ellipse,rgba(10,89,225,.17),transparent 68%);pointer-events:none}
+.hero-copy{position:relative;z-index:1}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid rgba(92,169,255,.33);border-radius:99px;background:rgba(13,46,96,.48);letter-spacing:2.2px}
+.hero h1{font-size:clamp(54px,7.4vw,105px);line-height:.96;letter-spacing:-.065em;text-transform:none;font-weight:900;margin:16px 0 26px}
+.hero h1 span{background:linear-gradient(120deg,#75caff,#168cff 55%,#b0dfff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.hero-text{font-size:clamp(15px,1.3vw,18px);color:#c0d4ee;line-height:1.8}
+.hero .trust-row{gap:12px;margin-top:26px}.hero .trust-row span{border:1px solid rgba(75,139,219,.26);background:rgba(8,29,61,.62);padding:8px 12px;border-radius:99px;color:#c7e1ff}
+.hero-art.jdr-featured-slider{min-height:clamp(360px,40vw,570px);border-radius:30px;border:1px solid rgba(110,183,255,.5);box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 70px rgba(0,94,255,.17);transform:translateZ(0)}
+.jdr-featured-photo{transition:opacity .45s ease,transform 7s linear;transform:scale(1.015)}
+.jdr-featured-slider:hover .jdr-featured-photo{transform:scale(1.065)}
+.jdr-featured-shade{background:linear-gradient(0deg,rgba(2,8,24,.92),transparent 62%),linear-gradient(90deg,rgba(2,8,24,.38),transparent 80%)}
+.jdr-featured-info{left:clamp(18px,3vw,35px);bottom:56px;max-width:82%}
+.jdr-featured-info strong{font-size:clamp(23px,3vw,42px);letter-spacing:-.03em}
+.jdr-featured-label{background:rgba(2,20,34,.7);border:1px solid rgba(89,236,165,.35);border-radius:99px;padding:6px 10px;width:fit-content}
+.jdr-featured-nav{backdrop-filter:blur(8px)}
+.section{position:relative;padding-block:clamp(45px,6vw,85px);border-top:1px solid rgba(75,135,212,.14)}
+.section-heading h2,.section h2{letter-spacing:-.04em}
+.section-heading h2::after{content:"";display:block;width:64px;height:3px;border-radius:5px;margin-top:13px;background:linear-gradient(90deg,#1b87ff,#74ceff,transparent)}
+#gameGrid .game-card,.game-card,.upcoming-game-card{border:1px solid rgba(75,140,223,.4);border-radius:21px;background:linear-gradient(160deg,rgba(16,40,76,.98),rgba(5,15,33,.99));box-shadow:0 12px 35px rgba(0,0,0,.3);transition:transform .28s,border-color .28s,box-shadow .28s;isolation:isolate}
+#gameGrid .game-card:hover,.game-card:hover,.upcoming-game-card:hover{transform:translateY(-6px);border-color:#65b9ff;box-shadow:0 22px 55px rgba(0,81,193,.24)}
+.game-card .cover-wrap{overflow:hidden}.game-card .cover{transition:transform .6s cubic-bezier(.2,.8,.2,1),filter .3s}.game-card:hover .cover{transform:scale(1.065)}
+.game-card .cover-wrap::after{content:"";position:absolute;inset:auto 0 0;height:32%;pointer-events:none;background:linear-gradient(transparent,rgba(2,12,29,.55))}
+.game-card .tag{z-index:1;background:rgba(3,17,39,.85);backdrop-filter:blur(8px);border-color:rgba(128,194,255,.5);font-weight:800;letter-spacing:.5px}
+.game-info{padding:clamp(12px,1.3vw,20px)}.game-info h3{font-size:clamp(14px,1.2vw,18px);min-height:2.3em}
+.availability.available{background:rgba(3,64,46,.45);border-color:#28c987;box-shadow:inset 3px 0 #21d78b}.availability.rented{background:rgba(92,15,35,.4);border-color:#e25b7b;box-shadow:inset 3px 0 #ff6689}
+#gameGrid .mega-favorite{backdrop-filter:blur(8px);box-shadow:0 4px 16px #0008;z-index:4}
+#gameGrid .mega-savings{border-radius:12px;background:rgba(17,69,120,.2)}
+.price{border-radius:14px;background:rgba(4,16,35,.85)}
+.mega-filter,.filter{transition:background .2s,border-color .2s,transform .2s}.mega-filter:hover,.filter:hover{transform:translateY(-2px)}
+#search{background:rgba(6,21,46,.88);border-color:#3873b2;border-radius:14px;box-shadow:inset 0 1px 12px rgba(0,0,0,.18)}
+#reviews .jdr-review-card{background:linear-gradient(145deg,rgba(15,46,91,.94),rgba(5,18,42,.97));border:1px solid rgba(96,158,245,.38);border-radius:21px;box-shadow:0 12px 34px #0004}
+#about .section-inner{box-shadow:0 16px 55px rgba(0,30,85,.15)}
+.jdr-trend-item{border-radius:19px!important;box-shadow:0 12px 28px #0004}
+.jdr-details-panel{box-shadow:0 30px 100px rgba(0,0,0,.75),0 0 40px rgba(26,117,255,.2)}
+/* Compact reassurance strip, only decorative text and anchor links */
+.jdr2-proof{max-width:1350px;margin:0 auto 25px;padding:0 clamp(18px,7vw,100px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.jdr2-proof a{display:flex;align-items:center;gap:12px;padding:17px 18px;border:1px solid rgba(88,154,238,.32);border-radius:18px;background:linear-gradient(135deg,rgba(12,42,84,.83),rgba(6,19,42,.8));transition:transform .2s,border-color .2s}
+.jdr2-proof a:hover{transform:translateY(-3px);border-color:#5caeff}
+.jdr2-proof-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(29,117,255,.2);font-size:21px;flex-shrink:0}
+.jdr2-proof strong{display:block;font-size:13px}.jdr2-proof small{display:block;font-size:11px;color:#a6c4e6;margin-top:3px}
+/* Messenger help: intentionally links to FB page, never pretends to send messages */
+.jdr2-chat{position:fixed;right:20px;bottom:22px;z-index:850;display:flex;align-items:center;gap:10px;border:1px solid #84cbff;border-radius:99px;padding:12px 18px;background:linear-gradient(120deg,#0761dd,#219bff);color:#fff;font-weight:900;font-size:13px;box-shadow:0 10px 32px rgba(0,92,225,.5);transition:transform .2s,box-shadow .2s}
+.jdr2-chat:hover{transform:translateY(-4px);box-shadow:0 14px 40px rgba(0,92,225,.65)}
+.jdr2-chat span{font-size:21px}
+.jdr2-scrolltop{position:fixed;right:20px;bottom:84px;z-index:849;width:43px;height:43px;border:1px solid rgba(130,198,255,.7);border-radius:50%;background:#0b2a57e8;color:white;font-size:23px;box-shadow:0 5px 18px #0007;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .2s,transform .2s}
+.jdr2-scrolltop.is-visible{opacity:1;pointer-events:auto;transform:none}
+@media(max-width:1100px){.topbar nav{gap:12px}.hero{min-height:auto}}
+@media(max-width:700px){.hero{padding:35px 6% 55px;gap:25px}.hero h1{font-size:clamp(47px,12vw,72px)}.hero-art.jdr-featured-slider{min-height:310px;border-radius:22px}.jdr2-proof{grid-template-columns:1fr;gap:9px;padding-inline:6%;margin-bottom:18px}.jdr2-proof a{padding:12px 15px}.jdr2-chat{right:14px;bottom:calc(86px + env(safe-area-inset-bottom));padding:11px 13px}.jdr2-chat b{display:none}.jdr2-scrolltop{right:15px;bottom:calc(145px + env(safe-area-inset-bottom))}.game-card .cover{transition:none}}
+@media(prefers-reduced-motion:reduce){.jdr2-chat,.jdr2-scrolltop,.jdr2-proof a,.game-card,.game-card .cover,.jdr-featured-photo{transition:none!important;animation:none!important}}
+
+</style>
 </head>
 
 <body>
@@ -2297,6 +2366,14 @@ nav a:hover { text-shadow:0 0 12px #168cffaa; }
   </a>
 
 </header>
+
+
+<!-- JDR 2.0: visual trust / navigation strip; no backend changes -->
+<div class="jdr2-proof" aria-label="Why rent with JDigitalsRental">
+  <a href="#games"><span class="jdr2-proof-icon">🎮</span><span><strong>Explore PS5 Games</strong><small>Browse rentals and live slot status</small></span></a>
+  <a href="#how"><span class="jdr2-proof-icon">⚡</span><span><strong>Simple Rental Process</strong><small>Choose a plan and send your request</small></span></a>
+  <a href="#reviews"><span class="jdr2-proof-icon">⭐</span><span><strong>Customer Reviews</strong><small>See published customer feedback</small></span></a>
+</div>
 
 <main>
 
@@ -5966,5 +6043,19 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 })();
 
 </script>
+
+<!-- JDR 2.0: support links / back-to-top -->
+<a class="jdr2-chat" href="https://www.facebook.com/share/1DajrF4mTy/" target="_blank" rel="noopener noreferrer" aria-label="Open JDigitalsRental Facebook page for support"><span aria-hidden="true">💬</span><b>Chat with us</b></a>
+<button class="jdr2-scrolltop" id="jdr2ScrollTop" type="button" aria-label="Back to top">↑</button>
+<script>
+(function(){
+  const topButton=document.getElementById('jdr2ScrollTop');
+  if(!topButton)return;
+  function update(){topButton.classList.toggle('is-visible',window.scrollY>650)}
+  window.addEventListener('scroll',update,{passive:true});update();
+  topButton.addEventListener('click',()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));
+})();
+</script>
+
 </body>
 </html>
