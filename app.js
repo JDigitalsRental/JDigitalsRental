@@ -574,43 +574,10 @@ function render() {
         ${availabilityHTML(game, "trophy")}
         ${availabilityHTML(game, "nonTrophy")}
 
-        <div
-          style="
-            margin:8px 0;
-            padding:10px;
-            border:1px solid rgba(57,169,255,.3);
-            border-radius:9px;
-            text-align:center;
-            font-size:12px;
-          "
-        >
-          <strong>WAITING LIST</strong>
-          <div>🏆 Trophy: ${Number(counts.trophy) || 0}</div>
-          <div>🎮 Non-Trophy: ${Number(counts.nonTrophy) || 0}</div>
-        </div>
-
-        <div class="mega-savings">
-          🔄 Weekly: 1 game swap
-          <br>
-          🎮 Monthly Single Game: No Swap
-          <br>
-          ♾️ Monthly UNLI SWAP: Max 1 swap/week
-        </div>
-
+        <div class="jdr-compact-count">🏆 ${Number(counts.trophy) || 0} waiting <span>·</span> 🎮 ${Number(counts.nonTrophy) || 0} waiting</div>
         <div class="game-bottom">
-          <div class="price">
-            <span>📅 WEEKLY</span>
-            <span>🏆 Trophy: ${money(p.weeklyTrophy)}</span>
-            <span>🎮 Non-Trophy: ${money(p.weeklyNonTrophy)}</span>
-
-            <span>🎮 1 MONTH SINGLE GAME (NO SWAP)</span>
-            <span>🏆 Trophy: ${money(p.singleMonthlyTrophy)}</span>
-            <span>🎮 Non-Trophy: ${money(p.singleMonthlyNonTrophy)}</span>
-
-            <span>♾️ MONTHLY UNLI SWAP</span>
-            <span>🏆 Trophy: ${money(p.monthlyTrophy)}</span>
-            <span>🎮 Non-Trophy: ${money(p.monthlyNonTrophy)}</span>
-          </div>
+          <div class="jdr-compact-price"><small>STARTING AT</small><strong>${money(Math.min(...[p.weeklyTrophy,p.weeklyNonTrophy].filter(v => Number.isFinite(v) && v >= 0)))}</strong><span>/ week</span></div>
+          <div class="jdr-compact-hint">Full prices, return dates &amp; rental plans in <b>View Details</b></div>
 
           <button class="rent" type="button">
             ${bothRented ? "Join Waiting List ↗" : "Rent Now ↗"}
