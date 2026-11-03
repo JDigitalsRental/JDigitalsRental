@@ -288,6 +288,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .management-modal-card{max-width:850px;max-height:92vh;overflow-y:auto}
 .management-modal-card .review-panel,.management-modal-card .blacklist-panel{margin:0;border:0;background:transparent;padding:0}
 @media(max-width:550px){.management-shortcuts{grid-template-columns:1fr}}
+
+/* PSN ACCOUNT & RENTER MANAGEMENT */
+.psn-panel{margin:0;padding:6px 0;color:#fff}.psn-panel h3{margin:16px 0 8px}.psn-panel p,.psn-muted{font-size:12px;color:#a9bfdc;line-height:1.6}
+.psn-panel label{display:block;font-size:12px;color:#c3ddff;margin:12px 0 5px}.psn-panel input,.psn-panel select,.psn-panel textarea{width:100%;background:#030d23;color:white;border:1px solid #31558d;border-radius:9px;padding:11px;font:inherit}.psn-panel select[multiple]{min-height:125px}.psn-panel button{background:#11417b;border:1px solid #3a72b8;color:white;border-radius:9px;padding:10px 13px;cursor:pointer}.psn-panel button:disabled{opacity:.5}.psn-panel .psn-danger{background:#5c1b2c;border-color:#b94c65}.psn-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.psn-entry{border:1px solid #284a7c;border-radius:12px;padding:13px;margin:10px 0;background:#071832;overflow-wrap:anywhere}.psn-entry strong{color:#b7dcff}.psn-entry small{display:block;color:#a8bfdc;line-height:1.7;margin:5px 0}.psn-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:580px){.psn-two{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -315,6 +319,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <section class="management-shortcuts" aria-label="Customer management tools">
 <button id="openReviewsPanel" type="button"><strong>⭐ Facebook Customer Reviews ↗</strong><small>Open, add, edit and publish customer reviews</small></button>
 <button id="openBlacklistPanel" type="button"><strong>🛡️ Customer Safety & Blacklist ↗</strong><small>Open customer records, search, warnings and blacklist</small></button>
+ <button id="openPsnPanel" type="button"><strong>📧 PSN Accounts & Renters ↗</strong><small>Account library, assigned renters, return dates & history</small></button>
 </section>
 
   <section class="stats" aria-label="Rental overview">
@@ -491,6 +496,43 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <div id="blacklistList">Loading customer records…</div>
 </section>
 </div></div>
+
+<div id="psnManagementModal" class="manage-modal" role="dialog" aria-modal="true" aria-label="Private PSN account and renter management">
+ <div class="manage-modal-card management-modal-card">
+ <button class="manage-close" id="closePsnPanel" type="button" aria-label="Close PSN management">×</button>
+ <section class="psn-panel">
+  <h2>📧 PSN Account & Renter Management</h2>
+  <p>🔒 Admin-only. Link one account to multiple games, and a game to multiple accounts. Never save PSN passwords or 2FA codes here.</p>
+  <h3>➕ Add / Edit PSN Account</h3>
+  <form id="psnAccountForm">
+   <input id="psnAccountEditId" type="hidden">
+   <div class="psn-two"><div><label for="psnEmail">PSN Email *</label><input id="psnEmail" type="email" required maxlength="180" autocomplete="off" placeholder="jas12@gmail.com"></div>
+   <div><label for="psnRegion">Region</label><input id="psnRegion" maxlength="50" placeholder="US / HK / Indonesia"></div></div>
+   <label for="psnOnlineId">PSN Online ID (optional)</label><input id="psnOnlineId" maxlength="100">
+   <label for="psnGames">Games owned (hold Ctrl to select multiple on desktop)</label><select id="psnGames" multiple></select>
+   <label for="psnNotes">Private notes (no passwords)</label><textarea id="psnNotes" maxlength="800"></textarea>
+   <div class="psn-actions"><button type="submit" id="psnAccountSave">💾 Save Account</button><button type="button" id="psnAccountClear">Clear</button></div>
+  </form>
+  <p id="psnAccountMessage" role="status" class="psn-muted"></p>
+  <h3>👤 Assign / Update Renter</h3>
+  <form id="psnRentalForm">
+   <input id="psnRentalEditId" type="hidden">
+   <label for="psnRentalAccount">PSN Account *</label><select id="psnRentalAccount" required></select>
+   <label for="psnRentalGame">Game on this account *</label><select id="psnRentalGame" required></select>
+   <div class="psn-two"><div><label for="psnRentalSlot">Slot *</label><select id="psnRentalSlot"><option value="trophy">🏆 Trophy</option><option value="nonTrophy">🎮 Non-Trophy</option></select></div>
+   <div><label for="psnRenterName">Renter name *</label><input id="psnRenterName" required maxlength="100"></div></div>
+   <div class="psn-two"><div><label for="psnStartDate">Rental start</label><input id="psnStartDate" type="date"></div><div><label for="psnReturnDate">Expected return *</label><input id="psnReturnDate" type="date" required></div></div>
+   <label for="psnRentalStatus">Status</label><select id="psnRentalStatus"><option value="rented">🔴 Currently Rented</option><option value="returned">🟢 Returned</option></select>
+   <div class="psn-actions"><button type="submit" id="psnRentalSave">💾 Save Assignment</button><button type="button" id="psnRentalClear">Clear</button></div>
+  </form>
+  <p id="psnRentalMessage" role="status" class="psn-muted"></p>
+  <h3>🔎 Account & Renter Lookup</h3>
+  <input id="psnSearch" placeholder="Search email, game or renter" aria-label="Search PSN accounts and renters">
+  <div class="psn-actions"><button id="psnRefresh" type="button">↻ Refresh</button></div>
+  <div id="psnAccountList" aria-live="polite"></div>
+  <h3>📋 PSN Rental History (latest 40)</h3><div id="psnRentalHistory" class="psn-muted">Loading...</div>
+ </section></div></div>
+
 <!-- ADD GAME -->
 
 <div id="addGameModal" class="manage-modal">
@@ -1925,6 +1967,7 @@ $("saveGameChanges").addEventListener("click",async()=>{
     closeModal("manageModal");
 
     await loadAdminGames();
+    await psnSyncFromGames();
     await loadActivityHistory();
 
     alert("Game and slot statuses updated successfully! 🎮");
@@ -1996,6 +2039,7 @@ async function confirmReturn(slot){
     closeModal("manageModal");
 
     await loadAdminGames();
+    await psnSyncFromGames();
     await loadActivityHistory();
 
     alert(
@@ -2194,6 +2238,7 @@ async function extendRental(slot){
     closeModal("manageModal");
 
     await loadAdminGames();
+    await psnSyncFromGames();
     await loadActivityHistory();
 
     alert(
@@ -2325,6 +2370,7 @@ $("saveNewGame").addEventListener("click",async()=>{
     closeModal("addGameModal");
 
     await loadAdminGames();
+    await psnSyncFromGames();
     await loadActivityHistory();
 
     alert("New game added successfully! 🎮");
@@ -2362,6 +2408,7 @@ $("deleteGame").addEventListener("click",async()=>{
     closeModal("manageModal");
 
     await loadAdminGames();
+    await psnSyncFromGames();
     await loadActivityHistory();
 
     alert("Game deleted successfully.");
@@ -3007,6 +3054,146 @@ $("blacklistReset").addEventListener("click",resetBlacklistForm);
 $("blacklistReload").addEventListener("click",loadBlacklist);
 $("blacklistSearch").addEventListener("input",renderBlacklist);
 
+
+/* PRIVATE PSN ACCOUNTS + RENTERS (MANUAL + GAME SLOT AUTO-SYNC) */
+let psnAccounts=[],psnRentals=[],psnHistory=[];
+const psnSlotLabel=s=>s==="trophy"?"🏆 Trophy":"🎮 Non-Trophy";
+const psnGameTitle=id=>gameName(gameCache.get(id)||{name:"Unknown / deleted game"});
+const psnOption=(value,label)=>{const o=document.createElement("option");o.value=value;o.textContent=label;return o;};
+function psnMsg(id,msg){$(id).textContent=msg;}
+function psnGameChoices(){
+ const select=$("psnGames");const chosen=new Set([...select.selectedOptions].map(o=>o.value));select.replaceChildren();
+ for(const [id,g] of [...gameCache].sort((a,b)=>gameName(a[1]).localeCompare(gameName(b[1])))){
+  const o=psnOption(id,gameName(g));o.selected=chosen.has(id);select.append(o);
+ }
+}
+function psnAccountChoices(){
+ const s=$("psnRentalAccount"),previous=s.value;s.replaceChildren(psnOption("","Select PSN account"));
+ for(const a of psnAccounts)s.append(psnOption(a.id,a.email+(a.region?" • "+a.region:"")));
+ if(psnAccounts.some(a=>a.id===previous))s.value=previous;
+ psnRentalGameChoices();
+}
+function psnRentalGameChoices(){
+ const s=$("psnRentalGame"),previous=s.value,a=psnAccounts.find(a=>a.id===$("psnRentalAccount").value);
+ s.replaceChildren(psnOption("","Select game"));
+ for(const id of a?.gameIds||[])s.append(psnOption(id,psnGameTitle(id)));
+ if((a?.gameIds||[]).includes(previous))s.value=previous;
+}
+function psnClearAccount(){
+ $("psnAccountForm").reset();$("psnAccountEditId").value="";
+ [...$("psnGames").options].forEach(o=>o.selected=false);$("psnAccountSave").textContent="💾 Save Account";
+}
+function psnClearRental(){
+ $("psnRentalForm").reset();$("psnRentalEditId").value="";
+ $("psnRentalSave").textContent="💾 Save Assignment";psnRentalGameChoices();
+}
+function psnLine(parent,tag,content){const e=document.createElement(tag);e.textContent=content;parent.append(e);return e;}
+function psnRender(){
+ const box=$("psnAccountList");box.replaceChildren();const q=$("psnSearch").value.trim().toLowerCase();
+ const matches=psnAccounts.filter(a=>[a.email,a.region,a.onlineId,...(a.gameIds||[]).map(psnGameTitle),...psnRentals.filter(r=>r.accountId===a.id).map(r=>r.renterName)].join(" ").toLowerCase().includes(q));
+ if(!matches.length)psnLine(box,"p","No matching PSN accounts. Add one above.");
+ for(const a of matches){
+  const card=document.createElement("div");card.className="psn-entry";
+  psnLine(card,"strong","📧 "+a.email);psnLine(card,"small","🌏 "+(a.region||"Region not set")+(a.onlineId?" • PSN ID: "+a.onlineId:""));
+  psnLine(card,"small","🎮 Games: "+(a.gameIds||[]).map(psnGameTitle).join(", "));
+  if(a.notes)psnLine(card,"small","📝 "+a.notes);
+  const assigned=psnRentals.filter(r=>r.accountId===a.id);
+  if(!assigned.length)psnLine(card,"small","No renters assigned yet.");
+  for(const r of assigned){
+   const state=r.status==="returned"?"🟢 Returned":r.returnDate&&r.returnDate<todayISO()?"🔴 Overdue":"🔴 Rented";
+   psnLine(card,"small",`${psnSlotLabel(r.slot)} • ${psnGameTitle(r.gameId)} • ${r.renterName} • ${state} • Return: ${r.returnDate||"Not set"}`);
+   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit Renter";
+   edit.onclick=()=>{ $("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth",block:"center"});};
+   card.append(edit);
+  }
+  const actions=document.createElement("div");actions.className="psn-actions";
+  const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit Account";
+  edit.onclick=()=>{$("psnAccountEditId").value=a.id;$("psnEmail").value=a.email;$("psnRegion").value=a.region||"";$("psnOnlineId").value=a.onlineId||"";$("psnNotes").value=a.notes||"";for(const o of $("psnGames").options)o.selected=(a.gameIds||[]).includes(o.value);$("psnAccountSave").textContent="💾 Update Account";$("psnAccountForm").scrollIntoView({behavior:"smooth",block:"center"});};
+  const del=document.createElement("button");del.type="button";del.className="psn-danger";del.textContent="🗑️ Delete Account";
+  del.onclick=async()=>{if(psnRentals.some(r=>r.accountId===a.id&&r.status!=="returned")){alert("Return or reassign active renters first.");return;}if(!confirm("Delete this PSN account? Rental history remains."))return;try{await deleteDoc(doc(db,"psnAccounts",a.id));await psnLoad();}catch(e){alert(e.message);}};
+  actions.append(edit,del);card.append(actions);box.append(card);
+ }
+ const history=$("psnRentalHistory");history.replaceChildren();
+ if(!psnHistory.length)psnLine(history,"p","No PSN rental activity yet.");
+ for(const h of psnHistory.slice(0,40)){const row=document.createElement("div");row.className="psn-entry";psnLine(row,"small",`${h.action||"Update"} • ${h.renterName||""} • ${h.gameName||""} • ${psnSlotLabel(h.slot)} • ${h.email||""}`);psnLine(row,"small",(h.createdAt?.toDate?.()?.toLocaleString("en-PH")||"Time pending")+(h.details?" • "+h.details:""));history.append(row);}
+}
+async function psnLog(action,r,details=""){
+ await setDoc(doc(collection(db,"psnRentalHistory")),{action,accountId:r.accountId,gameId:r.gameId,gameName:psnGameTitle(r.gameId),slot:r.slot,renterName:r.renterName,email:psnAccounts.find(a=>a.id===r.accountId)?.email||"",details,createdAt:serverTimestamp()});
+}
+async function psnLoad(){
+ if(auth.currentUser?.uid!==ADMIN_UID)return;
+ try{
+  const [a,r,h]=await Promise.all([getDocs(collection(db,"psnAccounts")),getDocs(collection(db,"psnRentals")),getDocs(collection(db,"psnRentalHistory"))]);
+  psnAccounts=a.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.email.localeCompare(b.email));
+  psnRentals=r.docs.map(d=>({id:d.id,...d.data()}));
+  psnHistory=h.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  psnGameChoices();psnAccountChoices();psnRender();
+ }catch(e){psnMsg("psnAccountMessage","❌ Unable to load PSN records: "+e.message);}
+}
+$("openPsnPanel").onclick=()=>{openModal("psnManagementModal");psnLoad();};
+$("closePsnPanel").onclick=()=>closeModal("psnManagementModal");
+$("psnAccountClear").onclick=psnClearAccount;
+$("psnRentalClear").onclick=psnClearRental;
+$("psnRentalAccount").onchange=psnRentalGameChoices;
+$("psnSearch").oninput=psnRender;
+$("psnRefresh").onclick=psnLoad;
+$("psnAccountForm").onsubmit=async e=>{
+ e.preventDefault();const btn=$("psnAccountSave");btn.disabled=true;
+ try{
+  if(auth.currentUser?.uid!==ADMIN_UID)throw Error("Admin only");
+  const email=$("psnEmail").value.trim().toLowerCase();const id=$("psnAccountEditId").value;
+  if(psnAccounts.some(a=>a.email.toLowerCase()===email&&a.id!==id))throw Error("Email already exists. Edit its existing record.");
+  const gameIds=[...$("psnGames").selectedOptions].map(o=>o.value);
+  const data={email,region:$("psnRegion").value.trim(),onlineId:$("psnOnlineId").value.trim(),notes:$("psnNotes").value.trim(),gameIds,updatedAt:serverTimestamp()};
+  if(id){const active=psnRentals.filter(r=>r.accountId===id&&r.status==="rented");if(active.some(r=>!gameIds.includes(r.gameId)))throw Error("Cannot unlink a game with an active renter. Return/reassign first.");await updateDoc(doc(db,"psnAccounts",id),data);}
+  else await setDoc(doc(collection(db,"psnAccounts")),{...data,createdAt:serverTimestamp()});
+  psnClearAccount();await psnLoad();psnMsg("psnAccountMessage","✅ PSN account saved privately.");
+ }catch(err){psnMsg("psnAccountMessage","❌ "+err.message);}finally{btn.disabled=false;}
+};
+$("psnRentalForm").onsubmit=async e=>{
+ e.preventDefault();const btn=$("psnRentalSave");btn.disabled=true;
+ try{
+  if(auth.currentUser?.uid!==ADMIN_UID)throw Error("Admin only");
+  const id=$("psnRentalEditId").value,accountId=$("psnRentalAccount").value,gameId=$("psnRentalGame").value,slot=$("psnRentalSlot").value;
+  const renterName=$("psnRenterName").value.trim(),status=$("psnRentalStatus").value,returnDate=$("psnReturnDate").value,startDate=$("psnStartDate").value;
+  if(!psnAccounts.find(a=>a.id===accountId)?.gameIds?.includes(gameId))throw Error("Select a game owned by this PSN account.");
+  if(!gameCache.has(gameId))throw Error("Game no longer exists in Game Management.");
+  if(!renterName||!returnDate)throw Error("Renter name and return date required.");
+  if(startDate&&returnDate<startDate)throw Error("Return date must not be before start date.");
+  if(status==="rented"&&psnRentals.some(r=>r.id!==id&&r.accountId===accountId&&r.gameId===gameId&&r.slot===slot&&r.status==="rented"))throw Error("This PSN account/game/slot already has an active renter.");
+  const g=gameCache.get(gameId);const actual=getSlotStatus(g,slot);
+  if(status==="rented"&&actual!=="currently-rented"&&!confirm("Game Management currently marks this slot AVAILABLE. Save the renter assignment anyway? (It will not change public availability.)"))return;
+  const data={accountId,gameId,slot,renterName,startDate,returnDate,status,updatedAt:serverTimestamp()};
+  const old=psnRentals.find(r=>r.id===id);
+  if(id)await updateDoc(doc(db,"psnRentals",id),data);
+  else await setDoc(doc(collection(db,"psnRentals")),{...data,createdAt:serverTimestamp()});
+  try{await psnLog(status==="returned"?"Returned":id?"Assignment Updated":"Renter Assigned",data,old?`Previous: ${old.status}, ${old.returnDate}`:`Expected return: ${returnDate}`);}catch(err){console.error("PSN history:",err);}
+  psnClearRental();await psnLoad();psnMsg("psnRentalMessage","✅ Renter assignment saved. Public Game Management is unchanged.");
+ }catch(err){psnMsg("psnRentalMessage","❌ "+err.message);}finally{btn.disabled=false;}
+};
+// Reconcile admin game slot updates with existing renter assignments.
+// Does NOT invent renter identities or mark public slots rented from waiting-list requests.
+let psnSyncBusy=false;
+async function psnSyncFromGames(){
+ if(psnSyncBusy||auth.currentUser?.uid!==ADMIN_UID||!psnRentals.length)return;
+ psnSyncBusy=true;
+ try{
+  let changed=false;
+  for(const r of psnRentals.filter(x=>x.status==="rented")){
+   const g=gameCache.get(r.gameId);if(!g)continue;
+   const state=getSlotStatus(g,r.slot);const gameReturn=dateToInput(g[slotFields(r.slot).date]);
+   if(state==="available"){
+    await updateDoc(doc(db,"psnRentals",r.id),{status:"returned",updatedAt:serverTimestamp()});
+    await psnLog("Auto-return (game slot)",r,"Slot marked available in Game Management");changed=true;
+   }else if(gameReturn&&gameReturn!==r.returnDate){
+    await updateDoc(doc(db,"psnRentals",r.id),{returnDate:gameReturn,updatedAt:serverTimestamp()});
+    await psnLog("Auto return-date sync",r,`${r.returnDate||"Not set"} → ${gameReturn}`);changed=true;
+   }
+  }
+  if(changed)await psnLoad();
+ }catch(err){console.error("PSN slot sync:",err);psnMsg("psnRentalMessage","⚠️ Auto-sync failed: "+err.message);}finally{psnSyncBusy=false;}
+}
+
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -3022,6 +3209,7 @@ onAuthStateChanged(auth,user=>{
   }
 
   loadAdminReviews();
+  psnLoad().then(()=>loadAdminGames().then(psnSyncFromGames)).catch(console.error);
   loadBlacklist();
   refreshCustomerSafetyAlerts();
   loadActivityHistory();
@@ -3041,7 +3229,7 @@ onAuthStateChanged(auth,user=>{
 
 setInterval(()=>{
   if(auth.currentUser?.uid===ADMIN_UID){
-    loadAdminGames().catch(console.error);
+    loadAdminGames().then(psnSyncFromGames).catch(console.error);
     loadBusinessOverview().catch(console.error);
     refreshCustomerSafetyAlerts().catch(console.error);
   }
