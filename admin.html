@@ -310,6 +310,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .library-table th{background:#102d56;color:#bde1ff}
 .library-table tr:last-child td{border-bottom:0}
 .library-summary{font-size:12px;color:#b9d5ff;margin:10px 0}
+
+/* PRIVATE EVIDENCE GALLERY + PSN RETURN ALERT CENTER */
+.evidence-tools{margin:14px 0;padding:13px;background:#071b38;border:1px solid #31558d;border-radius:11px}
+.evidence-tools input[type=file]{width:100%;padding:10px;border:1px dashed #4b88cf;border-radius:9px;background:#020817;color:white}
+.evidence-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:10px;margin-top:10px}
+.evidence-tile{border:1px solid #30598e;border-radius:10px;padding:7px;background:#06142e;min-width:0}
+.evidence-tile img{width:100%;height:105px;object-fit:cover;border-radius:6px;cursor:pointer}
+.evidence-tile small{display:block;overflow-wrap:anywhere;color:#a8bfdc;font-size:10px;margin:5px 0}
+.evidence-tile button{padding:7px 9px;font-size:11px;margin-top:5px;width:100%}
+.evidence-lightbox{position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;padding:15px}
+.evidence-lightbox.active{display:flex}.evidence-lightbox img{max-width:95vw;max-height:82vh;object-fit:contain}
+.evidence-lightbox button{background:#154a87;color:white;border:1px solid #69b8ff;border-radius:9px;padding:11px 20px;margin-bottom:10px}
+.psn-alert-row{padding:12px;margin:9px 0;border:1px solid #345780;border-radius:10px;background:#081a34;overflow-wrap:anywhere}
+.psn-alert-row strong{display:block;margin-bottom:6px}.psn-alert-row small{display:block;color:#bbcee7;line-height:1.7}
+.psn-alert-row button{background:#124b7f;color:white;border:1px solid #398ce0;border-radius:8px;padding:9px;margin:8px 8px 0 0}
 </style>
 </head>
 
@@ -378,6 +393,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <strong id="waitingGames">—</strong>
     </div>
   </section>
+
+  <section class="priority-panel" id="psnExpiryCenter" aria-live="polite"><h3>🔔 PSN Rental Expiry Alert Center <span id="psnAlertCount"></span></h3><p class="psn-muted">3 days before return, tomorrow, today, and overdue. Updates when dashboard loads and every minute.</p><div id="psnExpiryList">Checking PSN rentals...</div></section>
 
   <section class="priority-panel" aria-live="polite">
     <h3>🚨 Priority Rental Alerts</h3>
@@ -507,6 +524,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <select id="blacklistStatus"><option value="warning">🟡 Warning</option><option value="blacklisted">🔴 Blacklisted — admin review required</option><option value="good">🟢 Good standing</option></select>
 <label for="blacklistReason">Reason / documented incident *</label><textarea id="blacklistReason" maxlength="1500" required placeholder="Record specific facts, dates and rule violated."></textarea>
 <label for="blacklistEvidence">Evidence link (optional; only use access-restricted links)</label><input id="blacklistEvidence" type="url" maxlength="500" placeholder="https://...">
+<div class="evidence-tools"><strong>📸 Private Screenshot Evidence</strong><p>Save the customer record first, then upload any number of images from the record below. Images are admin-only. Max 5 MB each; select multiple at once.</p><input id="blacklistFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple><p id="blacklistUploadStatus" role="status" class="psn-muted"></p></div>
 <div class="blacklist-actions"><button type="submit" id="blacklistSave">💾 Save Customer Record</button><button type="button" id="blacklistReset">Clear Form</button><button type="button" id="blacklistReload">↻ Refresh</button></div>
 </form>
 <p id="blacklistMessage" role="status"></p>
@@ -1032,6 +1050,7 @@ import {
   getFirestore,collection,doc,getDocs,
   setDoc,getDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import {getStorage,ref as storageRef,uploadBytes,getBlob,deleteObject} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
 
 const firebaseConfig={
   apiKey:"AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",
@@ -1045,6 +1064,7 @@ const firebaseConfig={
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
+const evidenceStorage=getStorage(app);
 
 const $=id=>document.getElementById(id);
 let gameCache=new Map();
@@ -3013,6 +3033,53 @@ function resetBlacklistForm(){
  $("blacklistForm").reset();$("blacklistEditId").value="";
  $("blacklistSave").textContent="💾 Save Customer Record";
 }
+const evidenceBlobs=new Set();
+function evidenceShow(blob){const url=URL.createObjectURL(blob);evidenceBlobs.add(url);$("evidenceLightboxImage").src=url;$("evidenceLightbox").classList.add("active");}
+$("evidenceLightboxClose").onclick=()=>{$("evidenceLightbox").classList.remove("active");$("evidenceLightboxImage").removeAttribute("src");for(const url of evidenceBlobs)URL.revokeObjectURL(url);evidenceBlobs.clear();};
+async function loadEvidenceGallery(recordId,box){
+ try{
+  const snap=await getDocs(collection(db,"customerSafety",recordId,"evidence"));
+  box.replaceChildren();
+  if(snap.empty){const empty=document.createElement("small");empty.textContent="No screenshots yet.";box.append(empty);return;}
+  for(const d of snap.docs){
+   const e=d.data(),tile=document.createElement("div");tile.className="evidence-tile";
+   const img=document.createElement("img");img.alt="Private evidence screenshot";img.loading="lazy";
+   const label=document.createElement("small");label.textContent=(e.name||"Screenshot")+" • "+(e.createdAt?.toDate?.()?.toLocaleDateString("en-PH")||"Saved");
+   const open=document.createElement("button");open.type="button";open.textContent="🔎 View";
+   const remove=document.createElement("button");remove.type="button";remove.textContent="🗑️ Delete";
+   let cached=null;
+   const fetchImage=async()=>{if(!cached)cached=await getBlob(storageRef(evidenceStorage,e.path));return cached;};
+   open.onclick=async()=>{try{evidenceShow(await fetchImage());}catch(err){alert("Cannot open evidence: "+err.message);}};
+   remove.onclick=async()=>{if(!confirm("Permanently delete this screenshot?"))return;try{remove.disabled=true;await deleteObject(storageRef(evidenceStorage,e.path));await deleteDoc(d.ref);await loadEvidenceGallery(recordId,box);}catch(err){alert("Delete failed: "+err.message);remove.disabled=false;}};
+   tile.append(img,label,open,remove);box.append(tile);
+   fetchImage().then(blob=>{if(img.isConnected){const url=URL.createObjectURL(blob);img.src=url;img.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});}}).catch(()=>{img.alt="Preview unavailable — tap View";});
+  }
+ }catch(err){box.textContent="⚠️ Evidence unavailable: "+err.message;}
+}
+async function uploadEvidenceFiles(recordId,files,button){
+ const status=$("blacklistUploadStatus");button.disabled=true;
+ try{
+  if(auth.currentUser?.uid!==ADMIN_UID)throw Error("Admin sign-in required.");
+  for(let i=0;i<files.length;i++){
+   const f=files[i];
+   if(!["image/jpeg","image/png","image/webp"].includes(f.type))throw Error("Only JPG, PNG, and WebP screenshots are allowed.");
+   if(f.size>5*1024*1024)throw Error(f.name+" is over 5 MB.");
+   status.textContent=`Uploading ${i+1} of ${files.length}: ${f.name}`;
+   const id=doc(collection(db,"customerSafety",recordId,"evidence")).id;
+   const ext=f.type==="image/png"?"png":f.type==="image/webp"?"webp":"jpg";
+   const path=`blacklistEvidence/${recordId}/${id}.${ext}`;
+   await uploadBytes(storageRef(evidenceStorage,path),f,{contentType:f.type,customMetadata:{ownerUid:ADMIN_UID}});
+   try{await setDoc(doc(db,"customerSafety",recordId,"evidence",id),{path,name:f.name.slice(0,120),size:f.size,createdAt:serverTimestamp()});}
+   catch(err){await deleteObject(storageRef(evidenceStorage,path)).catch(()=>{});throw err;}
+  }
+  status.textContent=`✅ Uploaded ${files.length} screenshot(s) privately.`;$("blacklistFiles").value="";
+  await loadBlacklist();
+ }catch(err){status.textContent="❌ "+err.message;}finally{button.disabled=false;}
+}
+async function deleteAllEvidence(recordId){
+ const snap=await getDocs(collection(db,"customerSafety",recordId,"evidence"));
+ for(const d of snap.docs){const e=d.data();if(e.path)await deleteObject(storageRef(evidenceStorage,e.path));await deleteDoc(d.ref);}
+}
 function renderBlacklist(){
  const list=$("blacklistList");list.replaceChildren();
  const term=normalizeCustomerName($("blacklistSearch").value);
@@ -3038,6 +3105,10 @@ function renderBlacklist(){
    row.append(title,info,date);
    if(r.facebookUrl){const link=document.createElement("a");link.href=r.facebookUrl;link.textContent="↗ Facebook profile";link.target="_blank";link.rel="noopener noreferrer";row.append(link);}
    if(r.evidenceUrl){const link=document.createElement("a");link.href=r.evidenceUrl;link.textContent=" • ↗ Restricted evidence";link.target="_blank";link.rel="noopener noreferrer";row.append(link);}
+   const gallery=document.createElement("div");gallery.className="evidence-gallery";
+   const galleryHead=document.createElement("small");galleryHead.textContent="📸 Private Evidence Gallery";
+   row.append(galleryHead,gallery);
+   loadEvidenceGallery(r.id,gallery);
    const actions=document.createElement("div");actions.className="blacklist-actions";
    const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit";
    edit.onclick=()=>{
@@ -3051,10 +3122,12 @@ function renderBlacklist(){
    const del=document.createElement("button");del.type="button";del.textContent="🗑️ Delete";
    del.onclick=async()=>{
      if(!confirm("Permanently delete the private record for "+r.customerName+"?"))return;
-     try{del.disabled=true;await deleteDoc(doc(db,"customerSafety",r.id));await loadBlacklist();await refreshCustomerSafetyAlerts();}
+     try{del.disabled=true;await deleteAllEvidence(r.id);await deleteDoc(doc(db,"customerSafety",r.id));await loadBlacklist();await refreshCustomerSafetyAlerts();}
      catch(e){alert("Delete failed: "+e.message);del.disabled=false;}
    };
-   actions.append(edit,del);row.append(actions);list.append(row);
+   const upload=document.createElement("button");upload.type="button";upload.textContent="📸 Upload Screenshots";
+   upload.onclick=()=>{const input=$("blacklistFiles");const files=Array.from(input.files||[]);if(!files.length){input.scrollIntoView({behavior:"smooth"});alert("Choose screenshot files first, then tap Upload Screenshots on this customer's record.");return;}uploadEvidenceFiles(r.id,files,upload);};
+   actions.append(edit,upload,del);row.append(actions);list.append(row);
  }
 }
 async function loadBlacklist(){
@@ -3217,6 +3290,7 @@ async function psnLoad(){
   const [a,r,h]=await Promise.all([getDocs(collection(db,"psnAccounts")),getDocs(collection(db,"psnRentals")),getDocs(collection(db,"psnRentalHistory"))]);
   psnAccounts=a.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.email.localeCompare(b.email));
   psnRentals=r.docs.map(d=>({id:d.id,...d.data()}));
+  renderPsnExpiryAlerts();
   psnHistory=h.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
   psnGameChoices();psnAccountChoices();psnRender();psnLibraryRender();
  }catch(e){psnMsg("psnAccountMessage","❌ Unable to load PSN records: "+e.message);}
@@ -3285,6 +3359,26 @@ async function psnSyncFromGames(){
  }catch(err){console.error("PSN slot sync:",err);psnMsg("psnRentalMessage","⚠️ Auto-sync failed: "+err.message);}finally{psnSyncBusy=false;}
 }
 
+/* PSN RENTAL ALERTS: admin dashboard only; no background push */
+function renderPsnExpiryAlerts(){
+ const box=$("psnExpiryList"),count=$("psnAlertCount");if(!box)return;
+ box.replaceChildren();const today=new Date();today.setHours(0,0,0,0);
+ const items=psnRentals.filter(r=>r.status==="rented"&&/^\d{4}-\d{2}-\d{2}$/.test(r.returnDate||""))
+  .map(r=>{const [y,m,d]=r.returnDate.split("-").map(Number);const target=new Date(y,m-1,d);return {r,days:Math.round((target-today)/86400000)};})
+  .filter(x=>x.days<=3).sort((a,b)=>a.days-b.days);
+ count.textContent=items.length?`(${items.length})`:"(0)";
+ if(!items.length){box.textContent="🟢 No PSN rentals expiring within the next 3 days.";return;}
+ for(const {r,days} of items){
+  const row=document.createElement("div");row.className="psn-alert-row";
+  const title=document.createElement("strong");title.textContent=(days<0?"🚨 OVERDUE "+Math.abs(days)+" day(s)":days===0?"🔴 RETURN TODAY":days===1?"🟠 RETURN TOMORROW":"🟡 EXPIRING IN "+days+" DAYS")+" — "+psnGameTitle(r.gameId);
+  const info=document.createElement("small");info.textContent=`👤 ${r.renterName} • ${psnSlotLabel(r.slot)} • 📧 ${psnAccounts.find(a=>a.id===r.accountId)?.email||"Unknown account"} • 📅 ${r.returnDate}`;
+  const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit / Extend";
+  edit.onclick=()=>{openModal("psnManagementModal");$("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth"});};
+  const returned=document.createElement("button");returned.type="button";returned.textContent="✅ Mark Returned";
+  returned.onclick=async()=>{if(!confirm("Confirm that the PSN account was actually returned and disabled by "+r.renterName+"?"))return;returned.disabled=true;try{await updateDoc(doc(db,"psnRentals",r.id),{status:"returned",updatedAt:serverTimestamp()});await psnLog("Returned",r,"Confirmed by admin from PSN Rental Alert Center");await psnLoad();}catch(err){alert("Could not mark returned: "+err.message);returned.disabled=false;}};
+  row.append(title,info,edit,returned);box.append(row);
+ }
+}
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -3323,9 +3417,11 @@ setInterval(()=>{
     loadAdminGames().then(psnSyncFromGames).catch(console.error);
     loadBusinessOverview().catch(console.error);
     refreshCustomerSafetyAlerts().catch(console.error);
+    renderPsnExpiryAlerts();
   }
 },60000);
 
 </script>
+<div class="evidence-lightbox" id="evidenceLightbox" role="dialog" aria-modal="true" aria-label="Private screenshot viewer"><button type="button" id="evidenceLightboxClose">✕ Close screenshot</button><img id="evidenceLightboxImage" alt="Private evidence screenshot"></div>
 </body>
 </html>
