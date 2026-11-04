@@ -6061,5 +6061,70 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 })();
 </script>
 
+
+<!-- JDR UNLI SWAP LIMITED-SLOT CONTROL -->
+<style>
+#jdrUnliNotice{margin:16px auto;padding:16px;border:1px solid #3673a9;border-radius:14px;background:#0a2340;color:#d5eaff;line-height:1.6;max-width:1100px}
+#jdrUnliNotice strong{color:#92d4ff}#jdrUnliNotice .jdr-full{color:#ff9aaa;font-weight:800}
+.jdr-unli-disabled{opacity:.46!important;cursor:not-allowed!important;filter:grayscale(.7)}
+</style>
+<script type="module">
+import {initializeApp as jdrInitApp,getApps as jdrGetApps} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {getFirestore as jdrGetDB,doc as jdrDoc,onSnapshot as jdrOnSnapshot} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+const jdrApp=jdrGetApps().find(a=>a.name==="[DEFAULT]")||jdrInitApp({apiKey:"AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY",authDomain:"jdigitalrental.firebaseapp.com",projectId:"jdigitalrental",storageBucket:"jdigitalrental.firebasestorage.app",messagingSenderId:"611741872259",appId:"1:611741872259:web:01b3c2bec73d078999ebb6"});
+const jdrDB=jdrGetDB(jdrApp);
+let jdrUnli={trophy:false,nonTrophy:false}; // Fail closed until Firestore confirms availability.
+let jdrUnliLoaded=false;
+function jdrUnliKey(v){return String(v||"").toLowerCase().replace(/[\s_-]/g,"")==="trophy"?"trophy":"nonTrophy"}
+function jdrUnliFull(period,account){return String(period||"").toLowerCase()==="month"&&jdrUnli[jdrUnliKey(account)]!==true}
+function jdrUnliNotice(){
+ let box=document.getElementById("jdrUnliNotice");
+ if(!box){box=document.createElement("div");box.id="jdrUnliNotice";box.setAttribute("role","status");
+ const target=document.querySelector("#games .section-inner")||document.querySelector("#gameGrid")?.parentElement||document.body;
+ target.prepend(box)}
+ const status=k=>!jdrUnliLoaded?"⏳ Checking availability":jdrUnli[k]?"🟢 AVAILABLE":"🔴 FULL — Limited Slots";
+ box.innerHTML='<strong>♾️ Monthly UNLI SWAP — Limited Slots</strong><div>🏆 Trophy: <span class="'+(jdrUnli.trophy?'':'jdr-full')+'">'+status('trophy')+'</span></div><div>🎮 Non-Trophy: <span class="'+(jdrUnli.nonTrophy?'':'jdr-full')+'">'+status('nonTrophy')+'</span></div><small>Monthly UNLI SWAP has limited slots. When marked FULL, all slots for that package are occupied and new requests are temporarily unavailable. Please check back soon! 💙</small>';
+ for(const modalId of ["rentalModal","upcomingReservationModal"]){
+  const modal=document.getElementById(modalId);if(!modal)continue;
+  const account=modal.querySelector(".account-option.active,.upcoming-account-option.active")?.dataset.account;
+  const unli=modal.querySelector('[data-period="month"]');
+  if(unli){const disabled=!!account&&jdrUnliFull("month",account);unli.classList.toggle("jdr-unli-disabled",disabled);unli.setAttribute("aria-disabled",String(disabled));unli.title=disabled?"FULL — Limited Slots":""}
+  let warning=modal.querySelector(".jdr-unli-warning");
+  if(!warning){warning=document.createElement("p");warning.className="jdr-unli-warning";warning.style.cssText="color:#ffacb8;font-size:12px;line-height:1.5";unli?.after(warning)}
+  warning.textContent=account&&jdrUnliFull("month",account)?"🔴 This Monthly UNLI SWAP package is FULL. Please choose another rental plan or account type.":"";
+ }
+}
+// Capture prevents selecting a FULL plan before existing app handlers run.
+document.addEventListener("click",event=>{
+ const button=event.target.closest?.('[data-period="month"]');
+ if(button&&button.closest("#rentalModal,#upcomingReservationModal")){
+  const modal=button.closest("#rentalModal,#upcomingReservationModal");
+  const account=modal.querySelector(".account-option.active,.upcoming-account-option.active")?.dataset.account;
+  if(!jdrUnliLoaded||!account||jdrUnliFull("month",account)){
+   event.preventDefault();event.stopImmediatePropagation();
+   alert(!jdrUnliLoaded?"Checking Monthly UNLI SWAP availability. Please try again shortly.":!account?"Please select Trophy or Non-Trophy first.":"🔴 Monthly UNLI SWAP is FULL for this account type. Limited slots only. Please choose another plan.");
+   jdrUnliNotice();return;
+  }
+ }
+ // Block stale selected plans at submission, even if availability changed while modal was open.
+ const submit=event.target.closest?.("#continueRental,#continueUpcomingReservation");
+ if(submit){
+  const modal=submit.closest("#rentalModal,#upcomingReservationModal");
+  const period=modal?.querySelector(".period-option.active,.upcoming-period-option.active")?.dataset.period;
+  const account=modal?.querySelector(".account-option.active,.upcoming-account-option.active")?.dataset.account;
+  if(period==="month"&&(!jdrUnliLoaded||jdrUnliFull(period,account))){
+   event.preventDefault();event.stopImmediatePropagation();
+   alert("🔴 This Monthly UNLI SWAP package is FULL or availability cannot be verified. Please choose another plan.");
+  }
+ }
+ queueMicrotask(jdrUnliNotice);
+},true);
+jdrOnSnapshot(jdrDoc(jdrDB,"publicSettings","unliSwap"),snapshot=>{
+ const data=snapshot.exists()?snapshot.data():{};
+ jdrUnli={trophy:data.trophy!==false,nonTrophy:data.nonTrophy!==false};
+ jdrUnliLoaded=true;jdrUnliNotice();
+},error=>{console.error("UNLI SWAP availability:",error);jdrUnliLoaded=false;jdrUnli={trophy:false,nonTrophy:false};jdrUnliNotice()});
+document.addEventListener("DOMContentLoaded",jdrUnliNotice);
+</script>
 </body>
 </html>
