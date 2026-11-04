@@ -524,7 +524,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <select id="blacklistStatus"><option value="warning">🟡 Warning</option><option value="blacklisted">🔴 Blacklisted — admin review required</option><option value="good">🟢 Good standing</option></select>
 <label for="blacklistReason">Reason / documented incident *</label><textarea id="blacklistReason" maxlength="1500" required placeholder="Record specific facts, dates and rule violated."></textarea>
 <label for="blacklistEvidence">Evidence link (optional; only use access-restricted links)</label><input id="blacklistEvidence" type="url" maxlength="500" placeholder="https://...">
-<div class="evidence-tools"><strong>📸 Private Screenshot Evidence</strong><p>Save the customer record first, then upload any number of images from the record below. Images are admin-only. Max 5 MB each; select multiple at once.</p><input id="blacklistFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple><p id="blacklistUploadStatus" role="status" class="psn-muted"></p></div>
+<div class="evidence-tools"><strong>📸 Private Screenshot Evidence</strong><p>Save the customer record first, then use the Google Drive upload button beside the customer record. Google sign-in is required.</p><p id="blacklistUploadStatus" role="status" class="psn-muted"></p></div>
 <div class="blacklist-actions"><button type="submit" id="blacklistSave">💾 Save Customer Record</button><button type="button" id="blacklistReset">Clear Form</button><button type="button" id="blacklistReload">↻ Refresh</button></div>
 </form>
 <p id="blacklistMessage" role="status"></p>
@@ -1065,6 +1065,8 @@ const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 const evidenceStorage=getStorage(app);
+// Replace this with the Apps Script Web App /exec URL after deployment.
+const GOOGLE_DRIVE_UPLOAD_URL="https://script.google.com/macros/s/AKfycbxF83TFjp2hH1T7Vb3jBQ6Q0TR9S1xiEfSJv_AEtDB9wcZYGaAUoTW0prnJT2ngzKDp/exec";
 
 const $=id=>document.getElementById(id);
 let gameCache=new Map();
@@ -3125,8 +3127,8 @@ function renderBlacklist(){
      try{del.disabled=true;await deleteAllEvidence(r.id);await deleteDoc(doc(db,"customerSafety",r.id));await loadBlacklist();await refreshCustomerSafetyAlerts();}
      catch(e){alert("Delete failed: "+e.message);del.disabled=false;}
    };
-   const upload=document.createElement("button");upload.type="button";upload.textContent="📸 Upload Screenshots";
-   upload.onclick=()=>{const input=$("blacklistFiles");const files=Array.from(input.files||[]);if(!files.length){input.scrollIntoView({behavior:"smooth"});alert("Choose screenshot files first, then tap Upload Screenshots on this customer's record.");return;}uploadEvidenceFiles(r.id,files,upload);};
+   const upload=document.createElement("button");upload.type="button";upload.textContent="📸 Upload to Google Drive";
+   upload.onclick=()=>{const base=GOOGLE_DRIVE_UPLOAD_URL;if(!base||base.includes("PASTE_YOUR")){alert("Set GOOGLE_DRIVE_UPLOAD_URL in admin.html after deploying your Apps Script web app.");return;}const url=new URL(base);url.searchParams.set("customer",r.customerName||"");window.open(url.toString(),"_blank","noopener,noreferrer");};
    actions.append(edit,upload,del);row.append(actions);list.append(row);
  }
 }
