@@ -1043,11 +1043,19 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
   </div>
 </div>
+
+<section id="jdrUnliAdmin" class="business-panel" style="margin:20px 0">
+ <h3>♾️ Monthly UNLI SWAP — Limited Slots</h3>
+ <p class="business-muted">Switch OFF when full. The customer website will display FULL and prevent new UNLI SWAP requests. Regular plans remain available.</p>
+ <div class="business-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span>🏆 Trophy UNLI SWAP <small>₱800 / month (default)</small></span><button type="button" id="jdrTrophyToggle" disabled>Loading…</button></div>
+ <div class="business-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span>🎮 Non-Trophy UNLI SWAP <small>₱700 / month (default)</small></span><button type="button" id="jdrNonTrophyToggle" disabled>Loading…</button></div>
+ <p id="jdrUnliAdminStatus" class="business-muted" role="status">Checking availability…</p>
+</section>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
-  getFirestore,collection,doc,getDocs,
+  getFirestore,collection,doc,getDocs,onSnapshot,
   setDoc,getDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import {getStorage,ref as storageRef,uploadBytes,getBlob,deleteObject} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
@@ -1065,6 +1073,43 @@ const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 const evidenceStorage=getStorage(app);
+// Shared, public-readable availability only. Firestore security rules must restrict writes to admin.
+const jdrUnliRef=doc(db,"publicSettings","unliSwap");
+let jdrUnliState={trophy:true,nonTrophy:true};
+let jdrUnliReady=false;
+function jdrPaintUnliAdmin(){
+ for(const [key,id] of [["trophy","jdrTrophyToggle"],["nonTrophy","jdrNonTrophyToggle"]]){
+  const button=document.getElementById(id);if(!button)continue;
+  const enabled=jdrUnliState[key]!==false;
+  button.textContent=enabled?"🟢 ON — Available":"🔴 OFF — FULL";
+  button.style.background=enabled?"#104331":"#621d30";
+  button.style.borderColor=enabled?"#26d987":"#e65c7b";
+  button.disabled=!jdrUnliReady||auth.currentUser?.uid!==ADMIN_UID;
+ }
+}
+function jdrStartUnliAdmin(){
+ onSnapshot(jdrUnliRef,snap=>{
+  const data=snap.exists()?snap.data():{};
+  jdrUnliState={trophy:data.trophy!==false,nonTrophy:data.nonTrophy!==false};
+  jdrUnliReady=true;jdrPaintUnliAdmin();
+  document.getElementById("jdrUnliAdminStatus").textContent="Live availability is synced with the customer website.";
+ },error=>{
+  jdrUnliReady=false;jdrPaintUnliAdmin();
+  document.getElementById("jdrUnliAdminStatus").textContent="Unable to read settings: "+error.message;
+ });
+ for(const [key,id] of [["trophy","jdrTrophyToggle"],["nonTrophy","jdrNonTrophyToggle"]]){
+  document.getElementById(id).addEventListener("click",async()=>{
+   if(!jdrUnliReady||auth.currentUser?.uid!==ADMIN_UID)return;
+   const button=document.getElementById(id);button.disabled=true;
+   try{
+    // Update only the selected field; do not overwrite the other switch.
+    await setDoc(jdrUnliRef,{[key]:jdrUnliState[key]===false,updatedAt:serverTimestamp()},{merge:true});
+   }catch(error){alert("Could not update UNLI SWAP: "+error.message)}
+   finally{jdrPaintUnliAdmin()}
+  });
+ }
+}
+
 // Replace this with the Apps Script Web App /exec URL after deployment.
 const GOOGLE_DRIVE_UPLOAD_URL="https://script.google.com/macros/s/AKfycbxF83TFjp2hH1T7Vb3jBQ6Q0TR9S1xiEfSJv_AEtDB9wcZYGaAUoTW0prnJT2ngzKDp/exec";
 
@@ -3395,6 +3440,7 @@ onAuthStateChanged(auth,user=>{
     return;
   }
 
+  jdrStartUnliAdmin();
   loadAdminReviews();
   psnLoad().then(()=>loadAdminGames().then(psnSyncFromGames)).catch(console.error);
   loadBlacklist();
