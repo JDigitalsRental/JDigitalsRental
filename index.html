@@ -4506,7 +4506,7 @@ function installRentalPlanButtons() {
       single.classList.remove("active");
       single.dataset.period = "single";
       single.textContent =
-        "🎮 1 Month Single Game (No Swap)";
+        "🎮 1 Month Regular (No Swap)";
 
       monthly.before(single);
     }
@@ -4569,13 +4569,12 @@ function gamePrices(game) {
   };
 }
 
-/* Hide duplicate Single Game prices only when they match UNLI SWAP.
-   Trophy and Non-Trophy are evaluated separately. */
+/* Regular monthly stays selectable independently of UNLI SWAP capacity. */
 function singlePlanVisibility(game) {
   const p = gamePrices(game);
   return {
-    trophy: Number.isFinite(p.singleMonthlyTrophy) && p.singleMonthlyTrophy > 0 && p.singleMonthlyTrophy !== p.monthlyTrophy,
-    nonTrophy: Number.isFinite(p.singleMonthlyNonTrophy) && p.singleMonthlyNonTrophy > 0 && p.singleMonthlyNonTrophy !== p.monthlyNonTrophy
+    trophy: Number.isFinite(p.singleMonthlyTrophy) && p.singleMonthlyTrophy > 0 && true,
+    nonTrophy: Number.isFinite(p.singleMonthlyNonTrophy) && p.singleMonthlyNonTrophy > 0 && true
   };
 }
 
@@ -4584,7 +4583,7 @@ function singlePlanPriceRows(game) {
   const visible = singlePlanVisibility(game);
   if (!visible.trophy && !visible.nonTrophy) return "";
   return `
-    <span class="jdr-single-heading">🎮 1 MONTH SINGLE GAME (NO SWAP)</span>
+    <span class="jdr-single-heading">🎮 1 MONTH REGULAR (NO SWAP)</span>
     ${visible.trophy ? `<span>🏆 Trophy: ${money(p.singleMonthlyTrophy)}</span>` : ""}
     ${visible.nonTrophy ? `<span>🎮 Non-Trophy: ${money(p.singleMonthlyNonTrophy)}</span>` : ""}
   `;
@@ -6096,7 +6095,7 @@ function jdrUnliNotice(){
   if(unli){const disabled=!!account&&jdrUnliFull("month",account);unli.classList.toggle("jdr-unli-disabled",disabled);unli.setAttribute("aria-disabled",String(disabled));unli.title=disabled?"FULL — Limited Slots":""}
   let warning=modal.querySelector(".jdr-unli-warning");
   if(!warning){warning=document.createElement("p");warning.className="jdr-unli-warning";warning.style.cssText="color:#ffacb8;font-size:12px;line-height:1.5";unli?.after(warning)}
-  warning.textContent=account&&jdrUnliFull("month",account)?"🔴 This Monthly UNLI SWAP package is FULL. Please choose another rental plan or account type.":"";
+  warning.textContent=account&&jdrUnliFull("month",account)?"🔴 This Monthly UNLI SWAP package is FULL. You can still choose 1 Month Regular (No Swap) or another plan.":"";
  }
 }
 // Capture prevents selecting a FULL plan before existing app handlers run.
@@ -6107,7 +6106,7 @@ document.addEventListener("click",event=>{
   const account=modal.querySelector(".account-option.active,.upcoming-account-option.active")?.dataset.account;
   if(!jdrUnliLoaded||!account||jdrUnliFull("month",account)){
    event.preventDefault();event.stopImmediatePropagation();
-   alert(!jdrUnliLoaded?"Checking Monthly UNLI SWAP availability. Please try again shortly.":!account?"Please select Trophy or Non-Trophy first.":"🔴 Monthly UNLI SWAP is FULL for this account type. Limited slots only. Please choose another plan.");
+   alert(!jdrUnliLoaded?"Checking Monthly UNLI SWAP availability. Please try again shortly.":!account?"Please select Trophy or Non-Trophy first.":"🔴 Monthly UNLI SWAP is FULL for this account type. Limited slots only. Please choose 1 Month Regular (No Swap) or another plan.");
    jdrUnliNotice();return;
   }
  }
@@ -6119,7 +6118,7 @@ document.addEventListener("click",event=>{
   const account=modal?.querySelector(".account-option.active,.upcoming-account-option.active")?.dataset.account;
   if(period==="month"&&(!jdrUnliLoaded||jdrUnliFull(period,account))){
    event.preventDefault();event.stopImmediatePropagation();
-   alert("🔴 This Monthly UNLI SWAP package is FULL or availability cannot be verified. Please choose another plan.");
+   alert("🔴 This Monthly UNLI SWAP package is FULL or availability cannot be verified. Please choose 1 Month Regular (No Swap) or another plan.");
   }
  }
  queueMicrotask(jdrUnliNotice);
