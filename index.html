@@ -2881,6 +2881,15 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 
     </article>
 
+
+    <article class="jdr-swap-policy-card">
+      <b>♾️</b>
+      <h3>Monthly UNLI SWAP — Slot Rules</h3>
+      <p><strong>🎮 Non-Trophy UNLI SWAP (₱700/month):</strong> Swaps are allowed only to available Non-Trophy slots. Trophy slots are not included.</p>
+      <p><strong>🏆 Trophy UNLI SWAP (₱800/month):</strong> Swaps are allowed to available Trophy OR Non-Trophy slots.</p>
+      <p>Maximum 1 swap per week, 1 game at a time. All swaps depend on slot availability. Existing FULL / limited-slot restrictions still apply to new UNLI SWAP rentals.</p>
+    </article>
+
     <article>
 
       <b>02</b>
@@ -6129,6 +6138,71 @@ jdrOnSnapshot(jdrDoc(jdrDB,"publicSettings","unliSwap"),snapshot=>{
  jdrUnliLoaded=true;jdrUnliNotice();
 },error=>{console.error("UNLI SWAP availability:",error);jdrUnliLoaded=false;jdrUnli={trophy:false,nonTrophy:false};jdrUnliNotice()});
 document.addEventListener("DOMContentLoaded",jdrUnliNotice);
+</script>
+
+<!-- JDR MONTHLY UNLI SWAP RULES + REQUIRED ACKNOWLEDGEMENT -->
+<style>
+.jdr-swap-policy-card{border:1px solid #3576b7!important;border-radius:14px;padding:18px;background:linear-gradient(145deg,#0a274a,#07172e);color:#dceeff}
+.jdr-swap-policy-card h3{color:#90d4ff}.jdr-swap-policy-card p{font-size:13px;line-height:1.7}
+.jdr-swap-rules{margin:14px 0;padding:13px;border:1px solid #3371a6;border-radius:12px;background:#081d38;color:#dceeff;font-size:12px;line-height:1.65}
+.jdr-swap-rules strong{color:#9bd7ff}.jdr-swap-rules p{margin:7px 0}
+.jdr-swap-ack{display:flex;align-items:flex-start;gap:9px;margin-top:11px;cursor:pointer;color:#f0f7ff;font-weight:700}
+.jdr-swap-ack input{width:18px;height:18px;flex-shrink:0;margin:2px 0 0;accent-color:#168cff}
+.jdr-swap-ack-error{color:#ffb4c0;font-size:12px;margin:7px 0 0}
+</style>
+<script>
+(function(){
+ const modalIds=['rentalModal','upcomingReservationModal'];
+ function update(modal){
+  if(!modal)return;
+  let panel=modal.querySelector('.jdr-swap-rules');
+  if(!panel){
+   panel=document.createElement('div');panel.className='jdr-swap-rules';
+   panel.innerHTML='<strong>♾️ Monthly UNLI SWAP — Important Slot Rules</strong>'+
+    '<p>🎮 <b>Non-Trophy UNLI (₱700):</b> Swap to Non-Trophy slots only. Trophy slots are not included.</p>'+
+    '<p>🏆 <b>Trophy UNLI (₱800):</b> Swap to either Trophy or Non-Trophy slots, subject to availability.</p>'+
+    '<p>Maximum 1 swap per week, 1 game at a time. All swaps depend on availability.</p>'+
+    '<label class="jdr-swap-ack"><input type="checkbox" class="jdr-swap-agree"> I understand and agree to the Monthly UNLI SWAP slot and swap rules.</label>'+
+    '<p class="jdr-swap-ack-error" role="alert" hidden>Please check the box to continue with Monthly UNLI SWAP.</p>';
+   const submit=modal.querySelector('#continueRental,#continueUpcomingReservation');
+   if(submit)submit.before(panel);else modal.querySelector('.rental-modal-card')?.append(panel);
+  }
+  const active=modal.querySelector('.period-option.active,.upcoming-period-option.active');
+  const monthly=active?.dataset.period==='month';
+  panel.hidden=!monthly;
+  if(!monthly){const err=panel.querySelector('.jdr-swap-ack-error');if(err)err.hidden=true}
+ }
+ function setup(){
+  for(const id of modalIds){
+   const modal=document.getElementById(id);if(!modal)continue;
+   update(modal);
+   new MutationObserver(records=>{
+    if(records.some(r=>r.target===modal&&r.attributeName==='class')&&modal.classList.contains('active')){
+     const cb=modal.querySelector('.jdr-swap-agree');if(cb)cb.checked=false;
+    }
+   }).observe(modal,{attributes:true,attributeFilter:['class']});
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+ document.addEventListener('click',event=>{
+  const button=event.target.closest?.('#continueRental,#continueUpcomingReservation');
+  if(button){
+   const modal=button.closest('#rentalModal,#upcomingReservationModal');
+   if(modal){
+    update(modal);
+    const selected=modal.querySelector('.period-option.active,.upcoming-period-option.active');
+    if(selected?.dataset.period==='month'&&!modal.querySelector('.jdr-swap-agree')?.checked){
+     event.preventDefault();event.stopImmediatePropagation();
+     const error=modal.querySelector('.jdr-swap-ack-error');if(error)error.hidden=false;
+     modal.querySelector('.jdr-swap-agree')?.focus();return;
+    }
+   }
+  }
+  if(event.target.closest?.('#rentalModal .period-option,#upcomingReservationModal .upcoming-period-option')){
+   queueMicrotask(()=>update(event.target.closest('#rentalModal,#upcomingReservationModal')));
+  }
+ },true);
+})();
 </script>
 </body>
 </html>
