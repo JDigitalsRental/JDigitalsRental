@@ -353,7 +353,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <button id="openReviewsPanel" type="button"><strong>⭐ Facebook Customer Reviews ↗</strong><small>Open, add, edit and publish customer reviews</small></button>
 <button id="openBlacklistPanel" type="button"><strong>🛡️ Customer Safety & Blacklist ↗</strong><small>Open customer records, search, warnings and blacklist</small></button>
  <button id="openPsnLibrary" type="button"><strong>📚 PSN Email & Game Library ↗</strong><small>Saved accounts and owned games • Table / Card view</small></button>
- <button id="openPsnPanel" type="button"><strong>📧 PSN Accounts & Renters ↗</strong><small>Account library, assigned renters, return dates & history</small></button>
+ <button id="openPsnPanel" type="button"><strong>📧 PSN Account Management ↗</strong><small>Add, edit and search PSN accounts by game or email</small></button>
+ <button id="openRentalPanel" type="button"><strong>👤 Rental Management ↗</strong><small>Assign renters, update dates, check status and rental history</small></button>
 </section>
 
   <section class="stats" aria-label="Rental overview">
@@ -550,11 +551,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <div id="psnLibraryList" aria-live="polite"></div>
  </div>
 </div>
-<div id="psnManagementModal" class="manage-modal" role="dialog" aria-modal="true" aria-label="Private PSN account and renter management">
+<div id="psnManagementModal" class="manage-modal" role="dialog" aria-modal="true" aria-label="Private PSN account management">
  <div class="manage-modal-card management-modal-card">
  <button class="manage-close" id="closePsnPanel" type="button" aria-label="Close PSN management">×</button>
  <section class="psn-panel">
-  <h2>📧 PSN Account & Renter Management</h2>
+  <h2>📧 PSN Account Management</h2>
   <p>🔒 Admin-only. Link one account to multiple games, and a game to multiple accounts. Never save PSN passwords or 2FA codes here.</p>
   <h3>➕ Add / Edit PSN Account</h3>
   <form id="psnAccountForm">
@@ -567,6 +568,25 @@ button:disabled{opacity:.5;cursor:not-allowed}
    <div class="psn-actions"><button type="submit" id="psnAccountSave">💾 Save Account</button><button type="button" id="psnAccountClear">Clear</button></div>
   </form>
   <p id="psnAccountMessage" role="status" class="psn-muted"></p>
+  <h3>🔎 PSN Account Lookup</h3>
+  <label for="psnSearchMode">🔎 Search Type</label>
+  <select id="psnSearchMode" aria-label="Choose PSN search type">
+   <option value="game">🎮 Search by Game</option>
+   <option value="email">📧 Search by Email</option>
+  </select>
+  <label for="psnSearch">Search</label>
+  <input id="psnSearch" type="search" placeholder="Type a game title (e.g. Phantom Blade Zero)" aria-label="Search PSN accounts">
+  <p class="psn-muted" id="psnSearchHint">Shows every PSN email that owns the matching game.</p>
+  <div class="psn-actions"><button id="psnRefresh" type="button">↻ Refresh</button></div>
+  <div id="psnAccountList" aria-live="polite"></div>
+ </section></div></div>
+
+<div id="rentalManagementModal" class="manage-modal" role="dialog" aria-modal="true" aria-label="Private Rental Management">
+ <div class="manage-modal-card management-modal-card">
+  <button class="manage-close" id="closeRentalPanel" type="button" aria-label="Close rental management">×</button>
+  <section class="psn-panel">
+   <h2>👤 Rental Management</h2>
+   <p>🔒 Admin-only renter assignments, rental dates and return history. PSN accounts are managed separately.</p>
   <h3>👤 Assign / Update Renter</h3>
   <form id="psnRentalForm">
    <input id="psnRentalEditId" type="hidden">
@@ -579,19 +599,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
    <div class="psn-actions"><button type="submit" id="psnRentalSave">💾 Save Assignment</button><button type="button" id="psnRentalClear">Clear</button></div>
   </form>
   <p id="psnRentalMessage" role="status" class="psn-muted"></p>
-  <h3>🔎 Account & Renter Lookup</h3>
-  <label for="psnSearchMode">🔎 Search Type</label>
-  <select id="psnSearchMode" aria-label="Choose PSN search type">
-   <option value="game">🎮 Search by Game</option>
-   <option value="email">📧 Search by Email</option>
-  </select>
-  <label for="psnSearch">Search</label>
-  <input id="psnSearch" type="search" placeholder="Type a game title (e.g. Phantom Blade Zero)" aria-label="Search PSN accounts">
-  <p class="psn-muted" id="psnSearchHint">Shows every PSN email that owns the matching game.</p>
-  <div class="psn-actions"><button id="psnRefresh" type="button">↻ Refresh</button></div>
-  <div id="psnAccountList" aria-live="polite"></div>
+   <h3>🔎 Find Rental / Renter</h3>
+   <input id="rentalSearch" type="search" placeholder="Search renter, game or PSN email" aria-label="Search rentals">
+   <div class="psn-actions"><button id="rentalRefresh" type="button">↻ Refresh Rentals</button></div>
+   <div id="rentalList" aria-live="polite"></div>
   <h3>📋 PSN Rental History (latest 40)</h3><div id="psnRentalHistory" class="psn-muted">Loading...</div>
- </section></div></div>
+  </section>
+ </div>
+</div>
 
 <!-- ADD GAME -->
 
@@ -3321,21 +3336,30 @@ function psnRender(){
   psnLine(card,"strong","📧 "+a.email);psnLine(card,"small","🌏 "+(a.region||"Region not set")+(a.onlineId?" • PSN ID: "+a.onlineId:""));
   psnLine(card,"small","🎮 Games: "+(a.gameIds||[]).map(psnGameTitle).join(", "));
   if(a.notes)psnLine(card,"small","📝 "+a.notes);
-  const assigned=psnRentals.filter(r=>r.accountId===a.id);
-  if(!assigned.length)psnLine(card,"small","No renters assigned yet.");
-  for(const r of assigned){
-   const state=r.status==="returned"?"🟢 Returned":r.returnDate&&r.returnDate<todayISO()?"🔴 Overdue":"🔴 Rented";
-   psnLine(card,"small",`${psnSlotLabel(r.slot)} • ${psnGameTitle(r.gameId)} • ${r.renterName} • ${state} • Return: ${r.returnDate||"Not set"}`);
-   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit Renter";
-   edit.onclick=()=>{ $("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth",block:"center"});};
-   card.append(edit);
-  }
   const actions=document.createElement("div");actions.className="psn-actions";
   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit Account";
   edit.onclick=()=>{$("psnAccountEditId").value=a.id;$("psnEmail").value=a.email;$("psnRegion").value=a.region||"";$("psnOnlineId").value=a.onlineId||"";$("psnNotes").value=a.notes||"";for(const o of $("psnGames").options)o.selected=(a.gameIds||[]).includes(o.value);$("psnAccountSave").textContent="💾 Update Account";$("psnAccountForm").scrollIntoView({behavior:"smooth",block:"center"});};
   const del=document.createElement("button");del.type="button";del.className="psn-danger";del.textContent="🗑️ Delete Account";
   del.onclick=async()=>{if(psnRentals.some(r=>r.accountId===a.id&&r.status!=="returned")){alert("Return or reassign active renters first.");return;}if(!confirm("Delete this PSN account? Rental history remains."))return;try{await deleteDoc(doc(db,"psnAccounts",a.id));await psnLoad();}catch(e){alert(e.message);}};
   actions.append(edit,del);card.append(actions);box.append(card);
+ }
+ const rentalBox=$("rentalList");rentalBox.replaceChildren();
+ const rentalQuery=$("rentalSearch").value.trim().toLowerCase();
+ const rentals=psnRentals.filter(r=>{
+  const account=psnAccounts.find(a=>a.id===r.accountId);
+  return [r.renterName,psnGameTitle(r.gameId),account?.email||"",r.slot,r.status].join(" ").toLowerCase().includes(rentalQuery);
+ }).sort((a,b)=>(a.status==="returned")-(b.status==="returned") || (a.returnDate||"").localeCompare(b.returnDate||""));
+ if(!rentals.length)psnLine(rentalBox,"p","No matching rental records.");
+ for(const r of rentals){
+  const account=psnAccounts.find(a=>a.id===r.accountId);
+  const card=document.createElement("div");card.className="psn-entry";
+  psnLine(card,"strong","👤 "+(r.renterName||"Unknown renter"));
+  psnLine(card,"small","🎮 "+psnGameTitle(r.gameId)+" • "+psnSlotLabel(r.slot));
+  psnLine(card,"small","📧 "+(account?.email||"Account unavailable"));
+  psnLine(card,"small",(r.status==="returned"?"🟢 Returned":r.returnDate&&r.returnDate<todayISO()?"🔴 Overdue":"🔴 Currently Rented")+" • Start: "+(r.startDate||"Not set")+" • Return: "+(r.returnDate||"Not set"));
+  const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit Renter";
+  edit.onclick=()=>{ $("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth",block:"center"});};
+  card.append(edit);rentalBox.append(card);
  }
  const history=$("psnRentalHistory");history.replaceChildren();
  if(!psnHistory.length)psnLine(history,"p","No PSN rental activity yet.");
@@ -3356,6 +3380,10 @@ async function psnLoad(){
  }catch(e){psnMsg("psnAccountMessage","❌ Unable to load PSN records: "+e.message);}
 }
 $("openPsnPanel").onclick=()=>{openModal("psnManagementModal");psnLoad();};
+$("openRentalPanel").onclick=()=>{openModal("rentalManagementModal");psnLoad();};
+$("closeRentalPanel").onclick=()=>closeModal("rentalManagementModal");
+$("rentalSearch").oninput=psnRender;
+$("rentalRefresh").onclick=psnLoad;
 $("closePsnPanel").onclick=()=>closeModal("psnManagementModal");
 $("psnAccountClear").onclick=psnClearAccount;
 $("psnRentalClear").onclick=psnClearRental;
@@ -3440,7 +3468,7 @@ function renderPsnExpiryAlerts(){
   const title=document.createElement("strong");title.textContent=(days<0?"🚨 OVERDUE "+Math.abs(days)+" day(s)":days===0?"🔴 RETURN TODAY":days===1?"🟠 RETURN TOMORROW":"🟡 EXPIRING IN "+days+" DAYS")+" — "+psnGameTitle(r.gameId);
   const info=document.createElement("small");info.textContent=`👤 ${r.renterName} • ${psnSlotLabel(r.slot)} • 📧 ${psnAccounts.find(a=>a.id===r.accountId)?.email||"Unknown account"} • 📅 ${r.returnDate}`;
   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit / Extend";
-  edit.onclick=()=>{openModal("psnManagementModal");$("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth"});};
+  edit.onclick=()=>{openModal("rentalManagementModal");$("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth"});};
   const returned=document.createElement("button");returned.type="button";returned.textContent="✅ Mark Returned";
   returned.onclick=async()=>{if(!confirm("Confirm that the PSN account was actually returned and disabled by "+r.renterName+"?"))return;returned.disabled=true;try{await updateDoc(doc(db,"psnRentals",r.id),{status:"returned",updatedAt:serverTimestamp()});await psnLog("Returned",r,"Confirmed by admin from PSN Rental Alert Center");await psnLoad();}catch(err){alert("Could not mark returned: "+err.message);returned.disabled=false;}};
   row.append(title,info,edit,returned);box.append(row);
