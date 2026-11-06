@@ -4199,9 +4199,9 @@ onSnapshot(
 </script>
 
 
-<!-- PHASE 4.1: Reviews carousel; Firebase review loader above remains unchanged -->
+<!-- PHASE 4.1: Customer Reviews — gentle automatic continuous slider -->
 <script>
-(function () {
+(() => {
   const track = document.getElementById('jdrReviewGrid');
   const prev = document.getElementById('jdrReviewPrev');
   const next = document.getElementById('jdrReviewNext');
@@ -4209,76 +4209,94 @@ onSnapshot(
   const section = document.getElementById('reviews');
   if (!track || !prev || !next || !dots || !section) return;
 
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let timer = null;
-  let hovering = false;
-  let inView = false;
-  let current = 0;
-  let count = 0;
-
-  const cards = () => Array.from(track.querySelectorAll(':scope > .jdr-review-card'));
-  const visibleCount = () => window.matchMedia('(max-width: 600px)').matches ? 1 :
-    window.matchMedia('(max-width: 900px)').matches ? 2 : 3;
-  const maxIndex = () => Math.max(0, count - visibleCount());
-  const getStep = () => {
-    const card = cards()[0];
-    if (!card) return 0;
-    const gap = parseFloat(getComputedStyle(track).gap) || 0;
-    return card.getBoundingClientRect().width + gap;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const originals = () => [...track.children].filter(el => el.classList.contains('jdr-review-card') && !el.dataset.jdrClone);
+  let originalWidth = 0, lastTime = 0, raf = 0, manualUntil = 0, visible = false;
+  let rebuilding = false;
+  const speed = 23; // pixels per second: lower = slower
+  const step = () => {
+    const card = originals()[0];
+    return card ? card.getBoundingClientRect().width + (parseFloat(getComputedStyle(track).gap) || 0) : 0;
   };
-  function syncPosition() {
-    const step = getStep();
-    if (!step) return;
-    current = Math.max(0, Math.min(maxIndex(), Math.round(track.scrollLeft / step)));
-    dots.querySelectorAll('button').forEach((dot, index) => {
-      dot.classList.toggle('active', index === current);
-      dot.setAttribute('aria-current', index === current ? 'true' : 'false');
+  const clearClones = () => track.querySelectorAll('[data-jdr-clone]').forEach(el => el.remove());
+  function updateDots() {
+    const n = originals().length;
+    const s = step();
+    const index = n && s ? Math.round((track.scrollLeft % Math.max(originalWidth, 1)) / s) % n : 0;
+    [...dots.children].forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+      dot.setAttribute('aria-current', String(i === index));
     });
   }
-  function goTo(index) {
-    current = index > maxIndex() ? 0 : index < 0 ? maxIndex() : index;
-    track.scrollTo({left: current * getStep(), behavior: reducedMotion.matches ? 'instant' : 'smooth'});
-    dots.querySelectorAll('button').forEach((dot, i) => dot.classList.toggle('active', i === current));
-  }
-  function stop() { if (timer !== null) clearInterval(timer); timer = null; }
-  function start() {
-    stop();
-    if (count <= visibleCount() || reducedMotion.matches || hovering || !inView || document.hidden) return;
-    timer = setInterval(() => goTo(current + 1), 4300);
-  }
   function rebuild() {
-    count = cards().length;
+    if (rebuilding) return;
+    rebuilding = true;
+    clearClones();
+    const items = originals();
+    const gap = parseFloat(getComputedStyle(track).gap) || 0;
+    const s = step();
+    originalWidth = items.length * s;
     dots.replaceChildren();
-    const pages = maxIndex() + 1;
-    prev.disabled = next.disabled = count <= visibleCount();
-    for (let i = 0; i < pages && count > visibleCount(); i++) {
+    items.forEach((_, i) => {
       const dot = document.createElement('button');
       dot.type = 'button'; dot.className = 'jdr-carousel-dot';
-      dot.setAttribute('aria-label', 'Show review position ' + (i + 1));
-      dot.addEventListener('click', () => { goTo(i); start(); });
+      dot.setAttribute('aria-label', 'Show review ' + (i + 1));
+      dot.addEventListener('click', () => {
+        manualUntil = performance.now() + 3000;
+        track.scrollTo({left: i * step(), behavior: 'smooth'});
+      });
       dots.appendChild(dot);
+    });
+    // Duplicate cards for a seamless loop, without duplicating real reviews in Firebase.
+    if (items.length > 1 && s > 0) {
+      items.forEach(item => {
+        const clone = item.cloneNode(true);
+        clone.dataset.jdrClone = 'true';
+        clone.setAttribute('aria-hidden', 'true');
+        clone.querySelectorAll('a,button,[tabindex]').forEach(el => el.setAttribute('tabindex', '-1'));
+        track.appendChild(clone);
+      });
     }
-    current = Math.min(current, maxIndex());
-    goTo(current);
-    start();
+    prev.disabled = next.disabled = items.length < 2;
+    if (originalWidth && track.scrollLeft >= originalWidth) track.scrollLeft %= originalWidth;
+    updateDots();
+    rebuilding = false;
   }
-  prev.addEventListener('click', () => { goTo(current - 1); start(); });
-  next.addEventListener('click', () => { goTo(current + 1); start(); });
-  track.addEventListener('scroll', () => { window.requestAnimationFrame(syncPosition); }, {passive:true});
-  section.addEventListener('mouseenter', () => { hovering = true; stop(); });
-  section.addEventListener('mouseleave', () => { hovering = false; start(); });
-  section.addEventListener('focusin', () => { hovering = true; stop(); });
-  section.addEventListener('focusout', event => {
-    if (!section.contains(event.relatedTarget)) { hovering = false; start(); }
-  });
-  document.addEventListener('visibilitychange', start);
+  function navigate(dir) {
+    const s = step();
+    if (!s || originals().length < 2) return;
+    manualUntil = performance.now() + 3500;
+    let target = track.scrollLeft + dir * s;
+    if (target < 0) { track.scrollLeft += originalWidth; target += originalWidth; }
+    track.scrollTo({left: target, behavior: 'smooth'});
+  }
+  prev.addEventListener('click', () => navigate(-1));
+  next.addEventListener('click', () => navigate(1));
+  track.addEventListener('scroll', updateDots, {passive: true});
+  // Pause briefly while someone touches/swipes the reviews, then resume.
+  track.addEventListener('pointerdown', () => { manualUntil = performance.now() + 5000; });
+  track.addEventListener('pointerup', () => { manualUntil = performance.now() + 3000; });
+  new IntersectionObserver(entries => { visible = entries[0].isIntersecting; }, {threshold: .05}).observe(section);
+  new MutationObserver(changes => {
+    if (rebuilding) return;
+    if (changes.some(change => [...change.addedNodes, ...change.removedNodes].some(node => node.nodeType === 1 && !node.dataset?.jdrClone))) rebuild();
+  }).observe(track, {childList: true});
   window.addEventListener('resize', rebuild);
-  reducedMotion.addEventListener('change', start);
-  new IntersectionObserver(entries => {
-    inView = entries[0].isIntersecting; start();
-  }, {threshold:.15}).observe(section);
-  new MutationObserver(rebuild).observe(track, {childList:true});
+  function tick(now) {
+    const elapsed = lastTime ? Math.min((now - lastTime) / 1000, .1) : 0;
+    lastTime = now;
+    if (visible && !document.hidden && !reduced.matches && now > manualUntil && originalWidth && originals().length > 1) {
+      // Temporarily turn off snap so pixel-by-pixel movement is smooth.
+      track.style.scrollSnapType = 'none';
+      track.style.scrollBehavior = 'auto';
+      track.scrollLeft += speed * elapsed;
+      if (track.scrollLeft >= originalWidth) track.scrollLeft -= originalWidth;
+      updateDots();
+    }
+    raf = requestAnimationFrame(tick);
+  }
   rebuild();
+  raf = requestAnimationFrame(tick);
 })();
 </script>
 
