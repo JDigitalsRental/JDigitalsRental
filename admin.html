@@ -325,6 +325,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .psn-alert-row{padding:12px;margin:9px 0;border:1px solid #345780;border-radius:10px;background:#081a34;overflow-wrap:anywhere}
 .psn-alert-row strong{display:block;margin-bottom:6px}.psn-alert-row small{display:block;color:#bbcee7;line-height:1.7}
 .psn-alert-row button{background:#124b7f;color:white;border:1px solid #398ce0;border-radius:8px;padding:9px;margin:8px 8px 0 0}
+/* Unified game + rental management */
+.jdr-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0;position:sticky;top:-24px;background:#06112b;padding:10px 0;z-index:3}
+.jdr-tabs button{padding:12px 7px;border-radius:10px;border:1px solid #31558d;background:#0b2145;color:#c3ddff;font-weight:700;font-size:13px}
+.jdr-tabs button[aria-selected="true"]{background:#168cff;border-color:#79c8ff;color:white}
+.jdr-unified-rentals{display:none}
+.jdr-unified-rentals .psn-panel{padding:0}
+.jdr-game-rental-summary{background:#091e42;border:1px solid #31558d;padding:12px;border-radius:10px;color:#bde1ff;font-size:12px;line-height:1.7;margin:10px 0}
 </style>
 </head>
 
@@ -798,6 +805,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
     <p class="eyebrow">GAME MANAGEMENT</p>
     <h2 id="manageGameName">Manage Game</h2>
+    <div class="jdr-tabs" role="tablist" aria-label="Game and rental management">
+      <button id="jdrGameTab" type="button" role="tab" aria-selected="true">🎮 Game Details</button>
+      <button id="jdrRentersTab" type="button" role="tab" aria-selected="false">👤 Renters & PSN</button>
+    </div>
+    <div id="jdrUnifiedRentals" class="jdr-unified-rentals">
+      <div id="jdrGameRentalSummary" class="jdr-game-rental-summary"></div>
+      <div id="jdrRentalMount"></div>
+    </div>
+    <div id="jdrGameDetails">
 
     <label style="display:flex;align-items:center;gap:9px;font-size:14px">
       <input id="manageStatusUpcoming" type="checkbox" style="width:auto;accent-color:#168cff">
@@ -1040,7 +1056,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <button id="deleteGame" class="delete-game">
       🗑️ Delete Game
     </button>
-
+    </div><!-- end jdrGameDetails -->
   </div>
 </div>
 
@@ -1372,6 +1388,7 @@ function openModal(id){
 }
 
 function closeModal(id){
+  if(id==="manageModal"&&jdrRentalsMounted)jdrSwitchManageTab('game');
   $(id).classList.remove("active");
 }
 
@@ -1827,10 +1844,57 @@ function updateManageSlotUI(slot){
   updateExtensionPreview(slot);
 }
 
+// Move the existing Rental Management form into the selected game's window.
+// One live form is reused: no duplicate IDs, writes, or Firebase collections.
+let jdrRentalsMounted=false;
+function jdrRestoreRentalPanel(){
+ if(!jdrRentalsMounted)return;
+ const section=$('rentalManagementModal').querySelector('.psn-panel');
+ if(section){const host=$('rentalManagementModal').querySelector('.management-modal-card')||$('rentalManagementModal').querySelector('.manage-modal-card');host.appendChild(section);}
+ jdrRentalsMounted=false;
+ $('rentalSearch').value='';
+ psnRender();
+}
+function jdrGameRentalFilter(){
+ if(!jdrRentalsMounted||!selectedGameId)return;
+ const gameId=selectedGameId;
+ const select=$('psnRentalAccount');
+ const old=select.value;
+ select.replaceChildren(psnOption('','Select PSN account for this game'));
+ const owners=psnAccounts.filter(a=>(a.gameIds||[]).includes(gameId));
+ owners.forEach(a=>select.append(psnOption(a.id,a.email+(a.region?' • '+a.region:''))));
+ if(owners.some(a=>a.id===old))select.value=old;
+ psnRentalGameChoices();
+ if(select.value && [...$('psnRentalGame').options].some(o=>o.value===gameId))$('psnRentalGame').value=gameId;
+ $('psnRentalGame').disabled=true;
+ const title=psnGameTitle(gameId);
+ $('jdrGameRentalSummary').textContent='🎮 '+title+' • '+owners.length+' PSN account(s) own this game. Choose an account to assign a renter. Only rentals for this game are shown below.';
+ $('rentalSearch').value='';
+ psnRender();
+}
+function jdrSwitchManageTab(tab){
+ const rental=tab==='renters';
+ $('jdrGameDetails').style.display=rental?'none':'';
+ $('jdrUnifiedRentals').style.display=rental?'block':'none';
+ $('jdrGameTab').setAttribute('aria-selected',String(!rental));
+ $('jdrRentersTab').setAttribute('aria-selected',String(rental));
+ if(rental){
+  const section=$('rentalManagementModal').querySelector('.psn-panel');
+  if(section){$('jdrRentalMount').appendChild(section);jdrRentalsMounted=true;}
+  psnLoad().then(jdrGameRentalFilter);
+ }else{
+  $('psnRentalGame').disabled=false;
+  jdrRestoreRentalPanel();
+ }
+ $('manageModal').querySelector('.manage-modal-card').scrollTop=0;
+}
+$('jdrGameTab').onclick=()=>jdrSwitchManageTab('game');
+$('jdrRentersTab').onclick=()=>jdrSwitchManageTab('renters');
 function openManage(id){
   const g=gameCache.get(id);
   if(!g)return;
 
+  if(jdrRentalsMounted)jdrSwitchManageTab('game');
   selectedGameId=id;
   coverData.manage=null;
   $("manageGameCover").value="";
@@ -3346,6 +3410,7 @@ function psnRender(){
  const rentalBox=$("rentalList");rentalBox.replaceChildren();
  const rentalQuery=$("rentalSearch").value.trim().toLowerCase();
  const rentals=psnRentals.filter(r=>{
+  if(jdrRentalsMounted&&selectedGameId&&r.gameId!==selectedGameId)return false;
   const account=psnAccounts.find(a=>a.id===r.accountId);
   return [r.renterName,psnGameTitle(r.gameId),account?.email||"",r.slot,r.status].join(" ").toLowerCase().includes(rentalQuery);
  }).sort((a,b)=>(a.status==="returned")-(b.status==="returned") || (a.returnDate||"").localeCompare(b.returnDate||""));
@@ -3377,10 +3442,11 @@ async function psnLoad(){
   renderPsnExpiryAlerts();
   psnHistory=h.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
   psnGameChoices();psnAccountChoices();psnRender();psnLibraryRender();
+  if(jdrRentalsMounted)jdrGameRentalFilter();
  }catch(e){psnMsg("psnAccountMessage","❌ Unable to load PSN records: "+e.message);}
 }
 $("openPsnPanel").onclick=()=>{openModal("psnManagementModal");psnLoad();};
-$("openRentalPanel").onclick=()=>{openModal("rentalManagementModal");psnLoad();};
+$("openRentalPanel").onclick=()=>{if(jdrRentalsMounted)jdrSwitchManageTab('game');openModal("rentalManagementModal");psnLoad();};
 $("closeRentalPanel").onclick=()=>closeModal("rentalManagementModal");
 $("rentalSearch").oninput=psnRender;
 $("rentalRefresh").onclick=psnLoad;
