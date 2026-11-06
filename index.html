@@ -4199,104 +4199,100 @@ onSnapshot(
 </script>
 
 
-<!-- PHASE 4.1: Customer Reviews — gentle automatic continuous slider -->
+<!-- PHASE 4.2: Customer Reviews — reliable timed auto-slide -->
 <script>
 (() => {
   const track = document.getElementById('jdrReviewGrid');
   const prev = document.getElementById('jdrReviewPrev');
   const next = document.getElementById('jdrReviewNext');
   const dots = document.getElementById('jdrReviewDots');
-  const section = document.getElementById('reviews');
-  if (!track || !prev || !next || !dots || !section) return;
+  if (!track || !prev || !next || !dots) return;
 
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const originals = () => [...track.children].filter(el => el.classList.contains('jdr-review-card') && !el.dataset.jdrClone);
-  let originalWidth = 0, lastTime = 0, raf = 0, manualUntil = 0, visible = false;
-  let rebuilding = false;
-  const speed = 23; // pixels per second: lower = slower
-  const step = () => {
-    const card = originals()[0];
-    return card ? card.getBoundingClientRect().width + (parseFloat(getComputedStyle(track).gap) || 0) : 0;
+  let cards = [];
+  let current = 0;
+  let timer = null;
+  let observer;
+  let resetting = false;
+  const INTERVAL_MS = 4000;
+
+  const getCards = () => [...track.children].filter(el =>
+    el.classList.contains('jdr-review-card') && !el.dataset.jdrClone
+  );
+  const stride = () => {
+    const first = cards[0];
+    return first ? first.getBoundingClientRect().width +
+      (parseFloat(getComputedStyle(track).gap) || 0) : 0;
   };
-  const clearClones = () => track.querySelectorAll('[data-jdr-clone]').forEach(el => el.remove());
-  function updateDots() {
-    const n = originals().length;
-    const s = step();
-    const index = n && s ? Math.round((track.scrollLeft % Math.max(originalWidth, 1)) / s) % n : 0;
+  const updateDots = () => {
     [...dots.children].forEach((dot, i) => {
-      dot.classList.toggle('active', i === index);
-      dot.setAttribute('aria-current', String(i === index));
+      dot.classList.toggle('active', i === current);
+      dot.setAttribute('aria-current', String(i === current));
     });
+  };
+  function moveTo(index, smooth = true) {
+    if (cards.length < 2) return;
+    current = ((index % cards.length) + cards.length) % cards.length;
+    track.scrollTo({left: current * stride(), behavior: smooth ? 'smooth' : 'instant'});
+    updateDots();
+  }
+  function stop() {
+    if (timer !== null) clearInterval(timer);
+    timer = null;
+  }
+  function start() {
+    stop();
+    if (cards.length > 1) timer = setInterval(() => {
+      if (!document.hidden) moveTo(current + 1);
+    }, INTERVAL_MS);
   }
   function rebuild() {
-    if (rebuilding) return;
-    rebuilding = true;
-    clearClones();
-    const items = originals();
-    const gap = parseFloat(getComputedStyle(track).gap) || 0;
-    const s = step();
-    originalWidth = items.length * s;
+    if (resetting) return;
+    resetting = true;
+    if (observer) observer.disconnect();
+    track.querySelectorAll('[data-jdr-clone]').forEach(el => el.remove());
+    cards = getCards();
+    current = 0;
     dots.replaceChildren();
-    items.forEach((_, i) => {
+    cards.forEach((_, i) => {
       const dot = document.createElement('button');
-      dot.type = 'button'; dot.className = 'jdr-carousel-dot';
+      dot.type = 'button';
+      dot.className = 'jdr-carousel-dot';
       dot.setAttribute('aria-label', 'Show review ' + (i + 1));
-      dot.addEventListener('click', () => {
-        manualUntil = performance.now() + 3000;
-        track.scrollTo({left: i * step(), behavior: 'smooth'});
-      });
+      dot.addEventListener('click', () => { moveTo(i); start(); });
       dots.appendChild(dot);
     });
-    // Duplicate cards for a seamless loop, without duplicating real reviews in Firebase.
-    if (items.length > 1 && s > 0) {
-      items.forEach(item => {
-        const clone = item.cloneNode(true);
+    // Clone cards only in the browser for enough scrolling space.
+    if (cards.length > 1) {
+      cards.forEach(card => {
+        const clone = card.cloneNode(true);
         clone.dataset.jdrClone = 'true';
         clone.setAttribute('aria-hidden', 'true');
-        clone.querySelectorAll('a,button,[tabindex]').forEach(el => el.setAttribute('tabindex', '-1'));
+        clone.querySelectorAll('a,button,[tabindex]').forEach(el => el.tabIndex = -1);
         track.appendChild(clone);
       });
     }
-    prev.disabled = next.disabled = items.length < 2;
-    if (originalWidth && track.scrollLeft >= originalWidth) track.scrollLeft %= originalWidth;
+    track.style.scrollSnapType = 'none';
+    track.style.scrollBehavior = 'auto';
+    track.scrollLeft = 0;
+    prev.disabled = next.disabled = cards.length < 2;
     updateDots();
-    rebuilding = false;
+    if (observer) observer.observe(track, {childList:true});
+    resetting = false;
+    start();
   }
-  function navigate(dir) {
-    const s = step();
-    if (!s || originals().length < 2) return;
-    manualUntil = performance.now() + 3500;
-    let target = track.scrollLeft + dir * s;
-    if (target < 0) { track.scrollLeft += originalWidth; target += originalWidth; }
-    track.scrollTo({left: target, behavior: 'smooth'});
-  }
-  prev.addEventListener('click', () => navigate(-1));
-  next.addEventListener('click', () => navigate(1));
-  track.addEventListener('scroll', updateDots, {passive: true});
-  // Pause briefly while someone touches/swipes the reviews, then resume.
-  track.addEventListener('pointerdown', () => { manualUntil = performance.now() + 5000; });
-  track.addEventListener('pointerup', () => { manualUntil = performance.now() + 3000; });
-  new IntersectionObserver(entries => { visible = entries[0].isIntersecting; }, {threshold: .05}).observe(section);
-  new MutationObserver(changes => {
-    if (rebuilding) return;
-    if (changes.some(change => [...change.addedNodes, ...change.removedNodes].some(node => node.nodeType === 1 && !node.dataset?.jdrClone))) rebuild();
-  }).observe(track, {childList: true});
-  window.addEventListener('resize', rebuild);
-  function tick(now) {
-    const elapsed = lastTime ? Math.min((now - lastTime) / 1000, .1) : 0;
-    lastTime = now;
-    if (visible && !document.hidden && !reduced.matches && now > manualUntil && originalWidth && originals().length > 1) {
-      // Temporarily turn off snap so pixel-by-pixel movement is smooth.
-      track.style.scrollSnapType = 'none';
-      track.style.scrollBehavior = 'auto';
-      track.scrollLeft += speed * elapsed;
-      if (track.scrollLeft >= originalWidth) track.scrollLeft -= originalWidth;
-      updateDots();
-    }
-    raf = requestAnimationFrame(tick);
-  }
+  prev.addEventListener('click', () => { moveTo(current - 1); start(); });
+  next.addEventListener('click', () => { moveTo(current + 1); start(); });
+  // Firebase replaces the cards asynchronously; rebuild after new reviews arrive.
+  let pending = false;
+  observer = new MutationObserver(() => {
+    if (pending || resetting) return;
+    pending = true;
+    queueMicrotask(() => { pending = false; rebuild(); });
+  });
+  window.addEventListener('resize', () => {
+    if (cards.length) moveTo(current, false);
+  });
   rebuild();
-  raf = requestAnimationFrame(tick);
 })();
 </script>
 
