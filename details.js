@@ -53,7 +53,14 @@
   stopButton.type = 'button';
   stopButton.textContent = '✕ Close Video';
   stopButton.style.cssText = 'border:1px solid #467cb9;border-radius:8px;background:#122c4f;color:white;padding:8px;cursor:pointer';
-  trailerHead.append(trailerTitle,stopButton);
+  const soundButton = document.createElement('button');
+  soundButton.type = 'button';
+  soundButton.textContent = '🔊 Unmute';
+  soundButton.style.cssText = 'border:1px solid #467cb9;border-radius:8px;background:#155a9c;color:white;padding:8px;cursor:pointer';
+  const trailerControls = document.createElement('div');
+  trailerControls.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end';
+  trailerControls.append(soundButton,stopButton);
+  trailerHead.append(trailerTitle,trailerControls);
   const trailerFrameWrap = document.createElement('div');
   trailerFrameWrap.style.cssText = 'width:100%;aspect-ratio:16/9;background:#000;border-radius:9px;overflow:hidden';
   const fallback = document.createElement('a');
@@ -64,7 +71,7 @@
   trailerBox.append(trailerHead,trailerFrameWrap,fallback);
   trailerLink.closest('.jdr-details-actions').insertAdjacentElement('afterend',trailerBox);
   const note = overlay.querySelector('.jdr-details-note');
-  if(note) note.textContent = 'Official trailers play here when a YouTube link is added in Admin Dashboard. Some videos do not permit embedding.';
+  if(note) note.textContent = 'Trailers with a YouTube link start automatically on mute. Tap Unmute for sound. Some videos or browsers may block embedded autoplay.';
   function trailerVideoId(urlText) {
     try {
       const url = new URL(urlText);
@@ -78,27 +85,51 @@
       return /^[A-Za-z0-9_-]{11}$/.test(id || '') ? id : '';
     } catch { return ''; }
   }
-  function stopTrailer() {
-    trailerFrameWrap.replaceChildren(); // Removes iframe and stops playback.
-    trailerBox.hidden = true;
+  let trailerMuted = true;
+  function sendTrailerCommand(func) {
+    const frame = trailerFrameWrap.querySelector('iframe');
+    if (!frame?.contentWindow) return;
+    frame.contentWindow.postMessage(JSON.stringify({event:'command',func,args:[]}),
+      'https://www.youtube-nocookie.com');
   }
-  stopButton.addEventListener('click', stopTrailer);
-  trailerLink.addEventListener('click', event => {
-    if(!currentGame) return;
-    const videoId = trailerVideoId(currentGame.trailerUrl);
-    if(!videoId) return; // No configured trailer: retain YouTube search link.
-    event.preventDefault();
-    if(!trailerBox.hidden) { stopTrailer(); return; }
+  function stopTrailer() {
+    trailerFrameWrap.replaceChildren(); // Removing iframe stops the trailer.
+    trailerBox.hidden = true;
+    trailerMuted = true;
+    soundButton.textContent = '🔊 Unmute';
+  }
+  function playTrailer(game, muted = true) {
+    const videoId = trailerVideoId(game?.trailerUrl);
+    if (!videoId) return false;
+    stopTrailer();
+    trailerMuted = muted;
     const frame = document.createElement('iframe');
-    frame.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0';
-    frame.title = currentGame.name + ' Official Trailer';
+    frame.src = 'https://www.youtube-nocookie.com/embed/' + videoId +
+      '?autoplay=1&mute=' + (muted ? '1' : '0') + '&playsinline=1&rel=0&enablejsapi=1';
+    frame.title = game.name + ' Official Trailer';
     frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
     frame.allowFullscreen = true;
     frame.referrerPolicy = 'strict-origin-when-cross-origin';
     frame.style.cssText = 'width:100%;height:100%;border:0;display:block';
     trailerFrameWrap.replaceChildren(frame);
     fallback.href = 'https://www.youtube.com/watch?v=' + videoId;
+    soundButton.textContent = muted ? '🔊 Unmute' : '🔇 Mute';
     trailerBox.hidden = false;
+    return true;
+  }
+  soundButton.addEventListener('click', () => {
+    trailerMuted = !trailerMuted;
+    sendTrailerCommand(trailerMuted ? 'mute' : 'unMute');
+    if (!trailerMuted) sendTrailerCommand('playVideo');
+    soundButton.textContent = trailerMuted ? '🔊 Unmute' : '🔇 Mute';
+  });
+  stopButton.addEventListener('click', stopTrailer);
+  trailerLink.addEventListener('click', event => {
+    if (!currentGame) return;
+    if (!trailerVideoId(currentGame.trailerUrl)) return; // Search link fallback.
+    event.preventDefault();
+    if (!trailerBox.hidden) { stopTrailer(); return; }
+    playTrailer(currentGame, true);
     trailerBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   });
   function open(game) {
@@ -128,11 +159,12 @@
     const trailer = $('jdrDetailsTrailer');
     const validTrailer = !!trailerVideoId(game.trailerUrl);
     trailer.href = validTrailer ? game.trailerUrl : 'https://www.youtube.com/results?search_query=' + encodeURIComponent(game.name + ' official game trailer');
-    trailer.textContent = validTrailer ? '▶ Watch Official Trailer' : '▶ Find Game Trailer ↗';
+    trailer.textContent = validTrailer ? '▶ Replay / Close Trailer' : '▶ Find Game Trailer ↗';
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     $('jdrDetailsClose').focus();
+    if (validTrailer) playTrailer(game, true); // Muted autoplay when details open.
   }
   function close() {
     stopTrailer();
