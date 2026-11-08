@@ -375,6 +375,11 @@ html{scroll-behavior:smooth}
 .v4-note{color:#9fb4d3;font-size:11px}
 @media(min-width:700px){.v4-finance-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:550px){.v4-form{grid-template-columns:1fr}.v4-calendar{gap:2px}.v4-day{min-height:60px;padding:4px 2px;font-size:10px}}
+.v41-return{display:grid;gap:3px;padding:6px;margin:5px 0;border-radius:7px;background:#0b2851;border:1px solid #2c6095;font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.v41-return strong{color:#ffd48d;font-size:10px}
+.v41-return span{display:block;color:#d5e9ff}
+.v4-day{min-height:105px}
+@media(max-width:650px){.v41-return{font-size:9px;padding:4px}.v4-day{min-height:95px}}
 </style>
 </head>
 
@@ -3775,18 +3780,31 @@ function v4RenderCalendar(){
  const first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
  for(let i=0;i<first;i++){const blank=document.createElement("div");blank.className="v4-day empty";grid.append(blank);}
  const today=todayISO();
+ let total=0,unmatched=0;
  for(let d=1;d<=last;d++){
   const iso=y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
   const tile=document.createElement("div");tile.className="v4-day"+(iso===today?" today":"");
   psnLine(tile,"b",String(d));
   const returns=psnRentals.filter(r=>r.status==="rented"&&r.returnDate===iso);
   for(const r of returns){
-   const small=psnLine(tile,"small","🔔 "+psnGameTitle(r.gameId)+" • "+(r.renterName||"Renter"));
-   small.title=(psnAccounts.find(a=>a.id===r.accountId)?.email||"")+" • "+psnSlotLabel(r.slot);
+   total++;
+   const g=gameCache.get(r.gameId);
+   const name=g?gameName(g):(r.gameName||"Game not linked");
+   if(!g)unmatched++;
+   const a=psnAccounts.find(a=>a.id===r.accountId);
+   const status=iso<today?"🚨 OVERDUE":iso===today?"🔴 DUE TODAY":"🟡 UPCOMING";
+   const item=document.createElement("div");item.className="v41-return";
+   psnLine(item,"strong",status);
+   psnLine(item,"span","🎮 "+name);
+   psnLine(item,"span","👤 "+(r.renterName||"Renter not recorded"));
+   psnLine(item,"span",psnSlotLabel(r.slot));
+   psnLine(item,"span","📧 "+(a?.email||"PSN account not linked"));
+   item.title="Expected return: "+iso;
+   tile.append(item);
   }
   grid.append(tile);
  }
- $("v4CalendarNote").textContent="Shows "+psnRentals.filter(r=>r.status==="rented"&&(r.returnDate||"").startsWith(v4MonthISO(v4CalendarMonth))).length+" active rental return(s) this month. Data refreshes when PSN records reload.";
+ $("v4CalendarNote").textContent="Shows "+total+" active PSN rental return(s) this month."+(unmatched?" "+unmatched+" record(s) reference a game not found in Game Management; check the linked game IDs.":"")+" Calendar is an admin reminder; a slot stays rented until return is confirmed.";
 }
 $("v4PrevMonth").onclick=()=>{v4CalendarMonth=new Date(v4CalendarMonth.getFullYear(),v4CalendarMonth.getMonth()-1,1);v4RenderCalendar();};
 $("v4NextMonth").onclick=()=>{v4CalendarMonth=new Date(v4CalendarMonth.getFullYear(),v4CalendarMonth.getMonth()+1,1);v4RenderCalendar();};
@@ -3831,7 +3849,7 @@ onAuthStateChanged(auth,user=>{
 
   jdrStartUnliAdmin();
   loadAdminReviews();
-  psnLoad().then(()=>loadAdminGames().then(psnSyncFromGames)).catch(console.error);
+  psnLoad().then(()=>loadAdminGames().then(()=>{v4RenderCalendar();return psnSyncFromGames();})).catch(console.error);
   loadBlacklist();
   refreshCustomerSafetyAlerts();
   v4LoadFinance().catch(console.error);
@@ -3841,7 +3859,7 @@ onAuthStateChanged(auth,user=>{
   // Sync existing reservations once when admin opens dashboard.
   loadWaitingList().catch(error=>console.error("Counter sync:",error));
 
-  loadAdminGames().catch(error=>{
+  loadAdminGames().then(()=>v4RenderCalendar()).catch(error=>{
     console.error(error);
     alert(
       "Unable to load admin games. Check Firebase access."
@@ -3853,7 +3871,7 @@ onAuthStateChanged(auth,user=>{
 
 setInterval(()=>{
   if(auth.currentUser?.uid===ADMIN_UID){
-    loadAdminGames().then(psnSyncFromGames).catch(console.error);
+    loadAdminGames().then(()=>{v4RenderCalendar();return psnSyncFromGames();}).catch(console.error);
     loadBusinessOverview().catch(console.error);
     refreshCustomerSafetyAlerts().catch(console.error);
     renderPsnExpiryAlerts();
