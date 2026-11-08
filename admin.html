@@ -702,8 +702,9 @@ html{scroll-behavior:smooth}
    <div class="psn-two"><div><label for="psnRentalSlot">Slot *</label><select id="psnRentalSlot"><option value="trophy">🏆 Trophy</option><option value="nonTrophy">🎮 Non-Trophy</option></select></div>
    <div><label for="psnRenterName">Renter name *</label><input id="psnRenterName" required maxlength="100"></div></div>
    <div class="psn-two"><div><label for="psnStartDate">Rental start</label><input id="psnStartDate" type="date"></div><div><label for="psnReturnDate">Expected return *</label><input id="psnReturnDate" type="date" required></div></div>
-   <div class="psn-two"><div><label for="psnExtendPeriod">Quick extension</label><select id="psnExtendPeriod"><option value="7">➕ 1 Week</option><option value="month">➕ 1 Month</option></select></div><div><label for="psnExtendApply">Automatic return date</label><button type="button" id="psnExtendApply" style="width:100%;margin-top:3px">📅 Apply Extension</button></div></div>
-   <p class="psn-muted" id="psnExtendMessage" role="status">Extension starts from the current expected return date, or today if already overdue. Click Update Assignment to save.</p>
+   <div class="psn-two"><div><label for="psnExtendPeriod">Paid extension period</label><select id="psnExtendPeriod"><option value="7">➕ 1 Week</option><option value="month">➕ 1 Month</option></select></div><div><label for="psnExtendAmount">Actual payment received (₱) *</label><input id="psnExtendAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="e.g. 250" autocomplete="off"></div></div>
+   <button type="button" id="psnExtendApply" style="width:100%;margin-top:8px">💳 Confirm Payment &amp; Extend</button>
+   <p class="psn-muted" id="psnExtendMessage" role="status">Select a saved, currently rented assignment. Confirm actual payment to update PSN return date, public game slot, calendar and finances together.</p>
    <label for="psnRentalStatus">Status</label><select id="psnRentalStatus"><option value="rented">🔴 Currently Rented</option><option value="returned">🟢 Returned</option></select>
    <div class="psn-actions"><button type="submit" id="psnRentalSave">💾 Save Assignment</button><button type="button" id="psnRentalClear">Clear</button></div>
   </form>
@@ -3502,7 +3503,7 @@ function psnClearAccount(){
  [...$("psnGames").options].forEach(o=>o.selected=false);$("psnAccountSave").textContent="💾 Save Account";
 }
 function psnClearRental(){
- $("psnRentalForm").reset();$("psnRentalEditId").value="";
+ $("psnRentalForm").reset();$("psnRentalEditId").value="";$("psnExtendAmount").value="";
  $("psnRentalSave").textContent="💾 Save Assignment";
  if(jdrRentalsMounted)jdrGameRentalFilter();
  else psnRentalGameChoices();
@@ -3661,30 +3662,75 @@ $("psnAccountForm").onsubmit=async e=>{
   psnClearAccount();await psnLoad();psnMsg("psnAccountMessage","✅ PSN account saved privately.");
  }catch(err){psnMsg("psnAccountMessage","❌ "+err.message);}finally{btn.disabled=false;}
 };
-// Quick rental extension: calculate date locally, then use the existing Save/Update flow.
-$("psnExtendApply").onclick=()=>{
- const id=$("psnRentalEditId").value;
- const status=$("psnRentalStatus").value;
- const dateValue=$("psnReturnDate").value;
- const message=$("psnExtendMessage");
- if(!id){message.textContent="⚠️ Select an existing rental first. Extensions are for saved assignments.";return;}
- if(status!=="rented"){message.textContent="⚠️ Only currently rented assignments can be extended.";return;}
- if(!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)){message.textContent="⚠️ Set a valid expected return date first.";return;}
- const [y,m,d]=dateValue.split("-").map(Number);
+// Paid extension: one Firestore atomic batch for PSN rental, public slot and finance.
+// Does not change other games or other slot types; financial entries are confirmed only.
+let jdrPaidExtensionBusy=false;
+function jdrAddPaidExtensionDate(iso,period){
+ const [y,m,d]=iso.split("-").map(Number);
  const base=new Date(y,m-1,d,12);
  const today=new Date();today.setHours(12,0,0,0);
  if(base<today)base.setTime(today.getTime());
- const period=$("psnExtendPeriod").value;
  if(period==="month"){
-  const day=base.getDate();
-  base.setDate(1);
-  base.setMonth(base.getMonth()+1);
-  const lastDay=new Date(base.getFullYear(),base.getMonth()+1,0).getDate();
-  base.setDate(Math.min(day,lastDay));
+  const day=base.getDate();base.setDate(1);base.setMonth(base.getMonth()+1);
+  const last=new Date(base.getFullYear(),base.getMonth()+1,0).getDate();
+  base.setDate(Math.min(day,last));
  }else base.setDate(base.getDate()+7);
- const result=[base.getFullYear(),String(base.getMonth()+1).padStart(2,"0"),String(base.getDate()).padStart(2,"0")].join("-");
- $("psnReturnDate").value=result;
- message.textContent="✅ New expected return: "+result+" ("+(period==="month"?"1 Month":"1 Week")+"). Click 💾 Update Assignment to save to Firebase.";
+ return [base.getFullYear(),String(base.getMonth()+1).padStart(2,"0"),String(base.getDate()).padStart(2,"0")].join("-");
+}
+$("psnExtendApply").onclick=async()=>{
+ if(jdrPaidExtensionBusy)return;
+ const btn=$("psnExtendApply"),message=$("psnExtendMessage");
+ const rentalId=$("psnRentalEditId").value;
+ const amount=Number($("psnExtendAmount").value);
+ const period=$("psnExtendPeriod").value;
+ try{
+  if(auth.currentUser?.uid!==ADMIN_UID)throw Error("Admin sign-in required.");
+  if(!rentalId)throw Error("Select a saved renter assignment first.");
+  if(!Number.isFinite(amount)||amount<=0||amount>100000000)throw Error("Enter the actual payment received (greater than ₱0).");
+  const rental=psnRentals.find(r=>r.id===rentalId);
+  if(!rental||rental.status!=="rented")throw Error("Only active saved rentals can be extended.");
+  const currentReturn=rental.returnDate;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(currentReturn||""))throw Error("Saved return date is invalid. Fix and save the assignment first.");
+  if($("psnRentalAccount").value!==rental.accountId||$("psnRentalGame").value!==rental.gameId||$("psnRentalSlot").value!==rental.slot)throw Error("Save any changes to PSN account, game or slot before extending.");
+  const game=gameCache.get(rental.gameId);
+  if(!game)throw Error("Game no longer exists. No payment recorded.");
+  if(getSlotStatus(game,rental.slot)!=="currently-rented")throw Error("The public game slot is not marked Currently Rented. Correct it before extending.");
+  const conflicts=psnRentals.filter(r=>r.id!==rental.id&&r.gameId===rental.gameId&&r.slot===rental.slot&&r.status==="rented");
+  if(conflicts.length)throw Error("Multiple active renters share this public game slot. Resolve them first to avoid changing another renter's return date.");
+  const newReturn=jdrAddPaidExtensionDate(currentReturn,period);
+  const label=period==="month"?"1 Month":"1 Week";
+  if(!confirm(`Confirm payment received?\n\nRenter: ${rental.renterName}\nGame: ${psnGameTitle(rental.gameId)}\nSlot: ${psnSlotLabel(rental.slot)}\nExtension: ${label}\nReturn: ${currentReturn} → ${newReturn}\nPaid: ₱${amount.toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2})}\n\nThis will update the customer game date and record the income.`))return;
+  jdrPaidExtensionBusy=true;btn.disabled=true;message.textContent="⏳ Verifying latest records and saving confirmed payment…";
+  // Re-read authoritative records before the atomic write; never trust unsaved form dates.
+  const [rentalSnap,gameSnap]=await Promise.all([getDoc(doc(db,"psnRentals",rentalId)),getDoc(doc(db,"games",rental.gameId))]);
+  if(!rentalSnap.exists()||!gameSnap.exists())throw Error("Rental or game was deleted. Nothing saved.");
+  const fresh=rentalSnap.data(),freshGame=gameSnap.data();
+  if(fresh.status!=="rented"||fresh.returnDate!==currentReturn||fresh.gameId!==rental.gameId||fresh.slot!==rental.slot)throw Error("Rental changed in another tab. Refresh rentals before retrying.");
+  if(getSlotStatus(freshGame,rental.slot)!=="currently-rented")throw Error("Public slot changed. Refresh before retrying.");
+  const fields=slotFields(rental.slot);
+  const transactionId=`extension_${rentalId}_${currentReturn.replace(/-/g,"")}_${newReturn.replace(/-/g,"")}`;
+  const batch=writeBatch(db);
+  batch.update(doc(db,"psnRentals",rentalId),{returnDate:newReturn,updatedAt:serverTimestamp(),lastPaidExtensionId:transactionId});
+  batch.update(doc(db,"games",rental.gameId),{[fields.status]:"currently-rented",[fields.date]:dateToText(newReturn),updatedAt:serverTimestamp()});
+  batch.set(doc(db,"adminFinanceTransactions",transactionId),{
+   type:"income",date:todayISO(),amount,category:"Rental extension",
+   description:`${rental.renterName} — ${psnGameTitle(rental.gameId)} — ${psnSlotLabel(rental.slot)} — ${label} paid extension`,
+   reference:transactionId,rentalId,gameId:rental.gameId,slot:rental.slot,
+   previousReturnDate:currentReturn,newReturnDate:newReturn,createdAt:serverTimestamp(),createdBy:auth.currentUser.uid
+  });
+  batch.set(doc(collection(db,"psnRentalHistory")),{
+   action:"Paid Extension",accountId:rental.accountId,gameId:rental.gameId,
+   gameName:psnGameTitle(rental.gameId),slot:rental.slot,renterName:rental.renterName,
+   email:psnAccounts.find(a=>a.id===rental.accountId)?.email||"",
+   details:`${label}: ${currentReturn} → ${newReturn}; confirmed paid ₱${amount.toFixed(2)}; finance ref ${transactionId}`,
+   createdAt:serverTimestamp()
+  });
+  await batch.commit();
+  $("psnReturnDate").value=newReturn;$("psnExtendAmount").value="";
+  await Promise.allSettled([psnLoad(),loadAdminGames(),v4LoadFinance()]);
+  message.textContent=`✅ Confirmed ₱${amount.toFixed(2)}. New return: ${newReturn}. Public slot, calendar and finances updated. Do not click Update Assignment again unless making another change.`;
+ }catch(err){message.textContent="❌ "+err.message;}
+ finally{jdrPaidExtensionBusy=false;btn.disabled=false;}
 };
 $("psnRentalForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("psnRentalSave");btn.disabled=true;
