@@ -1847,17 +1847,20 @@ function updateManageSlotUI(slot){
 // Move the existing Rental Management form into the selected game's window.
 // One live form is reused: no duplicate IDs, writes, or Firebase collections.
 let jdrRentalsMounted=false;
+let jdrRentalScopeGameId=null;
 function jdrRestoreRentalPanel(){
  if(!jdrRentalsMounted)return;
  const section=$('rentalManagementModal').querySelector('.psn-panel');
  if(section){const host=$('rentalManagementModal').querySelector('.management-modal-card')||$('rentalManagementModal').querySelector('.manage-modal-card');host.appendChild(section);}
  jdrRentalsMounted=false;
+ jdrRentalScopeGameId=null;
  $('rentalSearch').value='';
  psnRender();
 }
 function jdrGameRentalFilter(){
  if(!jdrRentalsMounted||!selectedGameId)return;
  const gameId=selectedGameId;
+ jdrRentalScopeGameId=gameId;
  const select=$('psnRentalAccount');
  const old=select.value;
  select.replaceChildren(psnOption('','Select PSN account for this game'));
@@ -1885,6 +1888,8 @@ function jdrSwitchManageTab(tab){
  if(rental){
   const section=$('rentalManagementModal').querySelector('.psn-panel');
   if(section){$('jdrRentalMount').appendChild(section);jdrRentalsMounted=true;}
+  jdrRentalScopeGameId=selectedGameId;
+  psnRender();
   psnLoad().then(jdrGameRentalFilter);
  }else{
   $('psnRentalGame').disabled=false;
@@ -3416,11 +3421,11 @@ function psnRender(){
  const rentalBox=$("rentalList");rentalBox.replaceChildren();
  const rentalQuery=$("rentalSearch").value.trim().toLowerCase();
  const rentals=psnRentals.filter(r=>{
-  if(jdrRentalsMounted&&selectedGameId&&r.gameId!==selectedGameId)return false;
+  if(jdrRentalsMounted && (!jdrRentalScopeGameId || r.gameId!==jdrRentalScopeGameId))return false;
   const account=psnAccounts.find(a=>a.id===r.accountId);
   return [r.renterName,psnGameTitle(r.gameId),account?.email||"",r.slot,r.status].join(" ").toLowerCase().includes(rentalQuery);
  }).sort((a,b)=>(a.status==="returned")-(b.status==="returned") || (a.returnDate||"").localeCompare(b.returnDate||""));
- if(!rentals.length)psnLine(rentalBox,"p","No matching rental records.");
+ if(!rentals.length)psnLine(rentalBox,"p",jdrRentalsMounted?"No renters found for this game.":"No matching rental records.");
  for(const r of rentals){
   const account=psnAccounts.find(a=>a.id===r.accountId);
   const card=document.createElement("div");card.className="psn-entry";
@@ -3433,8 +3438,8 @@ function psnRender(){
   card.append(edit);rentalBox.append(card);
  }
  const history=$("psnRentalHistory");history.replaceChildren();
- if(!psnHistory.length)psnLine(history,"p","No PSN rental activity yet.");
- for(const h of psnHistory.slice(0,40)){const row=document.createElement("div");row.className="psn-entry";psnLine(row,"small",`${h.action||"Update"} • ${h.renterName||""} • ${h.gameName||""} • ${psnSlotLabel(h.slot)} • ${h.email||""}`);psnLine(row,"small",(h.createdAt?.toDate?.()?.toLocaleString("en-PH")||"Time pending")+(h.details?" • "+h.details:""));history.append(row);}
+ if(!psnHistory.some(h=>!jdrRentalsMounted || (jdrRentalScopeGameId && h.gameId===jdrRentalScopeGameId)))psnLine(history,"p","No rental history for this game yet.");
+ for(const h of psnHistory.filter(h=>!jdrRentalsMounted || (jdrRentalScopeGameId && h.gameId===jdrRentalScopeGameId)).slice(0,40)){const row=document.createElement("div");row.className="psn-entry";psnLine(row,"small",`${h.action||"Update"} • ${h.renterName||""} • ${h.gameName||""} • ${psnSlotLabel(h.slot)} • ${h.email||""}`);psnLine(row,"small",(h.createdAt?.toDate?.()?.toLocaleString("en-PH")||"Time pending")+(h.details?" • "+h.details:""));history.append(row);}
 }
 async function psnLog(action,r,details=""){
  await setDoc(doc(collection(db,"psnRentalHistory")),{action,accountId:r.accountId,gameId:r.gameId,gameName:psnGameTitle(r.gameId),slot:r.slot,renterName:r.renterName,email:psnAccounts.find(a=>a.id===r.accountId)?.email||"",details,createdAt:serverTimestamp()});
