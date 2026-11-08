@@ -325,6 +325,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .psn-alert-row{padding:12px;margin:9px 0;border:1px solid #345780;border-radius:10px;background:#081a34;overflow-wrap:anywhere}
 .psn-alert-row strong{display:block;margin-bottom:6px}.psn-alert-row small{display:block;color:#bbcee7;line-height:1.7}
 .psn-alert-row button{background:#124b7f;color:white;border:1px solid #398ce0;border-radius:8px;padding:9px;margin:8px 8px 0 0}
+/* Account-level rental slots in selected game's Renters & PSN tab */
+.jdr-account-grid{display:grid;gap:12px;margin:14px 0}
+.jdr-account-card{padding:14px;border:1px solid #31558d;border-radius:12px;background:#071832;overflow-wrap:anywhere}
+.jdr-account-card h4{margin:0 0 10px;color:#c4e5ff;font-size:14px}
+.jdr-account-slot{padding:11px;margin-top:9px;border:1px solid #254b83;border-radius:9px;background:#041027}
+.jdr-account-slot strong{font-size:13px}
+.jdr-account-slot small{display:block;color:#b1c2de;margin:6px 0;line-height:1.6}
+.jdr-account-slot button{border:1px solid #3a72b8;border-radius:8px;background:#11417b;color:#fff;padding:9px 12px;margin-top:5px}
 /* Unified game + rental management */
 .jdr-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0;position:sticky;top:-24px;background:#06112b;padding:10px 0;z-index:3}
 .jdr-tabs button{padding:12px 7px;border-radius:10px;border:1px solid #31558d;background:#0b2145;color:#c3ddff;font-weight:700;font-size:13px}
@@ -810,7 +818,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <button id="jdrRentersTab" type="button" role="tab" aria-selected="false">👤 Renters & PSN</button>
     </div>
     <div id="jdrUnifiedRentals" class="jdr-unified-rentals">
-      <div id="jdrGameRentalSummary" class="jdr-game-rental-summary"></div>
+      <div id="jdrGameRentalSummary" class="jdr-game-rental-summary"></div>\n       <div id="jdrAccountSlots" class="jdr-account-grid" aria-live="polite"></div>
       <div id="jdrRentalMount"></div>
     </div>
     <div id="jdrGameDetails">
@@ -1857,6 +1865,56 @@ function jdrRestoreRentalPanel(){
  $('rentalSearch').value='';
  psnRender();
 }
+function jdrRenderAccountSlots(){
+ const host=$('jdrAccountSlots');if(!host)return;
+ host.replaceChildren();
+ if(!jdrRentalsMounted||!jdrRentalScopeGameId)return;
+ const gameId=jdrRentalScopeGameId;
+ const owners=psnAccounts.filter(a=>(a.gameIds||[]).includes(gameId))
+  .sort((a,b)=>(a.email||'').localeCompare(b.email||''));
+ if(!owners.length){psnLine(host,'p','No PSN accounts own this game yet. Add the game to a PSN account first.');return;}
+ for(const [index,account] of owners.entries()){
+  const card=document.createElement('section');card.className='jdr-account-card';
+  psnLine(card,'h4',`📧 Account ${index+1}: ${account.email||'No email'}`);
+  if(account.region)psnLine(card,'small','🌎 '+account.region);
+  for(const slot of ['trophy','nonTrophy']){
+   const panel=document.createElement('div');panel.className='jdr-account-slot';
+   psnLine(panel,'strong',psnSlotLabel(slot));
+   const active=psnRentals.filter(r=>r.accountId===account.id&&r.gameId===gameId&&r.slot===slot&&r.status==='rented')
+     .sort((a,b)=>(b.updatedAt?.seconds||0)-(a.updatedAt?.seconds||0));
+   if(active.length){
+    const r=active[0];
+    psnLine(panel,'small','🔴 CURRENTLY RENTED • '+(r.renterName||'Unnamed renter'));
+    psnLine(panel,'small','Start: '+(r.startDate||'Not set')+' • Expected return: '+(r.returnDate||'Not set'));
+    if(active.length>1)psnLine(panel,'small','⚠️ Multiple active records: '+active.length+'. Review duplicate assignments.');
+    const btn=document.createElement('button');btn.type='button';btn.textContent='✏️ Edit Renter';
+    btn.onclick=()=>{jdrPrefillAccountSlot(account.id,slot,r);};
+    panel.append(btn);
+   }else{
+    psnLine(panel,'small','🟢 No active renter for this game/slot');
+    const btn=document.createElement('button');btn.type='button';btn.textContent='➕ Assign Renter';
+    btn.onclick=()=>jdrPrefillAccountSlot(account.id,slot,null);
+    panel.append(btn);
+   }
+   card.append(panel);
+  }
+  host.append(card);
+ }
+}
+function jdrPrefillAccountSlot(accountId,slot,rental){
+ const form=$('psnRentalForm');if(!form)return;
+ $('psnRentalEditId').value=rental?.id||'';
+ $('psnRentalAccount').value=accountId;
+ psnRentalGameChoices();
+ $('psnRentalGame').value=jdrRentalScopeGameId||'';
+ $('psnRentalSlot').value=slot;
+ $('psnRenterName').value=rental?.renterName||'';
+ $('psnStartDate').value=rental?.startDate||'';
+ $('psnReturnDate').value=rental?.returnDate||'';
+ $('psnRentalStatus').value=rental?.status||'rented';
+ $('psnRentalSave').textContent=rental?'💾 Update Assignment':'💾 Save Assignment';
+ form.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function jdrGameRentalFilter(){
  if(!jdrRentalsMounted||!selectedGameId)return;
  const gameId=selectedGameId;
@@ -1878,6 +1936,7 @@ function jdrGameRentalFilter(){
  $('jdrGameRentalSummary').textContent='🎮 '+title+' • '+owners.length+' PSN account(s) own this game. Choose an account to assign a renter. Only rentals for this game are shown below.';
  $('rentalSearch').value='';
  psnRender();
+ jdrRenderAccountSlots();
 }
 function jdrSwitchManageTab(tab){
  const rental=tab==='renters';
