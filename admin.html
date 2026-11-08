@@ -347,6 +347,34 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .jdr-unified-rentals{display:none}
 .jdr-unified-rentals .psn-panel{padding:0}
 .jdr-game-rental-summary{background:#091e42;border:1px solid #31558d;padding:12px;border-radius:10px;color:#bde1ff;font-size:12px;line-height:1.7;margin:10px 0}
+
+/* PREMIUM V4 */
+html{scroll-behavior:smooth}
+.v4-nav{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow-x:auto;padding:12px;background:#06142ef2;border:1px solid #254b83;border-radius:13px;margin:18px 0}
+.v4-nav button,.v4-toolbar button{flex-shrink:0;border:1px solid #3269b6;border-radius:9px;background:#102c57;color:#dceeff;padding:10px 14px;font-weight:700}
+.v4-nav button:hover,.v4-toolbar button:hover{background:#1669bb}
+.v4-section{margin:24px 0;padding:18px;border:1px solid #24518d;border-radius:16px;background:linear-gradient(145deg,#081a3d,#041027)}
+.v4-section h3{margin:0 0 8px}.v4-section p{color:#a8bddc;font-size:12px;line-height:1.6}
+.v4-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.v4-section input,.v4-section select,.v4-section textarea,.v4-toolbar input,.v4-toolbar select{background:#030d23;border:1px solid #31558d;color:#fff;border-radius:9px;padding:11px;min-width:0}
+.v4-finance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0}
+.v4-metric{padding:13px;border:1px solid #2a4c7c;border-radius:11px;background:#06142e}
+.v4-metric small{display:block;color:#a8bfdc;font-size:11px}.v4-metric strong{display:block;font-size:25px;margin-top:7px}
+.v4-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.v4-form label{display:grid;gap:5px;font-size:12px;color:#b9d5ff}
+.v4-form .wide{grid-column:1/-1}
+.v4-form button{background:#087aff;color:#fff;border:0;border-radius:9px;padding:12px;font-weight:800}
+.v4-record{border-top:1px solid #284a7c;padding:12px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.v4-record small{display:block;color:#a8bfdc;margin-top:4px;overflow-wrap:anywhere}
+.v4-record button{background:#4a1c2a;color:#ffb6bd;border:1px solid #9b4656;border-radius:8px;padding:8px}
+.v4-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.v4-day{min-height:75px;padding:7px 5px;background:#06142e;border:1px solid #234878;border-radius:8px;font-size:11px;overflow-wrap:anywhere}
+.v4-day b{display:block;margin-bottom:6px}.v4-day small{display:block;color:#9fcbff;margin:4px 0;line-height:1.4}
+.v4-day.today{border-color:#63b8ff}
+.v4-day.empty{opacity:.3}
+.v4-note{color:#9fb4d3;font-size:11px}
+@media(min-width:700px){.v4-finance-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:550px){.v4-form{grid-template-columns:1fr}.v4-calendar{gap:2px}.v4-day{min-height:60px;padding:4px 2px;font-size:10px}}
 </style>
 </head>
 
@@ -364,14 +392,23 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </header>
 
 <main class="container">
-  <p class="eyebrow">ADMIN MANAGEMENT</p>
+  
+<nav class="v4-nav" aria-label="Dashboard sections">
+ <button type="button" data-v4-target="v4Overview">🏠 Overview</button>
+ <button type="button" data-v4-target="v4Games">🎮 Games</button>
+ <button type="button" data-v4-target="v4Psn">📧 PSN</button>
+ <button type="button" data-v4-target="v4Calendar">📅 Calendar</button>
+ <button type="button" data-v4-target="v4Finance">💰 Finances</button>
+ <button type="button" data-v4-target="jdrUnliAdmin">⚙️ UNLI Settings</button>
+</nav>
+<p class="eyebrow" id="v4Overview">ADMIN MANAGEMENT</p>
   <h2 class="title">Game Dashboard</h2>
   <p class="subtitle">
     Monitor rental slots, return alerts, waiting customers, extensions, and prices.
   </p>
 
   <!-- Quick access: customer reviews and safety -->
-  <section class="management-shortcuts" aria-label="Customer management tools">
+  <section id="v4Psn" class="management-shortcuts" aria-label="Customer management tools">
 <button id="openReviewsPanel" type="button"><strong>⭐ Facebook Customer Reviews ↗</strong><small>Open, add, edit and publish customer reviews</small></button>
 <button id="openBlacklistPanel" type="button"><strong>🛡️ Customer Safety & Blacklist ↗</strong><small>Open customer records, search, warnings and blacklist</small></button>
  <button id="openPsnLibrary" type="button"><strong>📚 PSN Email & Game Library ↗</strong><small>Saved accounts and owned games • Table / Card view</small></button>
@@ -483,7 +520,40 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <button id="bizRefresh" type="button" class="manage">↻ Refresh Business Overview</button>
   </section>
 
-  <h2 class="section-title">🎮 Game Management</h2>
+  <section id="v4Calendar" class="v4-section">
+<h3>📅 PSN Rental Return Calendar</h3>
+<p>Expected return dates from saved PSN rental assignments. Admin-only view; no phone push notifications.</p>
+<div class="v4-toolbar"><button id="v4PrevMonth" type="button">← Previous</button><strong id="v4MonthLabel"></strong><button id="v4NextMonth" type="button">Next →</button><button id="v4RefreshCalendar" type="button">↻ Refresh</button></div>
+<div id="v4CalendarGrid" class="v4-calendar"></div>
+<p id="v4CalendarNote" class="v4-note"></p>
+</section>
+<section id="v4Finance" class="v4-section">
+<h3>💰 Earnings & Expenses Tracker</h3>
+<p>Only manually confirmed payments and expenses are counted. Waiting-list requests and PSN rental assignments are NOT automatically counted as income.</p>
+<div class="v4-toolbar"><label for="v4FinanceMonth">Month</label><input type="month" id="v4FinanceMonth"><button id="v4FinanceRefresh" type="button">↻ Refresh</button></div>
+<div class="v4-finance-grid">
+<div class="v4-metric"><small>💵 Paid Revenue</small><strong id="v4Revenue">₱0</strong></div>
+<div class="v4-metric"><small>🛒 Expenses</small><strong id="v4Expenses">₱0</strong></div>
+<div class="v4-metric"><small>📈 Net Cash Flow</small><strong id="v4Profit">₱0</strong></div>
+<div class="v4-metric"><small>🧾 Transactions</small><strong id="v4TxnCount">0</strong></div>
+</div>
+<h3>➕ Record Payment or Expense</h3>
+<form id="v4FinanceForm" class="v4-form">
+<label>Type<select id="v4TxnType"><option value="income">💵 Payment received</option><option value="expense">🛒 Expense / game purchase</option></select></label>
+<label>Date<input id="v4TxnDate" type="date" required></label>
+<label>Amount (₱)<input id="v4TxnAmount" type="number" min="0.01" step="0.01" required placeholder="0.00"></label>
+<label>Category<select id="v4TxnCategory"><option value="Rental payment">Rental payment</option><option value="Rental extension">Rental extension</option><option value="Game purchase">Game purchase</option><option value="PSN wallet">PSN wallet</option><option value="Subscription">Subscription</option><option value="Other">Other</option></select></label>
+<label class="wide">Description / renter / game<input id="v4TxnDescription" maxlength="250" required placeholder="e.g. Phantom Blade Zero — weekly Trophy payment"></label>
+<label class="wide">Reference (optional)<input id="v4TxnReference" maxlength="100" placeholder="Receipt or transaction reference; no passwords"></label>
+<button class="wide" id="v4FinanceSave" type="submit">💾 Save Transaction</button>
+</form>
+<p id="v4FinanceStatus" role="status"></p>
+<h3 style="margin-top:24px">📋 Recorded Transactions</h3>
+<div id="v4FinanceList"></div>
+<p class="v4-note">Net cash flow = recorded payments − recorded expenses. This is not a tax or accrual profit calculation. Each entry must be recorded once.</p>
+</section>
+<h2 id="v4Games" class="section-title">🎮 Game Management</h2>
+<div class="v4-toolbar"><input id="v4GameSearch" type="search" placeholder="🔎 Search game title..." aria-label="Search game cards"><select id="v4GameFilter"><option value="all">All Games</option><option value="available">Available</option><option value="currently rented">Currently Rented</option><option value="upcoming">Upcoming</option></select><span id="v4GameCount" class="v4-note"></span></div>
 
   <button id="addGameButton" class="manage">
     ➕ Add New Game
@@ -3531,7 +3601,7 @@ async function psnLoad(){
   const [a,r,h]=await Promise.all([getDocs(collection(db,"psnAccounts")),getDocs(collection(db,"psnRentals")),getDocs(collection(db,"psnRentalHistory"))]);
   psnAccounts=a.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.email.localeCompare(b.email));
   psnRentals=r.docs.map(d=>({id:d.id,...d.data()}));
-  renderPsnExpiryAlerts();
+  renderPsnExpiryAlerts();v4RenderCalendar();
   psnHistory=h.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
   psnGameChoices();psnAccountChoices();psnRender();psnLibraryRender();
   if(jdrRentalsMounted)jdrGameRentalFilter();
@@ -3638,6 +3708,113 @@ function renderPsnExpiryAlerts(){
   row.append(title,info,edit,returned);box.append(row);
  }
 }
+
+/* V4 - admin-only financial ledger and PSN calendar */
+const v4Money=n=>"₱"+Number(n||0).toLocaleString("en-PH",{minimumFractionDigits:0,maximumFractionDigits:2});
+let v4Transactions=[],v4CalendarMonth=new Date();
+function v4MonthISO(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+function v4RenderFinance(){
+ const month=$("v4FinanceMonth").value;
+ const entries=v4Transactions.filter(x=>(x.date||"").startsWith(month)).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+ const revenue=entries.filter(x=>x.type==="income").reduce((sum,x)=>sum+Number(x.amount||0),0);
+ const expenses=entries.filter(x=>x.type==="expense").reduce((sum,x)=>sum+Number(x.amount||0),0);
+ $("v4Revenue").textContent=v4Money(revenue);$("v4Expenses").textContent=v4Money(expenses);
+ $("v4Profit").textContent=v4Money(revenue-expenses);$("v4TxnCount").textContent=String(entries.length);
+ const host=$("v4FinanceList");host.replaceChildren();
+ if(!entries.length){psnLine(host,"p","No confirmed transactions recorded for this month.");return;}
+ for(const t of entries){
+  const row=document.createElement("div");row.className="v4-record";
+  const left=document.createElement("div");
+  psnLine(left,"strong",(t.type==="income"?"🟢 +":"🔴 −")+v4Money(t.amount)+" • "+(t.description||""));
+  psnLine(left,"small",(t.date||"")+" • "+(t.category||"Other")+(t.reference?" • Ref: "+t.reference:""));
+  const del=document.createElement("button");del.type="button";del.textContent="Delete";
+  del.onclick=async()=>{
+   if(!confirm("Delete this financial transaction? This cannot be undone."))return;
+   del.disabled=true;
+   try{await deleteDoc(doc(db,"adminFinanceTransactions",t.id));await v4LoadFinance();}
+   catch(e){$("v4FinanceStatus").textContent="❌ Delete failed: "+e.message;del.disabled=false;}
+  };
+  row.append(left,del);host.append(row);
+ }
+}
+async function v4LoadFinance(){
+ if(auth.currentUser?.uid!==ADMIN_UID)return;
+ try{
+  const snap=await getDocs(collection(db,"adminFinanceTransactions"));
+  v4Transactions=snap.docs.map(d=>({id:d.id,...d.data()}));
+  v4RenderFinance();$("v4FinanceStatus").textContent="✅ Financial records loaded.";
+ }catch(e){$("v4FinanceStatus").textContent="❌ Could not load financial records: "+e.message+" (check Firestore admin rules).";}
+}
+$("v4FinanceForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const btn=$("v4FinanceSave");btn.disabled=true;
+ try{
+  if(auth.currentUser?.uid!==ADMIN_UID)throw Error("Admin access required.");
+  const amount=Number($("v4TxnAmount").value);
+  if(!Number.isFinite(amount)||amount<=0||amount>100000000)throw Error("Enter a valid amount.");
+  const date=$("v4TxnDate").value,description=$("v4TxnDescription").value.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!description)throw Error("Date and description required.");
+  await setDoc(doc(collection(db,"adminFinanceTransactions")),{
+   type:$("v4TxnType").value,date,amount,category:$("v4TxnCategory").value,
+   description,reference:$("v4TxnReference").value.trim(),createdAt:serverTimestamp(),
+   createdBy:auth.currentUser.uid
+  });
+  $("v4FinanceForm").reset();$("v4TxnDate").value=todayISO();
+  $("v4FinanceMonth").value=date.slice(0,7);
+  await v4LoadFinance();$("v4FinanceStatus").textContent="✅ Payment / expense saved.";
+ }catch(err){$("v4FinanceStatus").textContent="❌ "+err.message;}
+ finally{btn.disabled=false;}
+});
+$("v4FinanceRefresh").onclick=v4LoadFinance;
+$("v4FinanceMonth").onchange=v4RenderFinance;
+function v4RenderCalendar(){
+ const grid=$("v4CalendarGrid");grid.replaceChildren();
+ const y=v4CalendarMonth.getFullYear(),m=v4CalendarMonth.getMonth();
+ $("v4MonthLabel").textContent=v4CalendarMonth.toLocaleDateString("en-PH",{month:"long",year:"numeric"});
+ for(const day of ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"])psnLine(grid,"strong",day);
+ const first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
+ for(let i=0;i<first;i++){const blank=document.createElement("div");blank.className="v4-day empty";grid.append(blank);}
+ const today=todayISO();
+ for(let d=1;d<=last;d++){
+  const iso=y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+  const tile=document.createElement("div");tile.className="v4-day"+(iso===today?" today":"");
+  psnLine(tile,"b",String(d));
+  const returns=psnRentals.filter(r=>r.status==="rented"&&r.returnDate===iso);
+  for(const r of returns){
+   const small=psnLine(tile,"small","🔔 "+psnGameTitle(r.gameId)+" • "+(r.renterName||"Renter"));
+   small.title=(psnAccounts.find(a=>a.id===r.accountId)?.email||"")+" • "+psnSlotLabel(r.slot);
+  }
+  grid.append(tile);
+ }
+ $("v4CalendarNote").textContent="Shows "+psnRentals.filter(r=>r.status==="rented"&&(r.returnDate||"").startsWith(v4MonthISO(v4CalendarMonth))).length+" active rental return(s) this month. Data refreshes when PSN records reload.";
+}
+$("v4PrevMonth").onclick=()=>{v4CalendarMonth=new Date(v4CalendarMonth.getFullYear(),v4CalendarMonth.getMonth()-1,1);v4RenderCalendar();};
+$("v4NextMonth").onclick=()=>{v4CalendarMonth=new Date(v4CalendarMonth.getFullYear(),v4CalendarMonth.getMonth()+1,1);v4RenderCalendar();};
+$("v4RefreshCalendar").onclick=async()=>{await psnLoad();v4RenderCalendar();};
+for(const btn of document.querySelectorAll("[data-v4-target]"))btn.onclick=()=>{
+ const id=btn.dataset.v4Target;
+ document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});
+ if(id==="v4Finance")v4LoadFinance();
+ if(id==="v4Calendar")v4RenderCalendar();
+};
+function v4FilterGames(){
+ const q=$("v4GameSearch").value.trim().toLowerCase(),status=$("v4GameFilter").value;
+ let shown=0;
+ for(const card of $("gameGrid").children){
+  const text=card.textContent.toLowerCase();
+  const heading=card.querySelector("h3")?.textContent.toLowerCase()||"";
+  const statusLabel=card.querySelector(".status")?.textContent.toLowerCase()||"";
+  const ok=heading.includes(q)&&(status==="all"||statusLabel.includes(status));
+  card.style.display=ok?"":"none";if(ok)shown++;
+ }
+ $("v4GameCount").textContent=shown+" game(s)";
+}
+$("v4GameSearch").oninput=v4FilterGames;
+$("v4GameFilter").onchange=v4FilterGames;
+new MutationObserver(v4FilterGames).observe($("gameGrid"),{childList:true});
+$("v4FinanceMonth").value=v4MonthISO(new Date());
+$("v4TxnDate").value=todayISO();
+
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -3657,6 +3834,8 @@ onAuthStateChanged(auth,user=>{
   psnLoad().then(()=>loadAdminGames().then(psnSyncFromGames)).catch(console.error);
   loadBlacklist();
   refreshCustomerSafetyAlerts();
+  v4LoadFinance().catch(console.error);
+  v4RenderCalendar();
   loadActivityHistory();
   loadBusinessOverview();
   // Sync existing reservations once when admin opens dashboard.
