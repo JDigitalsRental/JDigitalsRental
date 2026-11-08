@@ -390,6 +390,20 @@ html{scroll-behavior:smooth}
 .v42-field{border-bottom:1px solid #244772;padding:10px 0;display:grid;gap:4px;overflow-wrap:anywhere}
 .v42-field small{color:#a9c8f1}.v42-field strong{font-size:14px}
 .v43-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.v43-actions button{background:#1253a3;border:1px solid #3b87d5;border-radius:9px;color:white;padding:11px 14px;cursor:pointer;font-weight:700}.v43-actions button:disabled{opacity:.5;cursor:wait}
+
+/* CLEAN PREMIUM ADMIN — PRESENTATION ONLY; FIRESTORE LOGIC UNCHANGED */
+.jdr-clean-nav{position:sticky;top:0;z-index:25;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px;background:#06142ef5;border:1px solid #2a5792;border-radius:15px;margin:12px 0 20px;box-shadow:0 12px 30px #0007}
+.jdr-clean-nav button{border:1px solid #295b9b;border-radius:10px;padding:12px 6px;background:#0c2447;color:#c6dfff;font-weight:800;font-size:12px;cursor:pointer}
+.jdr-clean-nav button[aria-selected="true"]{background:linear-gradient(120deg,#168cff,#0754d9);border-color:#8bcaff;color:white}
+.jdr-clean-page[hidden]{display:none!important}
+.jdr-clean-page{animation:jdrFade .18s ease-out}
+@keyframes jdrFade{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}
+.jdr-clean-page>h2{font-size:23px;margin:18px 0 8px;color:#e8f5ff}
+.jdr-clean-page>.management-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.jdr-clean-page .management-shortcuts button{min-height:100px}
+.jdr-clean-intro{color:#a7c8ec;font-size:13px;line-height:1.7;margin:0 0 18px}
+.jdr-clean-page .business-panel,.jdr-clean-page .priority-panel,.jdr-clean-page .history-panel{margin:15px 0}
+@media(max-width:560px){.jdr-clean-nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}.jdr-clean-nav button{font-size:11px;padding:11px 4px}.jdr-clean-page>.management-shortcuts{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -4024,5 +4038,76 @@ setInterval(()=>{
     <div id="v42RentalContent"></div>
   </div>
 </div>
+<script>
+/* Clean Premium Admin: organize existing UI without changing Firebase operations. */
+document.addEventListener('DOMContentLoaded',function(){
+  const main=document.querySelector('main.container');
+  if(!main||document.getElementById('jdrCleanNav'))return;
+  const oldNav=main.querySelector('nav.v4-nav');
+  if(oldNav)oldNav.remove();
+  const sections=[
+    ['overview','🏠 Overview','Daily activity, statistics and business alerts'],
+    ['games','🎮 Games','Game catalog, prices and public slot availability'],
+    ['psn','📧 PSN Accounts','Saved accounts and owned game libraries'],
+    ['rentals','👤 Rentals','Assignments, extension controls and activity history'],
+    ['calendar','📅 Calendar','Return calendar and upcoming expiry alerts'],
+    ['finances','💰 Finances','Confirmed payments and expenses'],
+    ['customers','🛡️ Customers','Waiting list, reviews and customer safety']
+  ];
+  const nav=document.createElement('nav');nav.id='jdrCleanNav';nav.className='jdr-clean-nav';nav.setAttribute('aria-label','Admin workspace navigation');
+  const pages={};
+  sections.forEach(([key,label,desc])=>{
+    const btn=document.createElement('button');btn.type='button';btn.textContent=label;btn.dataset.page=key;btn.setAttribute('aria-selected',String(key==='overview'));nav.appendChild(btn);
+    const page=document.createElement('section');page.id='jdrClean_'+key;page.className='jdr-clean-page';page.hidden=key!=='overview';page.setAttribute('aria-label',label);
+    const heading=document.createElement('h2');heading.textContent=label;page.appendChild(heading);
+    const intro=document.createElement('p');intro.className='jdr-clean-intro';intro.textContent=desc;page.appendChild(intro);
+    pages[key]=page;
+  });
+  const insertPoint=main.firstElementChild;
+  main.insertBefore(nav,insertPoint);
+  Object.values(pages).forEach(page=>main.appendChild(page));
+  const move=(node,key)=>{if(node)pages[key].appendChild(node)};
+  const byId=id=>document.getElementById(id);
+  const quick=byId('v4Psn');
+  if(quick){
+    const psnActions=document.createElement('section');psnActions.className='management-shortcuts';
+    const rentalActions=document.createElement('section');rentalActions.className='management-shortcuts';
+    const customerActions=document.createElement('section');customerActions.className='management-shortcuts';
+    ['openPsnLibrary','openPsnPanel'].forEach(id=>{if(byId(id))psnActions.appendChild(byId(id))});
+    ['openRentalPanel'].forEach(id=>{if(byId(id))rentalActions.appendChild(byId(id))});
+    ['openReviewsPanel','openBlacklistPanel'].forEach(id=>{if(byId(id))customerActions.appendChild(byId(id))});
+    move(psnActions,'psn');move(rentalActions,'rentals');move(customerActions,'customers');
+    quick.remove();
+  }
+  // Keep original IDs and event listeners; move only their existing DOM nodes.
+  move(byId('v4Overview'),'overview');
+  const overviewTitle=main.querySelector('h2.title');move(overviewTitle,'overview');
+  const subtitle=main.querySelector('p.subtitle');move(subtitle,'overview');
+  move(main.querySelector('section.stats'),'overview');
+  const priority=Array.from(main.querySelectorAll('section.priority-panel')).find(el=>el.id!=='psnExpiryCenter');move(priority,'overview');
+  move(main.querySelector('section.business-panel'),'overview');
+  move(main.querySelector('section.history-panel'),'rentals');
+  move(byId('psnExpiryCenter'),'calendar');
+  move(byId('v4Calendar'),'calendar');
+  move(byId('v4Finance'),'finances');
+  move(byId('v4Games'),'games');
+  const gameToolbar=main.querySelector('.v4-toolbar:has(#v4GameSearch)');move(gameToolbar,'games');
+  move(byId('addGameButton'),'games');move(byId('gameGrid'),'games');
+  const note=Array.from(main.children).find(el=>el.classList&&el.classList.contains('note'));move(note,'games');
+  // UNLI settings remains available from Rentals; its existing Firebase handler is untouched.
+  move(byId('jdrUnliAdmin'),'rentals');
+  const waitingBtn=document.createElement('button');waitingBtn.type='button';waitingBtn.innerHTML='<strong>📋 Waiting List ↗</strong><small>View current waiting requests</small>';
+  waitingBtn.addEventListener('click',()=>byId('waitingListCard')?.click());
+  const customerActions=pages.customers.querySelector('.management-shortcuts');if(customerActions)customerActions.prepend(waitingBtn);
+  function selectPage(key){
+    Object.entries(pages).forEach(([id,page])=>{page.hidden=id!==key});
+    nav.querySelectorAll('button').forEach(btn=>btn.setAttribute('aria-selected',String(btn.dataset.page===key)));
+    try{history.replaceState(null,'','#'+key)}catch(e){}
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  nav.addEventListener('click',e=>{const button=e.target.closest('button[data-page]');if(button)selectPage(button.dataset.page)});
+  const hash=location.hash.slice(1);if(pages[hash])selectPage(hash);
+});
+</script>
 </body>
 </html>
