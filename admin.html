@@ -325,6 +325,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .psn-alert-row{padding:12px;margin:9px 0;border:1px solid #345780;border-radius:10px;background:#081a34;overflow-wrap:anywhere}
 .psn-alert-row strong{display:block;margin-bottom:6px}.psn-alert-row small{display:block;color:#bbcee7;line-height:1.7}
 .psn-alert-row button{background:#124b7f;color:white;border:1px solid #398ce0;border-radius:8px;padding:9px;margin:8px 8px 0 0}
+/* Per-game PSN slot summary */
+.jdr-slot-summary{padding:14px;border:1px solid #31558d;border-radius:12px;background:#091e42;font-size:12px;line-height:1.8}
+.jdr-slot-summary>small{display:block;margin-top:10px;color:#a9bfdc;font-size:11px}
+.jdr-slot-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.jdr-slot-count{padding:10px 5px;text-align:center;border:1px solid #31558d;border-radius:9px;background:#06142e}
+.jdr-slot-count strong{display:block;font-size:25px}.jdr-slot-count small{color:#b9c9e4;font-size:10px}
+.jdr-slot-count.rented strong{color:#ff9292}.jdr-slot-count.available strong{color:#70ffb1}
 /* Account-level rental slots in selected game's Renters & PSN tab */
 .jdr-account-grid{display:grid;gap:12px;margin:14px 0}
 .jdr-account-card{padding:14px;border:1px solid #31558d;border-radius:12px;background:#071832;overflow-wrap:anywhere}
@@ -1872,6 +1879,21 @@ function jdrRenderAccountSlots(){
  const gameId=jdrRentalScopeGameId;
  const owners=psnAccounts.filter(a=>(a.gameIds||[]).includes(gameId))
   .sort((a,b)=>(a.email||'').localeCompare(b.email||''));
+ const total=owners.length*2;
+ const used=(slot)=>owners.filter(a=>psnRentals.some(r=>r.accountId===a.id&&r.gameId===gameId&&r.slot===slot&&r.status==='rented')).length;
+ const trophyUsed=used('trophy'),nonTrophyUsed=used('nonTrophy'),rented=trophyUsed+nonTrophyUsed;
+ const summary=document.createElement('section');summary.className='jdr-slot-summary';
+ psnLine(summary,'strong','📊 Live PSN Slot Availability');
+ const grid=document.createElement('div');grid.className='jdr-slot-counts';
+ for(const [label,num,kind] of [['TOTAL',total,'total'],['RENTED',rented,'rented'],['AVAILABLE',total-rented,'available']]){
+  const tile=document.createElement('div');tile.className='jdr-slot-count '+kind;
+  psnLine(tile,'strong',String(num));psnLine(tile,'small',label);grid.append(tile);
+ }
+ summary.append(grid);
+ psnLine(summary,'div','🏆 Trophy: '+(owners.length-trophyUsed)+' available / '+trophyUsed+' rented');
+ psnLine(summary,'div','🎮 Non-Trophy: '+(owners.length-nonTrophyUsed)+' available / '+nonTrophyUsed+' rented');
+ psnLine(summary,'small','Based on saved PSN renter records. Customer website availability is separate; check account sharing before assigning.');
+ host.append(summary);
  if(!owners.length){psnLine(host,'p','No PSN accounts own this game yet. Add the game to a PSN account first.');return;}
  for(const [index,account] of owners.entries()){
   const card=document.createElement('section');card.className='jdr-account-card';
