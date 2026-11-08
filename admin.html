@@ -702,6 +702,8 @@ html{scroll-behavior:smooth}
    <div class="psn-two"><div><label for="psnRentalSlot">Slot *</label><select id="psnRentalSlot"><option value="trophy">🏆 Trophy</option><option value="nonTrophy">🎮 Non-Trophy</option></select></div>
    <div><label for="psnRenterName">Renter name *</label><input id="psnRenterName" required maxlength="100"></div></div>
    <div class="psn-two"><div><label for="psnStartDate">Rental start</label><input id="psnStartDate" type="date"></div><div><label for="psnReturnDate">Expected return *</label><input id="psnReturnDate" type="date" required></div></div>
+   <div class="psn-two"><div><label for="psnExtendPeriod">Quick extension</label><select id="psnExtendPeriod"><option value="7">➕ 1 Week</option><option value="month">➕ 1 Month</option></select></div><div><label for="psnExtendApply">Automatic return date</label><button type="button" id="psnExtendApply" style="width:100%;margin-top:3px">📅 Apply Extension</button></div></div>
+   <p class="psn-muted" id="psnExtendMessage" role="status">Extension starts from the current expected return date, or today if already overdue. Click Update Assignment to save.</p>
    <label for="psnRentalStatus">Status</label><select id="psnRentalStatus"><option value="rented">🔴 Currently Rented</option><option value="returned">🟢 Returned</option></select>
    <div class="psn-actions"><button type="submit" id="psnRentalSave">💾 Save Assignment</button><button type="button" id="psnRentalClear">Clear</button></div>
   </form>
@@ -3658,6 +3660,31 @@ $("psnAccountForm").onsubmit=async e=>{
   else await setDoc(doc(collection(db,"psnAccounts")),{...data,createdAt:serverTimestamp()});
   psnClearAccount();await psnLoad();psnMsg("psnAccountMessage","✅ PSN account saved privately.");
  }catch(err){psnMsg("psnAccountMessage","❌ "+err.message);}finally{btn.disabled=false;}
+};
+// Quick rental extension: calculate date locally, then use the existing Save/Update flow.
+$("psnExtendApply").onclick=()=>{
+ const id=$("psnRentalEditId").value;
+ const status=$("psnRentalStatus").value;
+ const dateValue=$("psnReturnDate").value;
+ const message=$("psnExtendMessage");
+ if(!id){message.textContent="⚠️ Select an existing rental first. Extensions are for saved assignments.";return;}
+ if(status!=="rented"){message.textContent="⚠️ Only currently rented assignments can be extended.";return;}
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateValue)){message.textContent="⚠️ Set a valid expected return date first.";return;}
+ const [y,m,d]=dateValue.split("-").map(Number);
+ const base=new Date(y,m-1,d,12);
+ const today=new Date();today.setHours(12,0,0,0);
+ if(base<today)base.setTime(today.getTime());
+ const period=$("psnExtendPeriod").value;
+ if(period==="month"){
+  const day=base.getDate();
+  base.setDate(1);
+  base.setMonth(base.getMonth()+1);
+  const lastDay=new Date(base.getFullYear(),base.getMonth()+1,0).getDate();
+  base.setDate(Math.min(day,lastDay));
+ }else base.setDate(base.getDate()+7);
+ const result=[base.getFullYear(),String(base.getMonth()+1).padStart(2,"0"),String(base.getDate()).padStart(2,"0")].join("-");
+ $("psnReturnDate").value=result;
+ message.textContent="✅ New expected return: "+result+" ("+(period==="month"?"1 Month":"1 Week")+"). Click 💾 Update Assignment to save to Firebase.";
 };
 $("psnRentalForm").onsubmit=async e=>{
  e.preventDefault();const btn=$("psnRentalSave");btn.disabled=true;
