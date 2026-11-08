@@ -1864,9 +1864,13 @@ function jdrGameRentalFilter(){
  const owners=psnAccounts.filter(a=>(a.gameIds||[]).includes(gameId));
  owners.forEach(a=>select.append(psnOption(a.id,a.email+(a.region?' • '+a.region:''))));
  if(owners.some(a=>a.id===old))select.value=old;
+ else if(owners.length===1)select.value=owners[0].id;
  psnRentalGameChoices();
- if(select.value && [...$('psnRentalGame').options].some(o=>o.value===gameId))$('psnRentalGame').value=gameId;
- $('psnRentalGame').disabled=true;
+ const gameSelect=$('psnRentalGame');
+ gameSelect.disabled=false;
+ if(select.value && owners.some(a=>a.id===select.value && (a.gameIds||[]).includes(gameId))){
+  gameSelect.value=gameId;
+ }
  const title=psnGameTitle(gameId);
  $('jdrGameRentalSummary').textContent='🎮 '+title+' • '+owners.length+' PSN account(s) own this game. Choose an account to assign a renter. Only rentals for this game are shown below.';
  $('rentalSearch').value='';
@@ -3326,7 +3330,9 @@ function psnClearAccount(){
 }
 function psnClearRental(){
  $("psnRentalForm").reset();$("psnRentalEditId").value="";
- $("psnRentalSave").textContent="💾 Save Assignment";psnRentalGameChoices();
+ $("psnRentalSave").textContent="💾 Save Assignment";
+ if(jdrRentalsMounted)jdrGameRentalFilter();
+ else psnRentalGameChoices();
 }
 function psnLine(parent,tag,content){const e=document.createElement(tag);e.textContent=content;parent.append(e);return e;}
 let psnLibraryView="table";
@@ -3453,7 +3459,13 @@ $("rentalRefresh").onclick=psnLoad;
 $("closePsnPanel").onclick=()=>closeModal("psnManagementModal");
 $("psnAccountClear").onclick=psnClearAccount;
 $("psnRentalClear").onclick=psnClearRental;
-$("psnRentalAccount").onchange=psnRentalGameChoices;
+$("psnRentalAccount").onchange=()=>{
+ psnRentalGameChoices();
+ if(jdrRentalsMounted && selectedGameId){
+  const account=psnAccounts.find(a=>a.id===$("psnRentalAccount").value);
+  if((account?.gameIds||[]).includes(selectedGameId))$("psnRentalGame").value=selectedGameId;
+ }
+};
 $("psnSearch").oninput=psnRender;
 $("psnSearchMode").onchange=()=>{
  const byGame=$("psnSearchMode").value==="game";
