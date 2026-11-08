@@ -3721,10 +3721,10 @@ async function psnSyncFromGames(){
    if(state==="available"){
     await updateDoc(doc(db,"psnRentals",r.id),{status:"returned",updatedAt:serverTimestamp()});
     await psnLog("Auto-return (game slot)",r,"Slot marked available in Game Management");changed=true;
-   }else if(gameReturn&&gameReturn!==r.returnDate){
-    await updateDoc(doc(db,"psnRentals",r.id),{returnDate:gameReturn,updatedAt:serverTimestamp()});
-    await psnLog("Auto return-date sync",r,`${r.returnDate||"Not set"} → ${gameReturn}`);changed=true;
    }
+   // PSN rental return dates are authoritative for rental extensions.
+   // Do not overwrite saved PSN return dates with older Game Management slot dates.
+   // Game Management availability and its displayed slot return date remain separate.
   }
   if(changed)await psnLoad();
  }catch(err){console.error("PSN slot sync:",err);psnMsg("psnRentalMessage","⚠️ Auto-sync failed: "+err.message);}finally{psnSyncBusy=false;}
