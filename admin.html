@@ -380,6 +380,15 @@ html{scroll-behavior:smooth}
 .v41-return span{display:block;color:#d5e9ff}
 .v4-day{min-height:105px}
 @media(max-width:650px){.v41-return{font-size:9px;padding:4px}.v4-day{min-height:95px}}
+.v42-clickable{cursor:pointer;transition:border-color .15s,background .15s}
+.v42-clickable:hover,.v42-clickable:focus-visible{background:#174474;border-color:#6ab8ff;outline:2px solid #66aaff;outline-offset:1px}
+.v42-modal[hidden]{display:none!important}
+.v42-modal{position:fixed;inset:0;z-index:99999;background:rgba(0,5,20,.82);display:flex;align-items:center;justify-content:center;padding:16px}
+.v42-dialog{background:#071b3c;border:1px solid #3975b6;border-radius:16px;color:#eef7ff;width:min(470px,100%);max-height:85vh;overflow:auto;padding:20px;box-shadow:0 20px 65px #0008}
+.v42-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.v42-head h3{margin:0}.v42-head button{border:1px solid #4487cb;background:#133b6c;color:white;border-radius:8px;padding:9px 13px;cursor:pointer}
+.v42-field{border-bottom:1px solid #244772;padding:10px 0;display:grid;gap:4px;overflow-wrap:anywhere}
+.v42-field small{color:#a9c8f1}.v42-field strong{font-size:14px}
 </style>
 </head>
 
@@ -3704,7 +3713,7 @@ function renderPsnExpiryAlerts(){
  if(!items.length){box.textContent="🟢 No PSN rentals expiring within the next 3 days.";return;}
  for(const {r,days} of items){
   const row=document.createElement("div");row.className="psn-alert-row";
-  const title=document.createElement("strong");title.textContent=(days<0?"🚨 OVERDUE "+Math.abs(days)+" day(s)":days===0?"🔴 RETURN TODAY":days===1?"🟠 RETURN TOMORROW":"🟡 EXPIRING IN "+days+" DAYS")+" — "+psnGameTitle(r.gameId);
+  const title=document.createElement("strong");title.textContent=(days<0?"🚨 OVERDUE "+Math.abs(days)+" day(s)":days===0?"🔴 RETURN TODAY":days===1?"🟠 RETURN TOMORROW":"🟡 EXPIRING IN "+days+" DAYS")+" — "+(gameCache.has(r.gameId)?psnGameTitle(r.gameId):(r.gameName||"Game not linked"));
   const info=document.createElement("small");info.textContent=`👤 ${r.renterName} • ${psnSlotLabel(r.slot)} • 📧 ${psnAccounts.find(a=>a.id===r.accountId)?.email||"Unknown account"} • 📅 ${r.returnDate}`;
   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit / Extend";
   edit.onclick=()=>{openModal("rentalManagementModal");$("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth"});};
@@ -3772,6 +3781,29 @@ $("v4FinanceForm").addEventListener("submit",async e=>{
 });
 $("v4FinanceRefresh").onclick=v4LoadFinance;
 $("v4FinanceMonth").onchange=v4RenderFinance;
+function v42ShowRental(r){
+ const modal=$("v42RentalModal"),host=$("v42RentalContent");
+ host.replaceChildren();
+ const g=gameCache.get(r.gameId);
+ const account=psnAccounts.find(a=>a.id===r.accountId);
+ const name=g?gameName(g):(r.gameName||"Game not linked");
+ const today=todayISO();
+ const status=r.returnDate<today?"🚨 OVERDUE":r.returnDate===today?"🔴 DUE TODAY":"🟡 UPCOMING";
+ const fields=[
+  ["Status",status],["Game",name],["Renter",r.renterName||"Not recorded"],
+  ["Slot",psnSlotLabel(r.slot)],["PSN email",account?.email||"Account not linked"],
+  ["Start date",r.startDate||"Not recorded"],["Expected return",r.returnDate||"Not recorded"]
+ ];
+ for(const [label,value] of fields){
+  const row=document.createElement("div");row.className="v42-field";
+  psnLine(row,"small",label);psnLine(row,"strong",value);host.append(row);
+ }
+ modal.hidden=false;
+ $("v42CloseRental").focus();
+}
+$("v42CloseRental").onclick=()=>{$("v42RentalModal").hidden=true;};
+$("v42RentalModal").onclick=e=>{if(e.target===$("v42RentalModal"))$("v42RentalModal").hidden=true;};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("v42RentalModal").hidden=true;});
 function v4RenderCalendar(){
  const grid=$("v4CalendarGrid");grid.replaceChildren();
  const y=v4CalendarMonth.getFullYear(),m=v4CalendarMonth.getMonth();
@@ -3794,12 +3826,14 @@ function v4RenderCalendar(){
    const a=psnAccounts.find(a=>a.id===r.accountId);
    const status=iso<today?"🚨 OVERDUE":iso===today?"🔴 DUE TODAY":"🟡 UPCOMING";
    const item=document.createElement("div");item.className="v41-return";
+   item.classList.add("v42-clickable");
+   item.setAttribute("role","button");item.tabIndex=0;
    psnLine(item,"strong",status);
    psnLine(item,"span","🎮 "+name);
    psnLine(item,"span","👤 "+(r.renterName||"Renter not recorded"));
-   psnLine(item,"span",psnSlotLabel(r.slot));
-   psnLine(item,"span","📧 "+(a?.email||"PSN account not linked"));
-   item.title="Expected return: "+iso;
+   item.title="Click for rental details";
+   item.onclick=()=>v42ShowRental(r);
+   item.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();v42ShowRental(r);}};
    tile.append(item);
   }
   grid.append(tile);
@@ -3849,7 +3883,7 @@ onAuthStateChanged(auth,user=>{
 
   jdrStartUnliAdmin();
   loadAdminReviews();
-  psnLoad().then(()=>loadAdminGames().then(()=>{v4RenderCalendar();return psnSyncFromGames();})).catch(console.error);
+  psnLoad().then(()=>loadAdminGames().then(()=>{v4RenderCalendar();renderPsnExpiryAlerts();return psnSyncFromGames();})).catch(console.error);
   loadBlacklist();
   refreshCustomerSafetyAlerts();
   v4LoadFinance().catch(console.error);
@@ -3859,7 +3893,7 @@ onAuthStateChanged(auth,user=>{
   // Sync existing reservations once when admin opens dashboard.
   loadWaitingList().catch(error=>console.error("Counter sync:",error));
 
-  loadAdminGames().then(()=>v4RenderCalendar()).catch(error=>{
+  loadAdminGames().then(()=>{v4RenderCalendar();renderPsnExpiryAlerts();}).catch(error=>{
     console.error(error);
     alert(
       "Unable to load admin games. Check Firebase access."
@@ -3871,7 +3905,7 @@ onAuthStateChanged(auth,user=>{
 
 setInterval(()=>{
   if(auth.currentUser?.uid===ADMIN_UID){
-    loadAdminGames().then(()=>{v4RenderCalendar();return psnSyncFromGames();}).catch(console.error);
+    loadAdminGames().then(()=>{v4RenderCalendar();renderPsnExpiryAlerts();return psnSyncFromGames();}).catch(console.error);
     loadBusinessOverview().catch(console.error);
     refreshCustomerSafetyAlerts().catch(console.error);
     renderPsnExpiryAlerts();
@@ -3880,5 +3914,11 @@ setInterval(()=>{
 
 </script>
 <div class="evidence-lightbox" id="evidenceLightbox" role="dialog" aria-modal="true" aria-label="Private screenshot viewer"><button type="button" id="evidenceLightboxClose">✕ Close screenshot</button><img id="evidenceLightboxImage" alt="Private evidence screenshot"></div>
+<div id="v42RentalModal" class="v42-modal" role="dialog" aria-modal="true" aria-label="Rental details" hidden>
+  <div class="v42-dialog">
+    <div class="v42-head"><h3>📅 Rental Details</h3><button type="button" id="v42CloseRental" aria-label="Close rental details">✕</button></div>
+    <div id="v42RentalContent"></div>
+  </div>
+</div>
 </body>
 </html>
