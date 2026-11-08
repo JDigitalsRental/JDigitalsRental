@@ -389,6 +389,7 @@ html{scroll-behavior:smooth}
 .v42-head h3{margin:0}.v42-head button{border:1px solid #4487cb;background:#133b6c;color:white;border-radius:8px;padding:9px 13px;cursor:pointer}
 .v42-field{border-bottom:1px solid #244772;padding:10px 0;display:grid;gap:4px;overflow-wrap:anywhere}
 .v42-field small{color:#a9c8f1}.v42-field strong{font-size:14px}
+.v43-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.v43-actions button{background:#1253a3;border:1px solid #3b87d5;border-radius:9px;color:white;padding:11px 14px;cursor:pointer;font-weight:700}.v43-actions button:disabled{opacity:.5;cursor:wait}
 </style>
 </head>
 
@@ -3798,6 +3799,36 @@ function v42ShowRental(r){
   const row=document.createElement("div");row.className="v42-field";
   psnLine(row,"small",label);psnLine(row,"strong",value);host.append(row);
  }
+ const actions=document.createElement("div");actions.className="v43-actions";
+ const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit / Extend";
+ edit.onclick=()=>{
+  modal.hidden=true;
+  if(jdrRentalsMounted)jdrSwitchManageTab("game");
+  openModal("rentalManagementModal");
+  $("psnRentalEditId").value=r.id;
+  $("psnRentalAccount").value=r.accountId;
+  psnRentalGameChoices();
+  $("psnRentalGame").value=r.gameId;
+  $("psnRentalSlot").value=r.slot;
+  $("psnRenterName").value=r.renterName||"";
+  $("psnStartDate").value=r.startDate||"";
+  $("psnReturnDate").value=r.returnDate||"";
+  $("psnRentalStatus").value=r.status;
+  $("psnRentalSave").textContent="💾 Update Assignment";
+  $("psnRentalForm").scrollIntoView({behavior:"smooth",block:"center"});
+ };
+ const returned=document.createElement("button");returned.type="button";returned.textContent="✅ Mark Returned";
+ returned.onclick=async()=>{
+  if(!confirm("Confirm that "+(r.renterName||"this renter")+" has returned the PSN account and disabled console sharing? This will mark this rental as returned."))return;
+  returned.disabled=true;edit.disabled=true;
+  try{
+   await updateDoc(doc(db,"psnRentals",r.id),{status:"returned",updatedAt:serverTimestamp()});
+   await psnLog("Returned",r,"Confirmed by admin from Rental Calendar");
+   modal.hidden=true;
+   await psnLoad();
+  }catch(err){alert("Could not complete return: "+err.message);returned.disabled=false;edit.disabled=false;}
+ };
+ actions.append(edit,returned);host.append(actions);
  modal.hidden=false;
  $("v42CloseRental").focus();
 }
