@@ -467,7 +467,15 @@ html{scroll-behavior:smooth}
   </div>
   <h4 style="margin:16px 0 8px">📈 Last 7 Days</h4>
   <div id="jdrWeekChart" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;align-items:end;min-height:145px" aria-label="Daily visits for the last seven days"></div>
-  <p class="jdr-visit-note">Online Now and Most Viewed Games require additional customer-side activity and game-detail tracking. They are not yet available.</p>
+  <h4 style="margin:18px 0 8px">🎮 Game Interest & Live Presence</h4>
+  <div class="jdr-visit-grid">
+   <div class="jdr-visit-metric"><small>🟢 Approx. Online (last 2 min)</small><strong id="jdrOnlineNow">—</strong></div>
+   <div class="jdr-visit-metric"><small>👁️ Total Game Detail Views</small><strong id="jdrGameViews">—</strong></div>
+   <div class="jdr-visit-metric"><small>🎮 Games Viewed</small><strong id="jdrGamesViewed">—</strong></div>
+  </div>
+  <h4 style="margin:16px 0 8px">🏆 Top 5 Most Viewed Games</h4>
+  <div id="jdrTopViewed" class="jdr-visit-note">Waiting for analytics…</div>
+  <p class="jdr-visit-note">Online count estimates active browser sessions, not people. Views count detail clicks, including repeat clicks. Refresh to update.</p>
   <p class="jdr-visit-note" id="jdrVisitorStatus" role="status">Waiting for admin sign-in…</p>
   <button type="button" class="manage" id="jdrRefreshVisitors">↻ Refresh Visitor Analytics</button>
  </section>
@@ -4121,7 +4129,52 @@ async function jdrLoadVisitorAnalytics(){
    label.style.cssText="font-size:10px;color:#a8bddc;white-space:nowrap";
    col.append(number,bar,label);chart.append(col);
   });
-  status.textContent="Updated successfully. Dates use Philippine time. Counts cover available Firestore records.";
+  // Read-only V2 metrics. If one collection is restricted, existing visit metrics still work.
+  const top=document.getElementById("jdrTopViewed");
+  const setText=(id,value)=>{document.getElementById(id).textContent=value;};
+  const results=await Promise.allSettled([
+    getDocs(collection(db,"visitorPresence")),
+    getDocs(collection(db,"gameDetailViews")),
+    getDocs(collection(db,"games"))
+  ]);
+  const presenceResult=results[0],viewsResult=results[1],gamesResult=results[2];
+  const warnings=[];
+  if(presenceResult.status==="fulfilled"){
+    const active=new Set(),cutoff=Date.now()-120000;
+    presenceResult.value.forEach(item=>{
+      const d=item.data(),t=d.lastSeen?.toMillis?.();
+      if(t&&t>=cutoff)active.add(d.sessionId||item.id);
+    });
+    setText("jdrOnlineNow",active.size.toLocaleString());
+  }else{setText("jdrOnlineNow","—");warnings.push("presence: "+(presenceResult.reason?.code||"read error"));}
+  if(viewsResult.status==="fulfilled"){
+    const counts=new Map();let totalViews=0;
+    viewsResult.value.forEach(item=>{
+      totalViews++;
+      const id=item.data().gameId;
+      if(typeof id==="string"&&id.trim())counts.set(id,(counts.get(id)||0)+1);
+    });
+    setText("jdrGameViews",totalViews.toLocaleString());
+    setText("jdrGamesViewed",counts.size.toLocaleString());
+    const names=new Map();
+    if(gamesResult.status==="fulfilled")gamesResult.value.forEach(item=>{
+      const d=item.data();names.set(item.id,d.title||d.name||item.id);
+    });
+    top.replaceChildren();
+    const ranking=[...counts].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,5);
+    if(!ranking.length)top.textContent="No game detail views recorded yet.";
+    ranking.forEach(([id,count],index)=>{
+      const line=document.createElement("div");line.className="business-row";
+      const name=document.createElement("strong");name.textContent=(index+1)+". "+(names.get(id)||id);
+      const number=document.createElement("small");number.textContent=count.toLocaleString()+" view(s)";
+      line.append(name,number);top.append(line);
+    });
+  }else{
+    setText("jdrGameViews","—");setText("jdrGamesViewed","—");
+    top.textContent="Cannot load game detail views.";
+    warnings.push("game views: "+(viewsResult.reason?.code||"read error"));
+  }
+  status.textContent=warnings.length?"Visits updated, but some analytics could not load ("+warnings.join("; ")+"). Check Firestore read permissions.":"All analytics updated. Dates use Philippine time; online means seen in the last 2 minutes.";
  }catch(error){
   console.error("Visitor analytics:",error);
   status.textContent="Unable to read websiteVisits: "+(error.code||error.message||"Unknown error");
