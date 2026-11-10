@@ -404,6 +404,16 @@ html{scroll-behavior:smooth}
 .jdr-clean-intro{color:#a7c8ec;font-size:13px;line-height:1.7;margin:0 0 18px}
 .jdr-clean-page .business-panel,.jdr-clean-page .priority-panel,.jdr-clean-page .history-panel{margin:15px 0}
 @media(max-width:560px){.jdr-clean-nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}.jdr-clean-nav button{font-size:11px;padding:11px 4px}.jdr-clean-page>.management-shortcuts{grid-template-columns:1fr}}
+
+ /* VISITOR ANALYTICS V1 */
+ .jdr-visit-panel{margin:20px 0;padding:18px;border:1px solid #24518d;border-radius:16px;background:linear-gradient(145deg,#081a3d,#041027)}
+ .jdr-visit-panel h3{margin:0 0 8px}
+ .jdr-visit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0}
+ .jdr-visit-metric{padding:14px;background:#06142e;border:1px solid #2a4c7c;border-radius:11px}
+ .jdr-visit-metric small{display:block;color:#a8bfdc;font-size:12px}
+ .jdr-visit-metric strong{display:block;font-size:27px;margin-top:7px}
+ .jdr-visit-note{color:#a8bddc;font-size:12px;line-height:1.6}
+ @media(min-width:700px){.jdr-visit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 
@@ -444,6 +454,19 @@ html{scroll-behavior:smooth}
  <button id="openPsnPanel" type="button"><strong>📧 PSN Account Management ↗</strong><small>Add, edit and search PSN accounts by game or email</small></button>
  <button id="openRentalPanel" type="button"><strong>👤 Rental Management ↗</strong><small>Assign renters, update dates, check status and rental history</small></button>
 </section>
+
+
+ <section class="jdr-visit-panel" id="jdrVisitorAnalytics" aria-label="Website visitor analytics">
+  <h3>📊 Website Visitor Analytics</h3>
+  <p class="jdr-visit-note">Counts recorded browser sessions. Unique visitors are estimated using saved browser IDs, not verified people.</p>
+  <div class="jdr-visit-grid">
+   <div class="jdr-visit-metric"><small>👁️ Total Visits</small><strong id="jdrTotalVisits">—</strong></div>
+   <div class="jdr-visit-metric"><small>📅 Today's Visits (PH)</small><strong id="jdrTodayVisits">—</strong></div>
+   <div class="jdr-visit-metric"><small>👥 Unique Browsers</small><strong id="jdrUniqueVisitors">—</strong></div>
+  </div>
+  <p class="jdr-visit-note" id="jdrVisitorStatus" role="status">Waiting for admin sign-in…</p>
+  <button type="button" class="manage" id="jdrRefreshVisitors">↻ Refresh Visitor Analytics</button>
+ </section>
 
   <section class="stats" aria-label="Rental overview">
     <div class="stat">
@@ -4048,6 +4071,41 @@ new MutationObserver(v4FilterGames).observe($("gameGrid"),{childList:true});
 $("v4FinanceMonth").value=v4MonthISO(new Date());
 $("v4TxnDate").value=todayISO();
 
+
+/* WEBSITE VISITOR ANALYTICS — ADMIN READ ONLY */
+async function jdrLoadVisitorAnalytics(){
+ const status=document.getElementById("jdrVisitorStatus");
+ if(auth.currentUser?.uid!==ADMIN_UID){
+   status.textContent="Admin sign-in required.";return;
+ }
+ status.textContent="Loading visitor statistics…";
+ try{
+   const snapshot=await getDocs(collection(db,"websiteVisits"));
+   const unique=new Set();
+   let today=0,valid=0;
+   const phToday=new Intl.DateTimeFormat("en-CA",{
+     timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit"
+   }).format(new Date());
+   snapshot.forEach(item=>{
+     const data=item.data();
+     valid++;
+     if(typeof data.visitorId==="string"&&data.visitorId)unique.add(data.visitorId);
+     const date=data.createdAt?.toDate?.();
+     if(date && new Intl.DateTimeFormat("en-CA",{
+       timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit"
+     }).format(date)===phToday)today++;
+   });
+   document.getElementById("jdrTotalVisits").textContent=valid.toLocaleString();
+   document.getElementById("jdrTodayVisits").textContent=today.toLocaleString();
+   document.getElementById("jdrUniqueVisitors").textContent=unique.size.toLocaleString();
+   status.textContent="Updated successfully. Today uses Philippine time. These totals cover records currently in Firestore.";
+ }catch(error){
+   console.error("Visitor analytics:",error);
+   status.textContent="Unable to read websiteVisits. Check Firestore admin read permissions. "+(error.code||error.message||"");
+ }
+}
+document.getElementById("jdrRefreshVisitors").addEventListener("click",jdrLoadVisitorAnalytics);
+
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -4062,6 +4120,7 @@ onAuthStateChanged(auth,user=>{
     return;
   }
 
+  jdrLoadVisitorAnalytics();
   jdrStartUnliAdmin();
   loadAdminReviews();
   psnLoad().then(()=>loadAdminGames().then(()=>{v4RenderCalendar();renderPsnExpiryAlerts();return psnSyncFromGames();})).catch(console.error);
