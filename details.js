@@ -132,10 +132,63 @@
     playTrailer(currentGame, true);
     trailerBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   });
+  // Analytics V3: Record each actual details-popup opening in Firestore.
+  // Tracking is independent of the popup, so failures never block customers.
+  let analyticsDbPromise;
+  function getAnalyticsDb() {
+    if (!analyticsDbPromise) {
+      analyticsDbPromise = Promise.all([
+        import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js')
+      ]).then(([firebaseApp, firestore]) => {
+        const config = {
+          apiKey: 'AIzaSyDYxovJjUSbgiAPLbsNPpcUbrSCISnejqY',
+          authDomain: 'jdigitalrental.firebaseapp.com',
+          projectId: 'jdigitalrental',
+          storageBucket: 'jdigitalrental.firebasestorage.app',
+          messagingSenderId: '611741872259',
+          appId: '1:611741872259:web:01b3c2bec73d078999ebb6'
+        };
+        const app = firebaseApp.getApps().find(a => a.name === '[DEFAULT]') || firebaseApp.initializeApp(config);
+        return { db: firestore.getFirestore(app), firestore };
+      }).catch(error => {
+        analyticsDbPromise = null; // Permit retry on a later opening.
+        throw error;
+      });
+    }
+    return analyticsDbPromise;
+  }
+
+  function recordGameDetailView(game) {
+    try {
+      const rawId = String(game?.id || game?.gameId || game?.name || '').trim();
+      const gameId = rawId.toLowerCase()
+        .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 100);
+      if (!gameId) return;
+      const key = 'jdrSessionIdV3';
+      let sessionId = sessionStorage.getItem(key);
+      if (!sessionId || sessionId.length < 16 || sessionId.length > 100) {
+        sessionId = crypto.randomUUID();
+        sessionStorage.setItem(key, sessionId);
+      }
+      getAnalyticsDb().then(({ db, firestore }) =>
+        firestore.addDoc(firestore.collection(db, 'gameDetailViews'), {
+          gameId,
+          sessionId,
+          createdAt: firestore.serverTimestamp()
+        })
+      ).catch(error => console.warn('Game detail analytics unavailable:', error));
+    } catch (error) {
+      console.warn('Game detail analytics unavailable:', error);
+    }
+  }
+
   function open(game) {
     if (!game) return;
     stopTrailer();
     currentGame = game;
+    recordGameDetailView(game);
     previousFocus = document.activeElement;
     $('jdrDetailsTitle').textContent = escapeText(game.name);
     $('jdrDetailsGenre').textContent = [game.genre || game.type || 'PS5 Game', 'PS5 • Digital Rental'].join('  •  ');
