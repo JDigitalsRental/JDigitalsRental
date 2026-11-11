@@ -473,6 +473,17 @@ html{scroll-behavior:smooth}
    <div class="jdr-visit-metric"><small>👁️ Total Game Detail Views</small><strong id="jdrGameViews">—</strong></div>
    <div class="jdr-visit-metric"><small>🎮 Games Viewed</small><strong id="jdrGamesViewed">—</strong></div>
   </div>
+   <h4 style="margin:18px 0 8px">📱 Visitor Devices &amp; Rental Interest (V6)</h4>
+   <p class="jdr-visit-note">Device estimates count recorded browser sessions. Clicks show interest, not confirmed rentals or waiting-list entries.</p>
+   <div class="jdr-visit-grid">
+    <div class="jdr-visit-metric"><small>📱 Mobile Sessions</small><strong id="jdrMobileSessions">—</strong></div>
+    <div class="jdr-visit-metric"><small>💻 Desktop Sessions</small><strong id="jdrDesktopSessions">—</strong></div>
+    <div class="jdr-visit-metric"><small>🎮 Rent Interest Clicks</small><strong id="jdrRentClicks">—</strong></div>
+    <div class="jdr-visit-metric"><small>📋 Waiting List Interest Clicks</small><strong id="jdrWaitingClicks">—</strong></div>
+    <div class="jdr-visit-metric"><small>📅 Interest Clicks Today (PH)</small><strong id="jdrClicksToday">—</strong></div>
+    <div class="jdr-visit-metric"><small>📆 Interest Clicks This Month (PH)</small><strong id="jdrClicksMonth">—</strong></div>
+   </div>
+   <h4>🏆 Most Clicked Games for Rental Interest</h4><div id="jdrTopInterest" class="jdr-visit-note">Waiting for V6 analytics…</div>
   <h4 style="margin:16px 0 8px">🏆 Top 5 Most Viewed Games</h4>
   <div id="jdrTopViewed" class="jdr-visit-note">Waiting for analytics…</div>
   <p class="jdr-visit-note">Online count estimates active browser sessions, not people. Views count detail clicks, including repeat clicks. Refresh to update.</p>
@@ -4175,12 +4186,38 @@ async function jdrLoadVisitorAnalytics(){
     warnings.push("game views: "+(viewsResult.reason?.code||"read error"));
   }
   status.textContent=warnings.length?"Visits updated, but some analytics could not load ("+warnings.join("; ")+"). Check Firestore read permissions.":"All analytics updated. Dates use Philippine time; online means seen in the last 2 minutes.";
+  await jdrLoadV6Analytics();
  }catch(error){
   console.error("Visitor analytics:",error);
   status.textContent="Unable to read websiteVisits: "+(error.code||error.message||"Unknown error");
  }
 }
 document.getElementById("jdrRefreshVisitors").addEventListener("click",jdrLoadVisitorAnalytics);
+
+/* V6 INTEREST DASHBOARD — READ ONLY */
+async function jdrLoadV6Analytics(){
+ const status=document.getElementById('jdrVisitorStatus');
+ const put=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
+ const ids=['jdrMobileSessions','jdrDesktopSessions','jdrRentClicks','jdrWaitingClicks','jdrClicksToday','jdrClicksMonth'];
+ try{
+  const snap=await getDocs(collection(db,'visitorAnalyticsEvents'));
+  const phKey=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+  const today=phKey(new Date()),month=today.slice(0,7);
+  const mobile=new Set(),desktop=new Set(),counts=new Map();let rent=0,waiting=0,day=0,monthly=0;
+  snap.forEach(row=>{const d=row.data(),t=d.type,sid=d.sessionId||row.id;
+   if(t==='device_mobile')mobile.add(sid);if(t==='device_desktop')desktop.add(sid);
+   if(t!=='rent_click'&&t!=='waiting_click')return;
+   if(t==='rent_click')rent++;else waiting++;
+   if(d.gameId)counts.set(d.gameId,(counts.get(d.gameId)||0)+1);
+   const when=d.createdAt?.toDate?.();if(when){const key=phKey(when);if(key===today)day++;if(key.slice(0,7)===month)monthly++}
+  });
+  [mobile.size,desktop.size,rent,waiting,day,monthly].forEach((v,i)=>put(ids[i],v.toLocaleString()));
+  const target=document.getElementById('jdrTopInterest');target.replaceChildren();
+  const ranking=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(!ranking.length)target.textContent='No game-specific rental interest clicks yet. Some modal buttons may not identify a game.';
+  ranking.forEach(([id,count],i)=>{const row=document.createElement('div');row.className='business-row';row.textContent=(i+1)+'. '+id+' — '+count+' click(s)';target.appendChild(row)});
+ }catch(e){ids.forEach(id=>put(id,'—'));put('jdrTopInterest','V6 analytics unavailable: '+(e.code||e.message));status.textContent+=' V6 read access may need Firestore rules updated.';console.warn('V6 analytics',e)}
+}
 
 /* FIREBASE AUTHENTICATION */
 
