@@ -6218,6 +6218,73 @@ document.addEventListener("DOMContentLoaded",jdrUnliNotice);
  },true);
 })();
 </script>
+
+<!-- JDR GOOD RENTER REWARDS & RETURN POLICY — CUSTOMER AGREEMENT -->
+<style>
+.jdr-return-policy{margin:16px 0 8px;padding:15px;border:1px solid #3b7fc0;border-radius:14px;background:linear-gradient(145deg,#0b2443,#07162b);color:#e3f1ff;font-size:12px;line-height:1.65}
+.jdr-return-policy h3{margin:0 0 7px;color:#8dd4ff;font-size:15px}
+.jdr-return-policy p{margin:8px 0}
+.jdr-return-policy .jdr-good{color:#a9f3ce}.jdr-return-policy .jdr-caution{color:#ffcf91}
+.jdr-return-policy .jdr-return-note{font-size:11px;color:#b8cee5}
+.jdr-return-ack{display:flex;align-items:flex-start;gap:10px;margin:13px 0 0;font-size:12px;font-weight:700;cursor:pointer}
+.jdr-return-ack input{width:19px!important;min-width:19px!important;height:19px;flex:none;margin:2px 0 0;accent-color:#168cff}
+.jdr-return-error{margin:7px 0 0!important;color:#ffb3c1;font-size:12px;font-weight:700}
+</style>
+<script>
+(function(){
+ const ids=['rentalModal','upcomingReservationModal'];
+ function setup(){
+  ids.forEach(id=>{
+   const modal=document.getElementById(id);
+   if(!modal||modal.querySelector('.jdr-return-policy'))return;
+   const submit=modal.querySelector('#continueRental,#continueUpcomingReservation');
+   if(!submit)return;
+   const policy=document.createElement('section');
+   policy.className='jdr-return-policy';
+   policy.setAttribute('aria-label','Rental Return Policy');
+   policy.innerHTML=`
+    <h3>📢 Good Renter Rewards &amp; Return Policy</h3>
+    <p class="jdr-good"><strong>🟢 Responsible renters — Priority consideration</strong><br>
+    Early or on-time returns, proper Console Sharing deactivation, and complete video proof may earn priority consideration for future rentals and waiting lists.</p>
+    <p class="jdr-caution"><strong>🟡 Delays — Fair consideration</strong><br>
+    If you need more time, please contact us before your rental expires. Valid reasons and first-time delays will be considered fairly.</p>
+    <p><strong>🔴 Repeated late or improper returns</strong><br>
+    Repeated unapproved delays, failure to follow return instructions, or missing proof may lead to lower priority or rental restrictions.</p>
+    <p><strong>📌 Proper return required</strong><br>
+    Do not simply log out or delete the borrowed account. Follow the Console Sharing deactivation instructions and submit the required video proof. Early returns do not qualify for refunds on unused rental days.</p>
+    <p class="jdr-return-note">Priority is not guaranteed, depends on game availability, and is reviewed by JDigitalsRental. Customer rental history remains private.</p>
+    <label class="jdr-return-ack"><input type="checkbox" class="jdr-return-agree"><span>I have read and agree to the Rental Return Policy.</span></label>
+    <p class="jdr-return-error" role="alert" hidden>Please agree to the Rental Return Policy before continuing.</p>`;
+   submit.before(policy);
+   new MutationObserver(()=>{
+    if(modal.classList.contains('active')){
+     const check=policy.querySelector('.jdr-return-agree');
+     check.checked=false;
+     policy.querySelector('.jdr-return-error').hidden=true;
+    }
+   }).observe(modal,{attributes:true,attributeFilter:['class']});
+   policy.querySelector('.jdr-return-agree').addEventListener('change',()=>{
+    policy.querySelector('.jdr-return-error').hidden=true;
+   });
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+ document.addEventListener('click',event=>{
+  const submit=event.target.closest?.('#continueRental,#continueUpcomingReservation');
+  if(!submit)return;
+  const modal=submit.closest('#rentalModal,#upcomingReservationModal');
+  if(!modal)return;
+  const check=modal.querySelector('.jdr-return-agree');
+  if(!check||!check.checked){
+   event.preventDefault();
+   event.stopImmediatePropagation();
+   const error=modal.querySelector('.jdr-return-error');
+   if(error)error.hidden=false;
+   check?.focus();
+  }
+ },true);
+})();
+</script>
  <script type="module" src="visitor-tracker.js?v=5"></script>
 </body>
 </html>
