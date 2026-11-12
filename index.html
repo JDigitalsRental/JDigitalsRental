@@ -2409,6 +2409,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
   <a href="#reviews"><span class="jdr2-proof-icon">⭐</span><span><strong>Customer Reviews</strong><small>See published customer feedback</small></span></a>
 </div>
 
+
+<div class="jdr-premium-ribbon" aria-label="Rental highlights">🎮 <strong>PLAY MORE. SPEND LESS.</strong> <span>•</span> Weekly &amp; Monthly PS5 Rentals <span>•</span> <a href="#games">Explore games ↗</a></div>
+
 <main>
 
 <!-- ==========================================
@@ -2490,6 +2493,21 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 
   </div>
 
+</section>
+
+
+<!-- PREMIUM CUSTOMER TRUST: truthful service features; no invented statistics -->
+<section class="jdr-premium-trust" id="jdrPremiumTrust" aria-labelledby="jdrPremiumTrustTitle">
+ <div class="jdr-premium-wrap">
+  <div class="jdr-premium-heading"><p class="eyebrow">THE JDIGITALSRENTAL EXPERIENCE</p><h2 id="jdrPremiumTrustTitle">Your next adventure starts here.</h2><p>Discover games, compare rental plans, and request a slot with a straightforward process. See real customer recommendations before you rent.</p></div>
+  <div class="jdr-premium-cards">
+   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">🎮</span><strong>Choose Your Game</strong><p>Browse our PS5 catalog and check Trophy or Non-Trophy slot availability.</p></div>
+   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">💎</span><strong>Flexible Rental Plans</strong><p>Weekly, monthly single-game, and UNLI SWAP options, subject to plan rules.</p></div>
+   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">⭐</span><strong>Real Customer Feedback</strong><p>Read published Facebook recommendations from our gaming community.</p></div>
+   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">🛡️</span><strong>Clear Rental Guidelines</strong><p>Upfront prices, return instructions, and fair renter priority policies.</p></div>
+  </div>
+  <div class="jdr-premium-cta"><div><strong>Ready to play your next game?</strong><p>Check the game library, pick a plan, and send your request through Facebook.</p></div><a href="#games">Browse PS5 Games ↗</a></div>
+ </div>
 </section>
 
 <!-- ==========================================
@@ -6229,6 +6247,34 @@ document.addEventListener("DOMContentLoaded",jdrUnliNotice);
 .jdr-return-ack{display:flex;align-items:flex-start;gap:10px;margin:13px 0 0;font-size:12px;font-weight:700;cursor:pointer}
 .jdr-return-ack input{width:19px!important;min-width:19px!important;height:19px;flex:none;margin:2px 0 0;accent-color:#168cff}
 .jdr-return-error{margin:7px 0 0!important;color:#ffb3c1;font-size:12px;font-weight:700}
+
+/* JDIGITALSRENTAL PREMIUM CONVERSION UPGRADE — NOV 2026 */
+:root{--jdr-glass:rgba(8,23,48,.78);--jdr-edge:rgba(94,172,255,.27)}
+body{background-attachment:fixed}
+.jdr-premium-ribbon{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:11px 5%;background:linear-gradient(100deg,#06152f,#0b3470,#06152f);border-bottom:1px solid #367bb9;color:#d6edff;font-size:12px;font-weight:750;letter-spacing:.2px;text-align:center}
+.jdr-premium-ribbon strong{color:#fff}.jdr-premium-ribbon a{color:#8dd9ff;text-decoration:underline;text-underline-offset:3px}
+.hero{position:relative;isolation:isolate}
+.hero::after{content:"";position:absolute;z-index:-1;pointer-events:none;inset:0;background:radial-gradient(circle at 15% 35%,rgba(24,119,255,.14),transparent 42%)}
+.hero-copy .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #3d78b7;border-radius:999px;background:#0b2c56b8;color:#a8dfff}
+.hero-copy .eyebrow::before{content:"";width:7px;height:7px;background:#4de4aa;border-radius:50%;box-shadow:0 0 12px #4de4aa}
+.hero-actions .btn.primary{min-height:52px;justify-content:center;border:1px solid #81c5ff;box-shadow:0 9px 32px #006dff5c;transition:transform .2s,box-shadow .2s}
+.hero-actions .btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px #006dff8a}
+.jdr-premium-trust{padding:38px 5%;border-top:1px solid #214a78;border-bottom:1px solid #214a78;background:linear-gradient(150deg,#061123,#0a2143 55%,#07152b)}
+.jdr-premium-wrap{max-width:1250px;margin:auto}
+.jdr-premium-heading{margin-bottom:22px}.jdr-premium-heading .eyebrow{margin-bottom:8px}.jdr-premium-heading h2{font-size:clamp(25px,3vw,38px)}.jdr-premium-heading p{color:#aac4e2;font-size:13px;max-width:680px}
+.jdr-premium-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.jdr-premium-card{min-width:0;padding:19px 15px;border:1px solid var(--jdr-edge);border-radius:16px;background:linear-gradient(155deg,#12335b,#08172d);box-shadow:inset 0 1px #ffffff0a,0 10px 25px #0004}
+.jdr-premium-icon{font-size:25px;display:block;margin-bottom:12px}.jdr-premium-card strong{display:block;font-size:14px;color:#f7fbff;margin-bottom:5px}.jdr-premium-card p{font-size:11px;color:#b4cce6;line-height:1.6;margin:0}
+.jdr-premium-cta{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-top:18px;padding:18px 20px;border:1px solid #2c6fb1;border-radius:15px;background:linear-gradient(95deg,#10386e,#0a2146)}
+.jdr-premium-cta strong{display:block;font-size:15px}.jdr-premium-cta p{font-size:12px;color:#b6d0eb;margin:5px 0 0}.jdr-premium-cta a{display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:9px;background:#168cff;color:white;font-size:12px;font-weight:850}
+#reviews{background:linear-gradient(155deg,rgba(9,29,58,.82),rgba(4,12,28,.8))}
+#reviews .jdr-review-intro{border-radius:18px}
+#how .steps article{border-radius:18px;box-shadow:0 10px 25px #0004}
+#gameGrid .game-card{transition:transform .2s,box-shadow .2s,border-color .2s!important}
+#gameGrid .game-card:hover{border-color:#60b8ff!important;transform:translateY(-4px)}
+#gameGrid .rent{border-radius:10px;box-shadow:0 4px 16px #087bff4a}
+@media(max-width:850px){.jdr-premium-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.jdr-premium-ribbon{font-size:10px;padding:10px 4%}.jdr-premium-trust{padding:32px 5%}.jdr-premium-cards{gap:9px}.jdr-premium-card{padding:14px 11px}.jdr-premium-icon{font-size:21px;margin-bottom:8px}.jdr-premium-card strong{font-size:12px}.jdr-premium-card p{font-size:10px}.jdr-premium-cta{padding:15px}.jdr-premium-cta a{width:100%}}
 </style>
 <script>
 (function(){
