@@ -6376,5 +6376,17 @@ body{background-attachment:fixed}
 })();
 </script>
  <script type="module" src="visitor-tracker.js?v=5"></script>
+
+<!-- JDR V3 BACKGROUND RESTORE: keeps original artwork visible behind premium sections -->
+<style>
+html{background:#030916}
+body{background-color:#030916!important;background-image:linear-gradient(180deg,rgba(2,7,20,.24),rgba(2,8,23,.48) 48%,rgba(2,7,19,.64)),url("assets/premium-bg.png")!important;background-position:center top,center top!important;background-size:cover,cover!important;background-repeat:no-repeat!important;background-attachment:fixed,fixed!important}
+body::before{opacity:.05!important}
+/* Sections are translucent so the original gaming artwork can show through */
+.section,#games,#upcoming,#about,#plans,#faq,#rules,#reviews,.jdr-premium-trust{background-color:transparent!important}
+.jdr-premium-trust{background-image:linear-gradient(145deg,rgba(3,13,32,.82),rgba(7,31,67,.76))!important}
+#reviews{background-image:linear-gradient(135deg,rgba(4,14,32,.78),rgba(5,19,42,.72))!important}
+@media(max-width:700px){body{background-image:linear-gradient(180deg,rgba(2,7,20,.37),rgba(2,8,23,.62)),url("assets/premium-bg.png")!important;background-size:cover,auto 100vh!important;background-position:center top,35% top!important;background-attachment:scroll,scroll!important}}
+</style>
 </body>
 </html>
