@@ -414,6 +414,42 @@ html{scroll-behavior:smooth}
  .jdr-visit-metric strong{display:block;font-size:27px;margin-top:7px}
  .jdr-visit-note{color:#a8bddc;font-size:12px;line-height:1.6}
  @media(min-width:700px){.jdr-visit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* JDR PREMIUM ADMIN V2 — COMPACT RESPONSIVE LAYOUT */
+.container{max-width:1220px;padding:18px 18px 64px}
+.jdr-clean-nav{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 22px;padding:10px;top:0}
+.jdr-clean-nav button{font-size:12px;padding:13px 8px;min-height:44px}
+.jdr-clean-page>h2{margin:12px 0 5px;font-size:22px}
+.jdr-clean-intro{margin-bottom:15px}
+.jdr-clean-page .stats{margin:12px 0;grid-template-columns:repeat(3,minmax(0,1fr))}
+.jdr-clean-page .stat{padding:14px;border-radius:12px}
+.jdr-clean-page .stat strong{font-size:25px;margin-top:4px}
+.jdr-clean-page .priority-panel{margin:14px 0;padding:15px}
+.jdr-clean-page .jdr-visit-panel{margin:0;padding:18px}
+.jdr-clean-page .jdr-visit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.jdr-clean-page .jdr-visit-metric{padding:12px}
+.jdr-clean-page .jdr-visit-metric strong{font-size:23px}
+.jdr-clean-page .management-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}
+.jdr-clean-page .management-shortcuts button{min-height:80px;padding:15px}
+.jdr-v2-quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0 18px}
+.jdr-v2-quick button{padding:12px 8px;border:1px solid #2b65ac;border-radius:10px;background:#102d56;color:#e3f2ff;font-weight:700;cursor:pointer}
+.jdr-v2-quick button:hover{background:#14559b}
+.jdr-v2-expand{border:1px solid #28518a;border-radius:13px;background:#071831;margin:16px 0}
+.jdr-v2-expand>summary{cursor:pointer;padding:15px;font-weight:700;color:#cce8ff}
+.jdr-v2-expand>.business-panel{margin:0;border:0;background:transparent}
+.jdr-clean-page[hidden]{display:none!important}
+@media(max-width:700px){
+ .container{padding:12px 11px 55px}
+ .jdr-clean-nav{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:7px}
+ .jdr-clean-nav button{font-size:10px;padding:9px 3px;min-height:42px}
+ .jdr-clean-page .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .jdr-clean-page .jdr-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .jdr-v2-quick{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .jdr-clean-page .management-shortcuts{grid-template-columns:1fr}
+ .jdr-clean-page .management-shortcuts button{min-height:65px}
+ .jdr-clean-page>h2{font-size:20px}
+}
+
 </style>
 </head>
 
@@ -4274,20 +4310,20 @@ setInterval(()=>{
   </div>
 </div>
 <script>
-/* Clean Premium Admin: organize existing UI without changing Firebase operations. */
+/* Premium Admin V2: presentation/navigation only. Preserve Firebase IDs and handlers. */
 document.addEventListener('DOMContentLoaded',function(){
   const main=document.querySelector('main.container');
   if(!main||document.getElementById('jdrCleanNav'))return;
-  const oldNav=main.querySelector('nav.v4-nav');
-  if(oldNav)oldNav.remove();
+  main.querySelector('nav.v4-nav')?.remove();
   const sections=[
-    ['overview','🏠 Overview','Daily activity, statistics and business alerts'],
-    ['games','🎮 Games','Game catalog, prices and public slot availability'],
-    ['psn','📧 PSN Accounts','Saved accounts and owned game libraries'],
-    ['rentals','👤 Rentals','Assignments, extension controls and activity history'],
-    ['calendar','📅 Calendar','Return calendar and upcoming expiry alerts'],
-    ['finances','💰 Finances','Confirmed payments and expenses'],
-    ['customers','🛡️ Customers','Waiting list, reviews and customer safety']
+    ['overview','🏠 Overview','Rental status and urgent items at a glance'],
+    ['analytics','📊 Analytics','Visitor activity, device reports and game interest'],
+    ['games','🎮 Games','Manage games, prices and availability'],
+    ['psn','📧 PSN Accounts','Saved accounts and game ownership'],
+    ['rentals','👤 Rentals','Assignments, history and UNLI settings'],
+    ['calendar','📅 Calendar','Returns and upcoming expiries'],
+    ['finances','💰 Finances','Recorded income and expenses'],
+    ['customers','🛡️ Customers','Waiting list, reviews and safety records']
   ];
   const nav=document.createElement('nav');nav.id='jdrCleanNav';nav.className='jdr-clean-nav';nav.setAttribute('aria-label','Admin workspace navigation');
   const pages={};
@@ -4298,11 +4334,10 @@ document.addEventListener('DOMContentLoaded',function(){
     const intro=document.createElement('p');intro.className='jdr-clean-intro';intro.textContent=desc;page.appendChild(intro);
     pages[key]=page;
   });
-  const insertPoint=main.firstElementChild;
-  main.insertBefore(nav,insertPoint);
+  main.insertBefore(nav,main.firstElementChild);
   Object.values(pages).forEach(page=>main.appendChild(page));
-  const move=(node,key)=>{if(node)pages[key].appendChild(node)};
   const byId=id=>document.getElementById(id);
+  const move=(node,key)=>{if(node)pages[key].appendChild(node)};
   const quick=byId('v4Psn');
   if(quick){
     const psnActions=document.createElement('section');psnActions.className='management-shortcuts';
@@ -4314,33 +4349,46 @@ document.addEventListener('DOMContentLoaded',function(){
     move(psnActions,'psn');move(rentalActions,'rentals');move(customerActions,'customers');
     quick.remove();
   }
-  // Keep original IDs and event listeners; move only their existing DOM nodes.
+  move(byId('jdrVisitorAnalytics'),'analytics');
   move(byId('v4Overview'),'overview');
-  const overviewTitle=main.querySelector('h2.title');move(overviewTitle,'overview');
-  const subtitle=main.querySelector('p.subtitle');move(subtitle,'overview');
+  move(main.querySelector('h2.title'),'overview');
+  move(main.querySelector('p.subtitle'),'overview');
   move(main.querySelector('section.stats'),'overview');
-  const priority=Array.from(main.querySelectorAll('section.priority-panel')).find(el=>el.id!=='psnExpiryCenter');move(priority,'overview');
+  const priority=Array.from(main.querySelectorAll('section.priority-panel')).find(el=>el.id!=='psnExpiryCenter');
+  move(priority,'overview');
   move(main.querySelector('section.business-panel'),'overview');
   move(main.querySelector('section.history-panel'),'rentals');
   move(byId('psnExpiryCenter'),'calendar');
   move(byId('v4Calendar'),'calendar');
   move(byId('v4Finance'),'finances');
   move(byId('v4Games'),'games');
-  const gameToolbar=main.querySelector('.v4-toolbar:has(#v4GameSearch)');move(gameToolbar,'games');
+  move(main.querySelector('.v4-toolbar:has(#v4GameSearch)'),'games');
   move(byId('addGameButton'),'games');move(byId('gameGrid'),'games');
   const note=Array.from(main.children).find(el=>el.classList&&el.classList.contains('note'));move(note,'games');
-  // UNLI settings remains available from Rentals; its existing Firebase handler is untouched.
   move(byId('jdrUnliAdmin'),'rentals');
   const waitingBtn=document.createElement('button');waitingBtn.type='button';waitingBtn.innerHTML='<strong>📋 Waiting List ↗</strong><small>View current waiting requests</small>';
   waitingBtn.addEventListener('click',()=>byId('waitingListCard')?.click());
-  const customerActions=pages.customers.querySelector('.management-shortcuts');if(customerActions)customerActions.prepend(waitingBtn);
+  const customerActions=pages.customers.querySelector('.management-shortcuts');
+  if(customerActions)customerActions.prepend(waitingBtn);
+  const jump=document.createElement('div');jump.className='jdr-v2-quick';
+  [['analytics','📊 Visitor Analytics'],['games','🎮 Manage Games'],['rentals','👤 Rental Records'],['customers','📋 Customer Tools']].forEach(([key,label])=>{
+    const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>selectPage(key));jump.appendChild(b);
+  });
+  pages.overview.insertBefore(jump,pages.overview.children[2]||null);
+  const business=pages.overview.querySelector('.business-panel');
+  if(business){
+    const details=document.createElement('details');details.className='jdr-v2-expand';
+    const summary=document.createElement('summary');summary.textContent='🚀 Smart Business Reports — click to expand';
+    business.parentNode.insertBefore(details,business);details.appendChild(summary);details.appendChild(business);
+  }
   function selectPage(key){
+    if(!pages[key])return;
     Object.entries(pages).forEach(([id,page])=>{page.hidden=id!==key});
     nav.querySelectorAll('button').forEach(btn=>btn.setAttribute('aria-selected',String(btn.dataset.page===key)));
     try{history.replaceState(null,'','#'+key)}catch(e){}
-    window.scrollTo({top:0,behavior:'smooth'});
+    window.scrollTo({top:0,behavior:'instant'});
   }
-  nav.addEventListener('click',e=>{const button=e.target.closest('button[data-page]');if(button)selectPage(button.dataset.page)});
+  nav.addEventListener('click',e=>{const btn=e.target.closest('button[data-page]');if(btn)selectPage(btn.dataset.page)});
   const hash=location.hash.slice(1);if(pages[hash])selectPage(hash);
 });
 </script>
