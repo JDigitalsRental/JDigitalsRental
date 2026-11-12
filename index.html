@@ -2363,6 +2363,46 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 @media(prefers-reduced-motion:reduce){.jdr2-chat,.jdr2-scrolltop,.jdr2-proof a,.game-card,.game-card .cover,.jdr-featured-photo{transition:none!important;animation:none!important}}
 
 </style>
+
+<style id="jdr-v3-design-two">
+/* JDigitalsRental V3 — Design No. 2. Visual-only: preserves existing Firebase, booking, reviews and policy. */
+:root{--v3-blue:#36b8ff;--v3-light:#dcefff}
+body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.22),transparent 85%),radial-gradient(ellipse 55% 30% at 0% 52%,rgba(0,79,201,.13),transparent 85%),linear-gradient(180deg,#020916,#07172f 48%,#020815)!important}
+.topbar{border-bottom:1px solid rgba(62,174,255,.45)!important;box-shadow:0 0 24px rgba(0,119,255,.17)!important}
+.hero h1{font-style:italic;text-transform:uppercase!important;letter-spacing:-.06em!important;text-shadow:0 0 24px rgba(82,169,255,.16)}
+.hero h1 span{background:linear-gradient(110deg,#f3faff,#65caff,#128cff)!important;-webkit-background-clip:text!important;background-clip:text!important}
+.btn.primary,.rent,.jdr-details-primary{border-radius:14px!important;box-shadow:0 0 0 1px rgba(168,225,255,.4),0 0 24px rgba(0,143,255,.46)!important}
+.hero-art.jdr-featured-slider{box-shadow:0 0 0 1px rgba(85,194,255,.45),0 0 50px rgba(0,124,255,.24),0 30px 65px rgba(0,0,0,.55)!important}
+.jdr-v3-trust{position:relative;overflow:hidden;background:radial-gradient(ellipse 60% 70% at 50% 15%,rgba(16,91,192,.27),transparent 80%),linear-gradient(180deg,#061a35,#020b1e 90%)!important;border-block:1px solid #2689e2!important;padding:68px 5%!important}
+.jdr-v3-trust::before,.jdr-v3-trust::after{content:"";position:absolute;width:65%;height:140px;left:-20%;bottom:-100px;border:2px solid #0c8fff;border-radius:50%;transform:rotate(-8deg);box-shadow:0 0 25px #007dff;opacity:.55;pointer-events:none}
+.jdr-v3-trust::after{left:auto;right:-30%;bottom:auto;top:-110px;transform:rotate(10deg)}
+.jdr-v3-shell{max-width:1250px;margin:auto;position:relative;z-index:1;text-align:center}
+.jdr-v3-kicker{color:#7acfff;font-weight:850;font-size:11px;letter-spacing:3px;margin:0 0 16px}
+.jdr-v3-trust h2{font-size:clamp(34px,5vw,68px);font-weight:950;font-style:italic;line-height:1.05;letter-spacing:-.045em;color:#fff;text-shadow:0 4px 20px #0008}
+.jdr-v3-trust h2 span{display:block;color:#77caff;text-shadow:0 0 22px #167bff65}
+.jdr-v3-lead{max-width:650px;margin:18px auto 10px;color:#bed9f5;font-size:clamp(13px,1.4vw,17px)}
+.jdr-v3-controller{font-size:clamp(52px,7vw,95px);line-height:1.3;filter:drop-shadow(0 0 24px #168cff);margin:10px auto 20px}
+.jdr-v3-features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:10px auto 30px}
+.jdr-v3-feature{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:165px;padding:18px 12px;border:1px solid #398fe3;border-radius:22px;background:linear-gradient(145deg,rgba(18,67,127,.82),rgba(4,21,48,.93));box-shadow:inset 0 1px rgba(181,222,255,.16),0 8px 30px #0005,0 0 16px #006eff16;transition:transform .2s,border-color .2s,box-shadow .2s}
+.jdr-v3-feature:hover{transform:translateY(-5px);border-color:#8edaff;box-shadow:0 0 27px #087cff50}
+.jdr-v3-feature>span{font-size:35px;filter:drop-shadow(0 0 12px #35aaff)}
+.jdr-v3-feature strong{font-size:15px;color:#fff;line-height:1.25}
+.jdr-v3-feature small{font-size:11px;color:#a8c9eb;line-height:1.4}
+.jdr-v3-cta{display:flex;align-items:center;justify-content:space-between;gap:24px;text-align:left;border:1px solid #60b9ff;border-radius:22px;background:linear-gradient(105deg,#0a3972,#082348 65%,#061a39);padding:24px 30px;box-shadow:0 0 30px #006dff26}
+.jdr-v3-cta strong{font-size:clamp(21px,3vw,33px);font-style:italic;color:#fff}
+.jdr-v3-cta p{color:#bad5f2;font-size:13px;margin:6px 0 0}
+.jdr-v3-cta a{flex-shrink:0;display:inline-flex;justify-content:center;align-items:center;padding:14px 18px;border:1px solid #90d7ff;border-radius:999px;background:linear-gradient(120deg,#0576e6,#21b5ff);color:#fff;font-weight:850;font-size:12px;box-shadow:0 0 24px #008cff70}
+#reviews{background:radial-gradient(ellipse 70% 65% at 50% 20%,rgba(0,93,209,.14),transparent),#040e20}
+#reviews .jdr-review-intro{border-color:#328fe2!important;box-shadow:0 0 30px #086dff20}
+#reviews .jdr-review-card{border-color:#378fdf!important;box-shadow:0 0 20px #0678ff22,0 15px 35px #0005!important}
+#reviews .jdr-carousel-arrow{box-shadow:0 0 14px #168cff40}
+.steps article{background:linear-gradient(145deg,#0c315d,#07172f)!important;border:1px solid #398bda!important;border-radius:21px!important;box-shadow:0 0 22px #006fff20}
+.steps b{font-size:20px!important;text-shadow:0 0 12px #168cff}
+#gameGrid .game-card{box-shadow:0 0 0 1px #1978c929,0 10px 28px #0008!important}
+#gameGrid .game-card:hover{box-shadow:0 0 26px #0a8bff55,0 15px 38px #0008!important}
+@media(max-width:700px){.jdr-v3-trust{padding:44px 5%!important}.jdr-v3-features{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.jdr-v3-feature{min-height:145px;padding:14px 9px;border-radius:17px}.jdr-v3-feature>span{font-size:27px}.jdr-v3-feature strong{font-size:12px}.jdr-v3-feature small{font-size:10px}.jdr-v3-cta{flex-direction:column;text-align:center;padding:21px 16px}.jdr-v3-cta a{width:100%}.jdr-v3-kicker{letter-spacing:1.5px;font-size:9px}.hero h1{font-size:clamp(42px,11vw,65px)!important}}
+@media(prefers-reduced-motion:reduce){.jdr-v3-feature{transition:none!important}}
+</style>
 </head>
 
 <body>
@@ -2496,17 +2536,21 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 </section>
 
 
-<!-- PREMIUM CUSTOMER TRUST: truthful service features; no invented statistics -->
-<section class="jdr-premium-trust" id="jdrPremiumTrust" aria-labelledby="jdrPremiumTrustTitle">
- <div class="jdr-premium-wrap">
-  <div class="jdr-premium-heading"><p class="eyebrow">THE JDIGITALSRENTAL EXPERIENCE</p><h2 id="jdrPremiumTrustTitle">Your next adventure starts here.</h2><p>Discover games, compare rental plans, and request a slot with a straightforward process. See real customer recommendations before you rent.</p></div>
-  <div class="jdr-premium-cards">
-   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">🎮</span><strong>Choose Your Game</strong><p>Browse our PS5 catalog and check Trophy or Non-Trophy slot availability.</p></div>
-   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">💎</span><strong>Flexible Rental Plans</strong><p>Weekly, monthly single-game, and UNLI SWAP options, subject to plan rules.</p></div>
-   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">⭐</span><strong>Real Customer Feedback</strong><p>Read published Facebook recommendations from our gaming community.</p></div>
-   <div class="jdr-premium-card"><span class="jdr-premium-icon" aria-hidden="true">🛡️</span><strong>Clear Rental Guidelines</strong><p>Upfront prices, return instructions, and fair renter priority policies.</p></div>
+<!-- ULTIMATE PREMIUM V3 — truthful, design-2-inspired customer trust -->
+<section class="jdr-premium-trust jdr-v3-trust" id="jdrPremiumTrust" aria-labelledby="jdrPremiumTrustTitle">
+ <div class="jdr-v3-shell">
+  <div class="jdr-v3-orbit" aria-hidden="true">✦</div>
+  <div class="jdr-v3-kicker">✦ JDIGITALSRENTAL · CUSTOMER TRUST ✦</div>
+  <h2 id="jdrPremiumTrustTitle">Trusted by <span>Fellow Gamers</span></h2>
+  <p class="jdr-v3-lead">Real customer recommendations. Flexible PS5 rentals. A clear and straightforward booking experience.</p>
+  <div class="jdr-v3-controller" aria-hidden="true">🎮</div>
+  <div class="jdr-v3-features">
+   <a href="#rules" class="jdr-v3-feature"><span aria-hidden="true">🛡️</span><strong>Clear Rental Rules</strong><small>Know the setup and return process</small></a>
+   <a href="#games" class="jdr-v3-feature"><span aria-hidden="true">⚡</span><strong>Easy Booking</strong><small>Choose a game and request a slot</small></a>
+   <a href="#games" class="jdr-v3-feature"><span aria-hidden="true">🎮</span><strong>PS5 Game Library</strong><small>Check Trophy and Non-Trophy slots</small></a>
+   <a href="#plans" class="jdr-v3-feature"><span aria-hidden="true">♾️</span><strong>UNLI SWAP Plan</strong><small>Up to one swap per week, subject to availability</small></a>
   </div>
-  <div class="jdr-premium-cta"><div><strong>Ready to play your next game?</strong><p>Check the game library, pick a plan, and send your request through Facebook.</p></div><a href="#games">Browse PS5 Games ↗</a></div>
+  <div class="jdr-v3-cta"><div><strong>Rent with Confidence</strong><p>See genuine Facebook recommendations from our renters before choosing your next game.</p></div><a href="#reviews">See Customer Reviews ↗</a></div>
  </div>
 </section>
 
