@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JDigitalsRental V6.2: Rental modal tab-reset fix; admin-editable 14-day rates -->
+<!-- JDigitalsRental V6.7: PSN multi-slot public availability compatibility; retains existing rental form -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -4789,7 +4789,7 @@ function slotIsRented(game, account) {
       .trim();
 
     if (
-      ["available", "available now", "false", "open"]
+      ["available", "available now", "false", "open", "vacant"]
         .includes(value)
     ) {
       return false;
