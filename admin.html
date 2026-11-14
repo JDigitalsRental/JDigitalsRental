@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- JDigitalsRental V6.1: Admin-editable 14-day rates, 650 Trophy / 550 Non-Trophy -->
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -865,6 +867,12 @@ html{scroll-behavior:smooth}
       </div>
     </div>
 
+    <h3 class="form-heading">📅 14 Days / 2 Weeks</h3>
+    <div class="form-grid">
+      <div><label>🏆 Trophy — 14 Days</label><input id="newTwoWeeksTrophy" type="number" min="0" step="1" value="650"></div>
+      <div><label>🎮 Non-Trophy — 14 Days</label><input id="newTwoWeeksNonTrophy" type="number" min="0" step="1" value="550"></div>
+    </div>
+
     <h3 class="form-heading">
       🎮 1 Month — Single Game Only (No Swap)
     </h3>
@@ -1043,6 +1051,12 @@ html{scroll-behavior:smooth}
           min="0"
         >
       </div>
+    </div>
+
+    <h3 class="form-heading">📅 14 Days / 2 Weeks</h3>
+    <div class="form-grid">
+      <div><label>🏆 Trophy — 14 Days</label><input id="manageTwoWeeksTrophy" type="number" min="0" step="1" value="650"></div>
+      <div><label>🎮 Non-Trophy — 14 Days</label><input id="manageTwoWeeksNonTrophy" type="number" min="0" step="1" value="550"></div>
     </div>
 
     <h3 class="form-heading">
@@ -1420,6 +1434,8 @@ function priceDetails(before,after){
   const fields=[
     ["weeklyTrophy","Trophy weekly"],
     ["weeklyNonTrophy","Non-Trophy weekly"],
+    ["twoWeeksTrophy","Trophy 14 days"],
+    ["twoWeeksNonTrophy","Non-Trophy 14 days"],
     ["monthlyTrophy","Trophy UNLI SWAP"],
     ["monthlyNonTrophy","Non-Trophy UNLI SWAP"],
     ["singleMonthlyTrophy","Trophy single-game monthly"],
@@ -1685,6 +1701,8 @@ function numberFrom(id){
 function pricesFromForm(prefix){
   const weeklyTrophy=numberFrom(prefix+"WeeklyTrophy");
   const weeklyNonTrophy=numberFrom(prefix+"WeeklyNonTrophy");
+  const twoWeeksTrophy=numberFrom(prefix+"TwoWeeksTrophy");
+  const twoWeeksNonTrophy=numberFrom(prefix+"TwoWeeksNonTrophy");
   const monthlyTrophy=numberFrom(prefix+"MonthlyTrophy");
   const monthlyNonTrophy=numberFrom(prefix+"MonthlyNonTrophy");
   const singleMonthlyTrophy=numberFrom(prefix+"SingleMonthlyTrophy");
@@ -1693,6 +1711,8 @@ function pricesFromForm(prefix){
   return {
     weeklyTrophy,
     weeklyNonTrophy,
+    twoWeeksTrophy,
+    twoWeeksNonTrophy,
     monthlyTrophy,
     monthlyNonTrophy,
     singleMonthlyTrophy,
@@ -1706,6 +1726,8 @@ function getPrices(g){
   return {
     weeklyTrophy:Number(g.weeklyTrophy??g.weekly??350),
     weeklyNonTrophy:Number(g.weeklyNonTrophy??300),
+    twoWeeksTrophy:Number(g.twoWeeksTrophy??650),
+    twoWeeksNonTrophy:Number(g.twoWeeksNonTrophy??550),
     monthlyTrophy:Number(g.monthlyTrophy??800),
     monthlyNonTrophy:Number(g.monthlyNonTrophy??700),
     singleMonthlyTrophy:Number(g.singleMonthlyTrophy??500),
@@ -1903,6 +1925,9 @@ async function loadAdminGames(){
           <small>🎮 Weekly Non-Trophy</small>
           <strong>${money(p.weeklyNonTrophy)}</strong>
         </div>
+
+        <div class="price-box"><small>🏆 14 Days Trophy</small><strong>${money(p.twoWeeksTrophy)}</strong></div>
+        <div class="price-box"><small>🎮 14 Days Non-Trophy</small><strong>${money(p.twoWeeksNonTrophy)}</strong></div>
 
         <div class="price-box">
           <small>🏆 Monthly UNLI Trophy</small>
@@ -2191,6 +2216,8 @@ function openManage(id){
   for(const key of [
     "WeeklyTrophy",
     "WeeklyNonTrophy",
+    "TwoWeeksTrophy",
+    "TwoWeeksNonTrophy",
     "MonthlyTrophy",
     "MonthlyNonTrophy",
     "SingleMonthlyTrophy",
