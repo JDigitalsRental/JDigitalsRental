@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JDigitalsRental V6.1: Admin-editable 14-day rates -->
+<!-- JDigitalsRental V6.2: Rental modal tab-reset fix; admin-editable 14-day rates -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -6611,7 +6611,7 @@ function init(){
  const submit=document.getElementById('continueRental');
  const price=document.getElementById('modalPrice');
  if(!card||!name||!submit||!price)return;
- modal.dataset.smartBuilder='v5';
+ modal.dataset.smartBuilder='v6.2';
  const tabs=document.createElement('div');tabs.className='jdr-builder-tabs';
  tabs.innerHTML='<button type="button" class="jdr-builder-tab active" data-mode="new">🎮 New Rental</button><button type="button" class="jdr-builder-tab" data-mode="swap">🔄 Existing Renter — Swap</button>';
  const info=document.createElement('div');info.className='jdr-builder-note';info.textContent='Choose your rental details below. Availability and final payment instructions will be confirmed by JDigitalsRental.';
@@ -6670,13 +6670,20 @@ function init(){
   if(typeof window.showFacebookReminder==='function')window.showFacebookReminder(msg);
   else {navigator.clipboard?.writeText(msg).catch(()=>{});alert('Copy your swap details and send them to our Facebook Page.');window.open('https://www.facebook.com/share/1DajrF4mTy/','_blank','noopener,noreferrer')}
  });
+ // Reset only when the modal OPENS, not when the user switches tabs.
+ // The old observer also reacted to jdr-swap-mode class changes and
+ // incorrectly reset the form during interaction.
+ let wasOpen=modal.classList.contains('active');
  new MutationObserver(()=>{
-  if(modal.classList.contains('active')){
-   mode='new';modal.classList.remove('jdr-swap-mode');
+  const isOpen=modal.classList.contains('active');
+  if(isOpen&&!wasOpen){
+   mode='new';
+   modal.classList.remove('jdr-swap-mode');
    tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode==='new'));
    slot.value='';plan.value='';payment.value='GCash';
    setTimeout(update,30);
   }
+  wasOpen=isOpen;
  }).observe(modal,{attributes:true,attributeFilter:['class']});
  const priceObserver=new MutationObserver(update);priceObserver.observe(price,{childList:true,characterData:true,subtree:true});
  update();
