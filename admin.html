@@ -292,6 +292,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:550px){.management-shortcuts{grid-template-columns:1fr}}
 
 /* PSN ACCOUNT & RENTER MANAGEMENT */
+/* V6.6: Multi-PSN-account slots, earliest return, admin-confirmed release */
 .psn-panel{margin:0;padding:6px 0;color:#fff}.psn-panel h3{margin:16px 0 8px}.psn-panel p,.psn-muted{font-size:12px;color:#a9bfdc;line-height:1.6}
 .psn-panel label{display:block;font-size:12px;color:#c3ddff;margin:12px 0 5px}.psn-panel input,.psn-panel select,.psn-panel textarea{width:100%;background:#030d23;color:white;border:1px solid #31558d;border-radius:9px;padding:11px;font:inherit}.psn-panel select[multiple]{min-height:125px}.psn-panel button{background:#11417b;border:1px solid #3a72b8;color:white;border-radius:9px;padding:10px 13px;cursor:pointer}.psn-panel button:disabled{opacity:.5}.psn-panel .psn-danger{background:#5c1b2c;border-color:#b94c65}.psn-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.psn-entry{border:1px solid #284a7c;border-radius:12px;padding:13px;margin:10px 0;background:#071832;overflow-wrap:anywhere}.psn-entry strong{color:#b7dcff}.psn-entry small{display:block;color:#a8bfdc;line-height:1.7;margin:5px 0}.psn-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:580px){.psn-two{grid-template-columns:1fr}}
 
@@ -3914,6 +3915,8 @@ $("psnRentalForm").onsubmit=async e=>{
   if(id){
    // Existing rental edits never create initial-payment income.
    await updateDoc(doc(db,"psnRentals",id),data);
+   await jdrRefreshPublicSlotsForGame(gameId);
+   if(old && (old.gameId!==gameId || old.slot!==slot))await jdrRefreshPublicSlotsForGame(old.gameId);
    try{await psnLog(status==="returned"?"Returned":"Assignment Updated",data,old?`Previous: ${old.status}, ${old.returnDate}`:"");}catch(err){console.error("PSN history:",err);}
    psnMsg("psnRentalMessage","✅ Assignment updated. No new payment added.");
   }else{
@@ -3953,6 +3956,36 @@ $("psnRentalForm").onsubmit=async e=>{
   psnClearRental();await psnLoad();jdrToggleNewRentalPayment();
  }catch(err){psnMsg("psnRentalMessage","❌ "+err.message);}finally{jdrNewRentalSaving=false;btn.disabled=false;jdrToggleNewRentalPayment();}
 };
+// MULTI-ACCOUNT SLOT SYNC V6.6 — PSN accounts are the capacity source.
+// A rental is never released by date alone; only status="returned" releases it.
+async function jdrRefreshPublicSlotsForGame(gameId){
+ if(auth.currentUser?.uid!==ADMIN_UID||!gameId)return;
+ const [aSnap,rSnap,gSnap]=await Promise.all([
+  getDocs(collection(db,"psnAccounts")),
+  getDocs(collection(db,"psnRentals")),
+  getDoc(doc(db,"games",gameId))
+ ]);
+ if(!gSnap.exists())return;
+ const accounts=aSnap.docs.map(d=>({id:d.id,...d.data()}));
+ const rentals=rSnap.docs.map(d=>({id:d.id,...d.data()}));
+ const changes={};
+ for(const slot of ["trophy","nonTrophy"]){
+  const result=jdrPublicSlotFromRentals(gameId,slot,accounts,rentals);
+  if(!result)continue; // No verified capacity: preserve manual game status.
+  const fields=slotFields(slot);
+  changes[fields.status]=result.status;
+  changes[fields.date]=result.date;
+ }
+ if(Object.keys(changes).length){
+  await updateDoc(doc(db,"games",gameId),{...changes,updatedAt:serverTimestamp()});
+  await loadAdminGames();
+ }
+}
+async function jdrConfirmPsnReturn(rental){
+ await updateDoc(doc(db,"psnRentals",rental.id),{status:"returned",updatedAt:serverTimestamp()});
+ try{await jdrRefreshPublicSlotsForGame(rental.gameId);}
+ catch(err){console.error("Public availability sync failed:",err);alert("Return saved, but customer availability could not be refreshed. Please refresh and check Game Management: "+err.message);}
+}
 // Reconcile admin game slot updates with existing renter assignments.
 // Does NOT invent renter identities or mark public slots rented from waiting-list requests.
 let psnSyncBusy=false;
@@ -3978,7 +4011,7 @@ function renderPsnExpiryAlerts(){
   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit / Extend";
   edit.onclick=()=>{openModal("rentalManagementModal");$("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth"});};
   const returned=document.createElement("button");returned.type="button";returned.textContent="✅ Mark Returned";
-  returned.onclick=async()=>{if(!confirm("Confirm that the PSN account was actually returned and disabled by "+r.renterName+"?"))return;returned.disabled=true;try{await updateDoc(doc(db,"psnRentals",r.id),{status:"returned",updatedAt:serverTimestamp()});await psnLog("Returned",r,"Confirmed by admin from PSN Rental Alert Center");await psnLoad();}catch(err){alert("Could not mark returned: "+err.message);returned.disabled=false;}};
+  returned.onclick=async()=>{if(!confirm("Confirm that the PSN account was actually returned and disabled by "+r.renterName+"?"))return;returned.disabled=true;try{await jdrConfirmPsnReturn(r);await psnLog("Returned",r,"Confirmed by admin from PSN Rental Alert Center");await psnLoad();}catch(err){alert("Could not mark returned: "+err.message);returned.disabled=false;}};
   row.append(title,info,edit,returned);box.append(row);
  }
 }
@@ -4081,7 +4114,7 @@ function v42ShowRental(r){
   if(!confirm("Confirm that "+(r.renterName||"this renter")+" has returned the PSN account and disabled console sharing? This will mark this rental as returned."))return;
   returned.disabled=true;edit.disabled=true;
   try{
-   await updateDoc(doc(db,"psnRentals",r.id),{status:"returned",updatedAt:serverTimestamp()});
+   await jdrConfirmPsnReturn(r);
    await psnLog("Returned",r,"Confirmed by admin from Rental Calendar");
    modal.hidden=true;
    await psnLoad();
