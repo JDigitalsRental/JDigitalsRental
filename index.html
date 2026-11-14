@@ -6692,5 +6692,86 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+
+<!-- JDigitalsRental V6.3: Premium tap-to-select rental cards; keeps V6.2 booking logic -->
+<style id="jdr-premium-booking-v63">
+#rentalModal .rental-modal-card{max-width:520px;border-radius:24px;border:1px solid #358fdd;background:radial-gradient(circle at 10% 0%,#123968 0%,transparent 38%),linear-gradient(160deg,#091c35,#030b19 80%);box-shadow:0 24px 70px #000c,0 0 28px #087cff30}
+#rentalModal .jdr-builder-tabs{border-radius:16px;padding:5px;background:#030e20}
+#rentalModal .jdr-builder-tab{border-radius:12px;min-height:48px}
+#rentalModal .jdr-builder-note{background:#0a213c;border-color:#245381;color:#c0d8f1}
+#rentalModal .jdr-builder-field>label{font-size:13px;letter-spacing:.2px;color:#e1efff;margin:17px 0 10px}
+#rentalModal .jdr-v63-hidden-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;padding:0!important;margin:0!important;border:0!important;overflow:hidden!important}
+#rentalModal .jdr-v63-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#rentalModal .jdr-v63-card{min-width:0;min-height:88px;text-align:left;position:relative;border:1px solid #2b5179;border-radius:15px;background:linear-gradient(145deg,#102743,#09192e);padding:13px 12px;color:#f2f8ff;display:flex;flex-direction:column;justify-content:center;gap:5px;transition:border-color .15s,background .15s,box-shadow .15s}
+#rentalModal .jdr-v63-card:active{transform:scale(.985)}
+#rentalModal .jdr-v63-card .jdr-v63-name{font-size:14px;font-weight:850;line-height:1.25;overflow-wrap:anywhere;padding-right:16px}
+#rentalModal .jdr-v63-card .jdr-v63-desc{font-size:11px;color:#9bbbd9;line-height:1.3}
+#rentalModal .jdr-v63-card .jdr-v63-check{position:absolute;top:10px;right:10px;width:17px;height:17px;border:1.5px solid #587ba0;border-radius:50%;display:grid;place-items:center;font-size:11px;color:transparent}
+#rentalModal .jdr-v63-card[aria-pressed="true"]{border:2px solid #56baff;background:linear-gradient(135deg,#153d6d,#0c294b);box-shadow:0 0 17px #128eff25;padding:12px 11px}
+#rentalModal .jdr-v63-card[aria-pressed="true"] .jdr-v63-check{background:#48baff;border-color:#48baff;color:#041527;font-weight:900}
+#rentalModal .jdr-v63-card[data-value="trophy"]{border-color:#92743b;background:linear-gradient(145deg,#302617,#151a24)}
+#rentalModal .jdr-v63-card[data-value="trophy"][aria-pressed="true"]{border-color:#ffd16d;background:linear-gradient(145deg,#443218,#241e1b);box-shadow:0 0 18px #e5b44b28}
+#rentalModal .jdr-v63-card[data-value="trophy"][aria-pressed="true"] .jdr-v63-check{background:#ffd16d;border-color:#ffd16d}
+#rentalModal .jdr-v63-card[data-value="month"]{background:linear-gradient(145deg,#271846,#10152b);border-color:#7655b0}
+#rentalModal .jdr-v63-card[data-value="month"][aria-pressed="true"]{background:linear-gradient(145deg,#49277a,#201c42);border-color:#c09aff}
+#rentalModal .jdr-builder-summary{background:linear-gradient(140deg,#102f52,#07182c);border-color:#3877ae;border-radius:17px}
+#rentalModal .jdr-builder-total{font-size:29px;color:#78d5ff;line-height:1.2}
+#rentalModal .jdr-builder-line{padding:9px 0}
+#rentalModal .jdr-v63-card:focus-visible{outline:2px solid #a3e2ff;outline-offset:3px}
+@media(max-width:390px){#rentalModal .jdr-v63-card{padding:11px 9px;min-height:85px}#rentalModal .jdr-v63-card .jdr-v63-name{font-size:12px}#rentalModal .jdr-v63-card .jdr-v63-desc{font-size:10px}}
+</style>
+<script id="jdr-premium-booking-v63-js">
+(function(){
+ function init(){
+  const modal=document.getElementById('rentalModal');
+  if(!modal||modal.dataset.premiumCards)return;
+  const definitions=[
+   {id:'jdrSlotChoice',items:[['trophy','🏆 Trophy','Earn trophies'],['nonTrophy','🎮 Non-Trophy','Enjoy the game']]},
+   {id:'jdrPlanChoice',items:[['week','📅 7 Days','Weekly rental'],['twoWeeks','📅 14 Days','Two-week rental'],['single','🎮 1 Month','Single game · No swap'],['month','♾️ UNLI SWAP','Monthly plan']]}
+  ];
+  // Leave original select elements and their existing event listeners intact.
+  // Cards dispatch a real change event to the V6.2 builder, which then
+  // invokes the established pricing/availability/waitlist logic.
+  definitions.forEach(({id,items})=>{
+   const select=document.getElementById(id);
+   if(!select||!select.parentElement)return;
+   const grid=document.createElement('div');grid.className='jdr-v63-choice-grid';grid.setAttribute('role','group');grid.setAttribute('aria-label',id==='jdrSlotChoice'?'Account type':'Rental plan');
+   items.forEach(([value,title,desc])=>{
+    if(!Array.from(select.options).some(o=>o.value===value))return;
+    const button=document.createElement('button');button.type='button';button.className='jdr-v63-card';button.dataset.value=value;
+    const label=document.createElement('span');label.className='jdr-v63-name';label.textContent=title;
+    const sub=document.createElement('span');sub.className='jdr-v63-desc';sub.textContent=desc;
+    const check=document.createElement('span');check.className='jdr-v63-check';check.textContent='✓';check.setAttribute('aria-hidden','true');
+    button.append(label,sub,check);
+    button.addEventListener('click',()=>{select.value=value;select.dispatchEvent(new Event('change',{bubbles:true}));sync();});
+    grid.append(button);
+   });
+   select.classList.add('jdr-v63-hidden-select');select.after(grid);
+   select.addEventListener('change',sync);
+  });
+  function sync(){
+   definitions.forEach(({id})=>{
+    const select=document.getElementById(id);if(!select)return;
+    const grid=select.parentElement.querySelector('.jdr-v63-choice-grid');if(!grid)return;
+    grid.querySelectorAll('.jdr-v63-card').forEach(button=>{
+     const active=select.value===button.dataset.value;
+     button.setAttribute('aria-pressed',String(active));
+    });
+   });
+  }
+  // V6.2 resets the native selects on each new opening. Mirror that reset
+  // without mutating the modal or causing a repeated observer cycle.
+  let previouslyOpen=modal.classList.contains('active');
+  new MutationObserver(()=>{
+   const nowOpen=modal.classList.contains('active');
+   if(nowOpen&&!previouslyOpen)setTimeout(sync,70);
+   previouslyOpen=nowOpen;
+  }).observe(modal,{attributes:true,attributeFilter:['class']});
+  modal.dataset.premiumCards='v6.3';sync();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body>
 </html>
