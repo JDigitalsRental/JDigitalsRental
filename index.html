@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- JDigitalsRental V6.1: Admin-editable 14-day rates -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -4368,6 +4369,8 @@ const FACEBOOK_URL =
 const DEFAULT_PRICES = {
   weeklyTrophy: 350,
   weeklyNonTrophy: 300,
+  twoWeeksTrophy: 650,
+  twoWeeksNonTrophy: 550,
   monthlyTrophy: 800,
   monthlyNonTrophy: 700,
   singleMonthlyTrophy: 500,
@@ -4496,6 +4499,9 @@ function normalizedPeriod(period) {
   if (["week", "weekly", "1week"].includes(value))
     return "week";
 
+  if (["twoWeeks", "twoweeks", "2weeks", "14days", "14 days", "14-day"].includes(value))
+    return "twoWeeks";
+
   if (
     ["single", "single-month", "singlemonthly", "month-single"]
       .includes(value)
@@ -4520,7 +4526,9 @@ function accountLabel(account) {
 function periodLabel(period) {
   return normalizedPeriod(period) === "week"
     ? "1 Week"
-    : "1 Month";
+    : normalizedPeriod(period) === "twoWeeks"
+      ? "2 Weeks (14 Days)"
+      : "1 Month";
 }
 
 function planLabel(period) {
@@ -4528,6 +4536,8 @@ function planLabel(period) {
 
   return plan === "week"
     ? "Regular Weekly Rental"
+    : plan === "twoWeeks"
+      ? "Regular 14-Day Rental"
     : plan === "single"
       ? "Monthly Single Game (No Swap)"
       : "Monthly UNLI SWAP";
@@ -4538,6 +4548,8 @@ function swapRules(period) {
 
   return plan === "week"
     ? "Includes 1 game swap during the rental period. One game at a time, subject to availability."
+    : plan === "twoWeeks"
+      ? "14-day rental. Swap eligibility is subject to confirmation with JDigitalsRental; one game at a time and subject to availability."
     : plan === "single"
       ? "No game swaps. One selected game for the full month."
       : "Unlimited game swaps, maximum 1 swap per week. One game at a time, subject to availability.";
@@ -4596,6 +4608,13 @@ function installRentalPlanButtons() {
 
     if (weekly) {
       weekly.textContent = "📅 1 Week Regular";
+      if (!modal.querySelector(`[data-period="twoWeeks"]`)) {
+        const twoWeeks = weekly.cloneNode(true);
+        twoWeeks.classList.remove("active");
+        twoWeeks.dataset.period = "twoWeeks";
+        twoWeeks.textContent = "📅 2 Weeks / 14 Days";
+        weekly.after(twoWeeks);
+      }
     }
   }
 }
@@ -4625,6 +4644,9 @@ function gamePrices(game) {
       game?.weeklyNonTrophy ??
       DEFAULT_PRICES.weeklyNonTrophy
     ),
+
+    twoWeeksTrophy: Number(game?.twoWeeksTrophy ?? DEFAULT_PRICES.twoWeeksTrophy),
+    twoWeeksNonTrophy: Number(game?.twoWeeksNonTrophy ?? DEFAULT_PRICES.twoWeeksNonTrophy),
 
     monthlyTrophy: Number(
       game?.monthlyTrophy ??
@@ -4699,6 +4721,10 @@ function getRentalPrice(game, period, account) {
     if (type === "nonTrophy") {
       return prices.weeklyNonTrophy;
     }
+  }
+
+  if (duration === "twoWeeks") {
+    return type === "trophy" ? prices.twoWeeksTrophy : type === "nonTrophy" ? prices.twoWeeksNonTrophy : null;
   }
 
   if (duration === "single") {
@@ -5221,6 +5247,7 @@ Rental Period: ${periodLabel(selectedPeriod)}
 Rental Plan: ${planLabel(selectedPeriod)}
 Account Type: ${accountLabel(selectedAccount)}
 Price: ${money(price)}
+Payment Method: ${document.getElementById("jdrPaymentMethod")?.value || "To be confirmed"}
 
 SWAP RULES:
 ${swapRules(selectedPeriod)}
@@ -6550,6 +6577,113 @@ body{background-color:#020916!important;background-image:linear-gradient(180deg,
   .jdr2-scrolltop { width: 36px !important; height: 36px !important; right: 13px !important; }
 }
 </style>
+
+<!-- JDigitalsRental Smart Rental Builder V5: preserves existing rental and Firebase logic -->
+<style id="jdr-smart-builder-css">
+#rentalModal .rental-modal-card{max-width:510px;padding:24px 20px;background:linear-gradient(155deg,#0a2447,#030b1d 75%);border:1px solid #3c9dff;box-shadow:0 20px 70px #000b,0 0 35px #087cff35}
+#rentalModal .modal-eyebrow{color:#72d0ff}
+#rentalModal .jdr-builder-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:15px 0;padding:6px;background:#020d20;border:1px solid #295b8d;border-radius:14px}
+#rentalModal .jdr-builder-tab{border:0;border-radius:10px;padding:13px 8px;background:transparent;color:#9bb8d5;font-weight:800;font-size:12px}
+#rentalModal .jdr-builder-tab.active{background:linear-gradient(120deg,#0578e8,#12adff);color:white;box-shadow:0 0 14px #087fff66}
+#rentalModal .jdr-builder-note{padding:12px 14px;border:1px solid #296da6;background:#08213c;border-radius:12px;font-size:12px;color:#c5dff9;line-height:1.5;margin:10px 0}
+#rentalModal .jdr-builder-field{margin:13px 0}
+#rentalModal .jdr-builder-field label{display:block;color:#b6cce4;font-size:12px;font-weight:800;margin-bottom:7px}
+#rentalModal .jdr-builder-field select{display:block;width:100%;min-height:49px;border:1px solid #3179b5;border-radius:12px;background:#06182e;color:#f1f8ff;padding:12px;font-weight:700;font-size:14px}
+#rentalModal .jdr-builder-summary{border:1px solid #337fbd;background:linear-gradient(145deg,#0c2a4b,#071526);padding:16px;border-radius:16px;margin:16px 0}
+#rentalModal .jdr-builder-summary h3{font-size:13px;margin:0 0 12px;color:#85d7ff;letter-spacing:1px}
+#rentalModal .jdr-builder-total{font-size:27px;font-weight:900;color:#fff;margin:0 0 10px}
+#rentalModal .jdr-builder-line{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #244765;padding:8px 0;font-size:12px;color:#b9cde4}
+#rentalModal .jdr-builder-line strong{text-align:right;color:#fff;overflow-wrap:anywhere}
+#rentalModal .jdr-builder-choices-hidden{display:none!important}
+#rentalModal .jdr-builder-swap-button{display:none;width:100%;border:1px solid #6ccaff;border-radius:12px;padding:15px;background:linear-gradient(120deg,#0872df,#0db4f0);color:white;font-weight:850;margin-top:12px}
+#rentalModal.jdr-swap-mode #continueRental{display:none!important}
+#rentalModal.jdr-swap-mode .jdr-builder-swap-button{display:block}
+#rentalModal .jdr-builder-footnote{font-size:11px;color:#a9c4df;line-height:1.5;margin:10px 0}
+@media(max-width:600px){#rentalModal{padding:9px}#rentalModal .rental-modal-card{max-height:95dvh;padding:22px 15px}#rentalModal .jdr-builder-tab{font-size:11px}}
+</style>
+<script id="jdr-smart-builder-js">
+(function(){
+function init(){
+ const modal=document.getElementById('rentalModal');
+ if(!modal||modal.dataset.smartBuilder)return;
+ const card=modal.querySelector('.rental-modal-card');
+ const name=document.getElementById('rentalCustomerName');
+ const submit=document.getElementById('continueRental');
+ const price=document.getElementById('modalPrice');
+ if(!card||!name||!submit||!price)return;
+ modal.dataset.smartBuilder='v5';
+ const tabs=document.createElement('div');tabs.className='jdr-builder-tabs';
+ tabs.innerHTML='<button type="button" class="jdr-builder-tab active" data-mode="new">🎮 New Rental</button><button type="button" class="jdr-builder-tab" data-mode="swap">🔄 Existing Renter — Swap</button>';
+ const info=document.createElement('div');info.className='jdr-builder-note';info.textContent='Choose your rental details below. Availability and final payment instructions will be confirmed by JDigitalsRental.';
+ const fields=document.createElement('div');
+ fields.innerHTML=`<div class="jdr-builder-field"><label for="jdrSlotChoice">Account Type</label><select id="jdrSlotChoice"><option value="">Choose account type</option><option value="trophy">🏆 Trophy</option><option value="nonTrophy">🎮 Non-Trophy</option></select></div>
+ <div class="jdr-builder-field"><label for="jdrPlanChoice">Rental Plan</label><select id="jdrPlanChoice"><option value="">Choose rental plan</option><option value="week">📅 Weekly — 7 Days</option><option value="twoWeeks">📅 2 Weeks — 14 Days</option><option value="single">🎮 Monthly Single Game (No Swap)</option><option value="month">♾️ Monthly UNLI SWAP</option></select></div>
+ <div class="jdr-builder-field"><label for="jdrPaymentMethod">Payment Method</label><select id="jdrPaymentMethod"><option value="GCash">GCash</option><option value="Maya">Maya</option><option value="PayPal (international)">PayPal — International</option></select></div>`;
+ const summary=document.createElement('div');summary.className='jdr-builder-summary';summary.innerHTML='<h3>PRICE SUMMARY</h3><div class="jdr-builder-total" id="jdrBuilderTotal">Select plan and account</div><div class="jdr-builder-line"><span>Game</span><strong id="jdrBuilderGame">—</strong></div><div class="jdr-builder-line"><span>Account</span><strong id="jdrBuilderSlot">—</strong></div><div class="jdr-builder-line"><span>Plan</span><strong id="jdrBuilderPlan">—</strong></div><div class="jdr-builder-line"><span>Payment</span><strong id="jdrBuilderPayment">GCash</strong></div><div class="jdr-builder-line"><span>Slot</span><strong id="jdrBuilderStatus">Select account</strong></div>';
+ const swapButton=document.createElement('button');swapButton.type='button';swapButton.className='jdr-builder-swap-button';swapButton.textContent='Review Swap Request';
+ const footnote=document.createElement('p');footnote.className='jdr-builder-footnote';footnote.textContent='Payment first, after slot confirmation. We will send the correct payment details. Swap requests are subject to your active plan, weekly limit, and slot availability.';
+ const eyebrow=card.querySelector('.modal-eyebrow');eyebrow.after(tabs,info);
+ name.before(fields);
+ const oldPeriod=card.querySelector('.modal-options');const oldAccounts=card.querySelector('.upcoming-account-cards');const oldInfo=card.querySelector('.rental-plan-info');const oldPrice=card.querySelector('.modal-price');
+ [oldPeriod,oldAccounts,oldInfo,oldPrice].forEach(el=>el?.classList.add('jdr-builder-choices-hidden'));
+ const policy=card.querySelector('.jdr-return-policy');
+ if(policy)policy.before(summary);else submit.before(summary);
+ submit.after(swapButton,footnote);
+ const slot=fields.querySelector('#jdrSlotChoice'),plan=fields.querySelector('#jdrPlanChoice'),payment=fields.querySelector('#jdrPaymentMethod');
+ let mode='new';
+ function update(){
+  const title=document.getElementById('modalTitle')?.textContent||'';
+  document.getElementById('jdrBuilderGame').textContent=title.replace(/^Rent\s*[—-]\s*/i,'')||'Selected game';
+  document.getElementById('jdrBuilderSlot').textContent=slot.selectedOptions[0]?.textContent||'—';
+  document.getElementById('jdrBuilderPlan').textContent=plan.selectedOptions[0]?.textContent||'—';
+  document.getElementById('jdrBuilderPayment').textContent=payment.value;
+  document.getElementById('jdrBuilderTotal').textContent=mode==='swap'?'Existing plan — verify eligibility':price.textContent.trim();
+  const status=document.getElementById('continueRental')?.textContent||'';
+  document.getElementById('jdrBuilderStatus').textContent=!slot.value?'Select account':status.includes('Waiting')?'Waiting list / confirm availability':'Confirm availability with admin';
+  if(mode==='swap')info.textContent='Already renting? Request a game swap through Messenger. We will verify your active rental plan and swap eligibility. This does not create a new rental or waiting-list entry.';
+  else info.textContent='New rental: select account, plan, and payment. If the slot is rented, the existing waiting-list process applies.';
+ }
+ function choose(type,value){
+  const cls=type==='account'?'account-option':'period-option';
+  const selector=type==='account'?'data-account':'data-period';
+  const target=[...modal.querySelectorAll('.'+cls)].find(b=>b.getAttribute(selector)===value);
+  if(target)target.click();
+ }
+ slot.addEventListener('change',()=>{if(slot.value)choose('account',slot.value);update()});
+ plan.addEventListener('change',()=>{if(plan.value)choose('period',plan.value);update()});
+ payment.addEventListener('change',update);
+ tabs.addEventListener('click',e=>{
+  const button=e.target.closest('[data-mode]');if(!button)return;
+  mode=button.dataset.mode;modal.classList.toggle('jdr-swap-mode',mode==='swap');
+  tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===button));
+  update();
+ });
+ swapButton.addEventListener('click',()=>{
+  const customer=name.value.trim();
+  if(!customer){alert('Please enter your First and Last Name.');name.focus();return}
+  if(!slot.value){alert('Please choose Trophy or Non-Trophy.');slot.focus();return}
+  const check=modal.querySelector('.jdr-return-agree');
+  if(check&&!check.checked){const error=modal.querySelector('.jdr-return-error');if(error)error.hidden=false;check.focus();return}
+  const game=document.getElementById('jdrBuilderGame').textContent;
+  const msg=`Hi JDigitalsRental! 🎮\n\nI am an EXISTING RENTER requesting a game swap. Please check my active rental and swap eligibility.\n\nName: ${customer}\nRequested Game: ${game}\nRequested Account: ${slot.selectedOptions[0].textContent}\nPayment Method (if needed): ${payment.value}\n\nI understand swaps are subject to my active plan, maximum weekly swap rules, and available slots. Please confirm before processing. Thank you!`;
+  modal.classList.remove('active');
+  if(typeof window.showFacebookReminder==='function')window.showFacebookReminder(msg);
+  else {navigator.clipboard?.writeText(msg).catch(()=>{});alert('Copy your swap details and send them to our Facebook Page.');window.open('https://www.facebook.com/share/1DajrF4mTy/','_blank','noopener,noreferrer')}
+ });
+ new MutationObserver(()=>{
+  if(modal.classList.contains('active')){
+   mode='new';modal.classList.remove('jdr-swap-mode');
+   tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode==='new'));
+   slot.value='';plan.value='';payment.value='GCash';
+   setTimeout(update,30);
+  }
+ }).observe(modal,{attributes:true,attributeFilter:['class']});
+ const priceObserver=new MutationObserver(update);priceObserver.observe(price,{childList:true,characterData:true,subtree:true});
+ update();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 
 </body>
 </html>
