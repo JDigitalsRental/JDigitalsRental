@@ -3710,7 +3710,7 @@ function psnRender(){
   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit Account";
   edit.onclick=()=>{$("psnAccountEditId").value=a.id;$("psnEmail").value=a.email;$("psnRegion").value=a.region||"";$("psnOnlineId").value=a.onlineId||"";$("psnNotes").value=a.notes||"";for(const o of $("psnGames").options)o.selected=(a.gameIds||[]).includes(o.value);$("psnAccountSave").textContent="💾 Update Account";$("psnAccountForm").scrollIntoView({behavior:"smooth",block:"center"});};
   const del=document.createElement("button");del.type="button";del.className="psn-danger";del.textContent="🗑️ Delete Account";
-  del.onclick=async()=>{if(psnRentals.some(r=>r.accountId===a.id&&r.status!=="returned")){alert("Return or reassign active renters first.");return;}if(!confirm("Delete this PSN account? Rental history remains."))return;try{await deleteDoc(doc(db,"psnAccounts",a.id));await psnLoad();}catch(e){alert(e.message);}};
+  del.onclick=async()=>{if(psnRentals.some(r=>r.accountId===a.id&&r.status!=="returned")){alert("Return or reassign active renters first.");return;}if(!confirm("Delete this PSN account? Rental history remains."))return;try{await deleteDoc(doc(db,"psnAccounts",a.id));await psnLoad();await Promise.all((a.gameIds||[]).map(gid=>jdrRefreshPublicSlotsForGame(gid)));}catch(e){alert(e.message);}};
   actions.append(edit,del);card.append(actions);box.append(card);
  }
  const rentalBox=$("rentalList");rentalBox.replaceChildren();
@@ -3782,10 +3782,15 @@ $("psnAccountForm").onsubmit=async e=>{
   const email=$("psnEmail").value.trim().toLowerCase();const id=$("psnAccountEditId").value;
   if(psnAccounts.some(a=>a.email.toLowerCase()===email&&a.id!==id))throw Error("Email already exists. Edit its existing record.");
   const gameIds=[...$("psnGames").selectedOptions].map(o=>o.value);
+  const previousGameIds=psnAccounts.find(a=>a.id===id)?.gameIds||[];
   const data={email,region:$("psnRegion").value.trim(),onlineId:$("psnOnlineId").value.trim(),notes:$("psnNotes").value.trim(),gameIds,updatedAt:serverTimestamp()};
   if(id){const active=psnRentals.filter(r=>r.accountId===id&&r.status==="rented");if(active.some(r=>!gameIds.includes(r.gameId)))throw Error("Cannot unlink a game with an active renter. Return/reassign first.");await updateDoc(doc(db,"psnAccounts",id),data);}
   else await setDoc(doc(collection(db,"psnAccounts")),{...data,createdAt:serverTimestamp()});
-  psnClearAccount();await psnLoad();psnMsg("psnAccountMessage","✅ PSN account saved privately.");
+  psnClearAccount();await psnLoad();
+  const affectedGames=[...new Set([...previousGameIds,...gameIds])];
+  const syncResults=await Promise.allSettled(affectedGames.map(gid=>jdrRefreshPublicSlotsForGame(gid)));
+  const syncFailed=syncResults.filter(r=>r.status==="rejected");
+  psnMsg("psnAccountMessage",syncFailed.length?"⚠️ PSN account saved, but some public availability updates failed. Use Refresh Public Slots below.":"✅ PSN account saved. Customer availability refreshed.");
  }catch(err){psnMsg("psnAccountMessage","❌ "+err.message);}finally{btn.disabled=false;}
 };
 // PAID PSN EXTENSIONS — separate accounts, transactional finance, aggregate public availability.
@@ -3956,6 +3961,38 @@ $("psnRentalForm").onsubmit=async e=>{
   psnClearRental();await psnLoad();jdrToggleNewRentalPayment();
  }catch(err){psnMsg("psnRentalMessage","❌ "+err.message);}finally{jdrNewRentalSaving=false;btn.disabled=false;jdrToggleNewRentalPayment();}
 };
+// V6.7 — Admin-only one-tap reconciliation for existing PSN account inventory.
+(function(){
+ const mount=document.getElementById("psnAccountForm");if(!mount)return;
+ const button=document.createElement("button");button.type="button";
+ button.textContent="🔄 Refresh Customer Slot Availability";
+ button.style.cssText="display:block;width:100%;margin:12px 0;padding:14px;border:1px solid #59baff;border-radius:12px;background:#0d3b71;color:#fff;font-weight:800";
+ mount.after(button);
+ button.addEventListener("click",async()=>{
+  if(auth.currentUser?.uid!==ADMIN_UID)return;
+  button.disabled=true;button.textContent="⏳ Syncing all games...";
+  try{
+   const [gSnap,aSnap,rSnap]=await Promise.all([getDocs(collection(db,"games")),getDocs(collection(db,"psnAccounts")),getDocs(collection(db,"psnRentals"))]);
+   const accounts=aSnap.docs.map(d=>({id:d.id,...d.data()}));
+   const rentals=rSnap.docs.map(d=>({id:d.id,...d.data()}));
+   const batch=writeBatch(db);let count=0;
+   for(const gameDoc of gSnap.docs){
+    const changes={};
+    for(const slot of ["trophy","nonTrophy"]){
+     const result=jdrPublicSlotFromRentals(gameDoc.id,slot,accounts,rentals);
+     if(!result)continue;
+     const fields=slotFields(slot);
+     changes[fields.status]=result.status;changes[fields.date]=result.date;
+    }
+    if(Object.keys(changes).length){batch.update(gameDoc.ref,{...changes,updatedAt:serverTimestamp()});count++;}
+   }
+   if(count)await batch.commit();
+   await loadAdminGames();
+   button.textContent=`✅ ${count} game(s) synced to customer website`;
+  }catch(e){console.error(e);button.textContent="❌ Sync failed — tap to retry";alert("Public availability sync failed: "+e.message);}
+  finally{button.disabled=false;}
+ });
+})();
 // MULTI-ACCOUNT SLOT SYNC V6.6 — PSN accounts are the capacity source.
 // A rental is never released by date alone; only status="returned" releases it.
 async function jdrRefreshPublicSlotsForGame(gameId){
