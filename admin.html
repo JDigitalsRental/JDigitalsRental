@@ -455,9 +455,10 @@ html{scroll-behavior:smooth}
 
 
 /* V6.8 — low-read waiting-list alerts */
-#jdrNotifyDock{position:fixed;right:14px;top:78px;z-index:1100;font-family:Arial,sans-serif}
+#jdrNotifyDock{position:relative;display:block;width:calc(100% - 40px);max-width:1100px;margin:12px auto 4px;text-align:right;font-family:Arial,sans-serif;z-index:5}
+#jdrNotifyDock[hidden]{display:none!important}
 #jdrNotifyButton{background:#0c3268;color:white;border:1px solid #64baff;border-radius:999px;padding:12px 16px;box-shadow:0 8px 24px #0009;font-weight:800}
-#jdrNotifyPanel{display:none;width:min(340px,calc(100vw - 28px));max-height:65vh;overflow:auto;margin-top:8px;background:#06162e;border:1px solid #3873b5;border-radius:15px;padding:14px;color:#e7f5ff;box-shadow:0 12px 30px #000b}
+#jdrNotifyPanel{display:none;width:min(430px,100%);max-height:50vh;overflow:auto;margin:10px 0 0 auto;text-align:left;background:#06162e;border:1px solid #3873b5;border-radius:15px;padding:14px;color:#e7f5ff;box-shadow:0 12px 30px #000b}
 #jdrNotifyPanel.active{display:block}
 .jdr-notify-item{padding:10px 0;border-bottom:1px solid #274a79;font-size:12px;line-height:1.6}
 .jdr-notify-item small{color:#9dc7ef}
@@ -477,6 +478,7 @@ html{scroll-behavior:smooth}
   </div>
   <button id="logoutButton" class="logout-button">Logout</button>
 </header>
+<div id="jdrNotifyDock" hidden><button id="jdrNotifyButton" type="button">🔔 Waiting List <span id="jdrNotifyCount">0</span></button><div id="jdrNotifyPanel"><strong>🔔 New Waiting List Requests</strong><div id="jdrNotifyItems" style="margin-top:10px">Loading…</div><button id="jdrNotifyRead" type="button">✓ Mark all as read</button><p style="font-size:11px;color:#9dc7ef">Notifications work while the dashboard is open. Requests are not deleted when marked read.</p></div></div>
 
 <main class="container">
   
@@ -1314,7 +1316,7 @@ html{scroll-behavior:smooth}
  <div class="business-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span>🎮 Non-Trophy UNLI SWAP <small>₱700 / month (default)</small></span><button type="button" id="jdrNonTrophyToggle" disabled>Loading…</button></div>
  <p id="jdrUnliAdminStatus" class="business-muted" role="status">Checking availability…</p>
 </section>
-<div id="jdrNotifyDock" hidden><button id="jdrNotifyButton" type="button">🔔 Waiting List <span id="jdrNotifyCount">0</span></button><div id="jdrNotifyPanel"><strong>🔔 New Waiting List Requests</strong><div id="jdrNotifyItems" style="margin-top:10px">Loading…</div><button id="jdrNotifyRead" type="button">✓ Mark all as read</button><p style="font-size:11px;color:#9dc7ef">Notifications work while the dashboard is open. Requests are not deleted when marked read.</p></div></div>
+
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
