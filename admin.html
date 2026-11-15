@@ -4396,6 +4396,7 @@ onAuthStateChanged(auth,user=>{
     return;
   }
 
+  jdrStartWaitingNotifications();
   jdrLoadVisitorAnalytics();
   jdrStartUnliAdmin();
   loadAdminReviews();
