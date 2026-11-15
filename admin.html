@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- JDigitalsRental V6.1: Admin-editable 14-day rates, 650 Trophy / 550 Non-Trophy -->
+<!-- JDigitalsRental V6.9 low-read admin optimization; V6.1: Admin-editable 14-day rates, 650 Trophy / 550 Non-Trophy -->
 
 <html lang="en">
 <head>
@@ -4260,13 +4260,13 @@ $("v4FinanceMonth").value=v4MonthISO(new Date());
 $("v4TxnDate").value=todayISO();
 
 
-/* WEBSITE VISITOR ANALYTICS — ADMIN READ ONLY */
+/* WEBSITE VISITOR ANALYTICS — ADMIN READ ONLY; V6.9 bounded, on demand */
 async function jdrLoadVisitorAnalytics(){
  const status=document.getElementById("jdrVisitorStatus");
  if(auth.currentUser?.uid!==ADMIN_UID){status.textContent="Admin sign-in required.";return;}
  status.textContent="Loading visitor statistics…";
  try{
-  const snapshot=await getDocs(collection(db,"websiteVisits"));
+  const snapshot=await getDocs(query(collection(db,"websiteVisits"),limit(500)));
   const phFmt=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit"});
   const phKey=date=>phFmt.format(date);
   const phToday=phKey(new Date());
@@ -4309,8 +4309,8 @@ async function jdrLoadVisitorAnalytics(){
   const top=document.getElementById("jdrTopViewed");
   const setText=(id,value)=>{document.getElementById(id).textContent=value;};
   const results=await Promise.allSettled([
-    getDocs(collection(db,"visitorPresence")),
-    getDocs(collection(db,"gameDetailViews")),
+    getDocs(query(collection(db,"visitorPresence"),limit(500))),
+    getDocs(query(collection(db,"gameDetailViews"),limit(500))),
     getDocs(collection(db,"games"))
   ]);
   const presenceResult=results[0],viewsResult=results[1],gamesResult=results[2];
@@ -4350,7 +4350,7 @@ async function jdrLoadVisitorAnalytics(){
     top.textContent="Cannot load game detail views.";
     warnings.push("game views: "+(viewsResult.reason?.code||"read error"));
   }
-  status.textContent=warnings.length?"Visits updated, but some analytics could not load ("+warnings.join("; ")+"). Check Firestore read permissions.":"All analytics updated. Dates use Philippine time; online means seen in the last 2 minutes.";
+  status.textContent=(snapshot.size>=500?"⚠️ Low-read mode: showing a sample of up to 500 visit records, not lifetime totals. ":"Low-read mode active. ")+(warnings.length?"Some analytics could not load ("+warnings.join("; ")+").":"Analytics loaded. Dates use Philippine time.");
   await jdrLoadV6Analytics();
  }catch(error){
   console.error("Visitor analytics:",error);
@@ -4365,7 +4365,7 @@ async function jdrLoadV6Analytics(){
  const put=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
  const ids=['jdrMobileSessions','jdrDesktopSessions','jdrRentClicks','jdrWaitingClicks','jdrClicksToday','jdrClicksMonth'];
  try{
-  const snap=await getDocs(collection(db,'visitorAnalyticsEvents'));
+  const snap=await getDocs(query(collection(db,'visitorAnalyticsEvents'),limit(500)));
   const phKey=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
   const today=phKey(new Date()),month=today.slice(0,7);
   const mobile=new Set(),desktop=new Set(),counts=new Map();let rent=0,waiting=0,day=0,monthly=0;
@@ -4384,6 +4384,10 @@ async function jdrLoadV6Analytics(){
  }catch(e){ids.forEach(id=>put(id,'—'));put('jdrTopInterest','V6 analytics unavailable: '+(e.code||e.message));status.textContent+=' V6 read access may need Firestore rules updated.';console.warn('V6 analytics',e)}
 }
 
+window.addEventListener('jdr:load-analytics',()=>{
+  if(auth.currentUser?.uid===ADMIN_UID)jdrLoadVisitorAnalytics();
+});
+
 /* FIREBASE AUTHENTICATION */
 
 const ADMIN_UID="4APTlwgwMTNSsdpp76jWwDiEZxp1";
@@ -4399,7 +4403,8 @@ onAuthStateChanged(auth,user=>{
   }
 
   jdrStartWaitingNotifications();
-  jdrLoadVisitorAnalytics();
+  // Low-read V6.9: visitor analytics only loads when Analytics tab is opened.
+  // jdrLoadVisitorAnalytics();
   jdrStartUnliAdmin();
   loadAdminReviews();
   psnLoad().then(()=>loadAdminGames().then(()=>{v4RenderCalendar();renderPsnExpiryAlerts();return psnSyncFromGames();})).catch(console.error);
@@ -4412,12 +4417,7 @@ onAuthStateChanged(auth,user=>{
   // Sync existing reservations once when admin opens dashboard.
   loadWaitingList().catch(error=>console.error("Counter sync:",error));
 
-  loadAdminGames().then(()=>{v4RenderCalendar();renderPsnExpiryAlerts();}).catch(error=>{
-    console.error(error);
-    alert(
-      "Unable to load admin games. Check Firebase access."
-    );
-  });
+  // V6.9: game list already loads in the psnLoad() chain above; no duplicate startup scan.
 });
 
 /* V6.8: No automatic full-collection polling. Changes are refreshed after admin actions. */
@@ -4502,9 +4502,15 @@ document.addEventListener('DOMContentLoaded',function(){
     const summary=document.createElement('summary');summary.textContent='🚀 Smart Business Reports — click to expand';
     business.parentNode.insertBefore(details,business);details.appendChild(summary);details.appendChild(business);
   }
+  let jdrAnalyticsLastLoaded=0;
   function selectPage(key){
     if(!pages[key])return;
     Object.entries(pages).forEach(([id,page])=>{page.hidden=id!==key});
+    // On-demand analytics: no Firestore visitor scans on every admin login.
+    if(key==='analytics' && Date.now()-jdrAnalyticsLastLoaded>90000){
+      jdrAnalyticsLastLoaded=Date.now();
+      window.dispatchEvent(new Event('jdr:load-analytics'));
+    }
     nav.querySelectorAll('button').forEach(btn=>btn.setAttribute('aria-selected',String(btn.dataset.page===key)));
     try{history.replaceState(null,'','#'+key)}catch(e){}
     window.scrollTo({top:0,behavior:'instant'});
