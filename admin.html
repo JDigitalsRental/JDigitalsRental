@@ -453,6 +453,15 @@ html{scroll-behavior:smooth}
  .jdr-clean-page>h2{font-size:20px}
 }
 
+
+/* V6.8 — low-read waiting-list alerts */
+#jdrNotifyDock{position:fixed;right:14px;top:78px;z-index:1100;font-family:Arial,sans-serif}
+#jdrNotifyButton{background:#0c3268;color:white;border:1px solid #64baff;border-radius:999px;padding:12px 16px;box-shadow:0 8px 24px #0009;font-weight:800}
+#jdrNotifyPanel{display:none;width:min(340px,calc(100vw - 28px));max-height:65vh;overflow:auto;margin-top:8px;background:#06162e;border:1px solid #3873b5;border-radius:15px;padding:14px;color:#e7f5ff;box-shadow:0 12px 30px #000b}
+#jdrNotifyPanel.active{display:block}
+.jdr-notify-item{padding:10px 0;border-bottom:1px solid #274a79;font-size:12px;line-height:1.6}
+.jdr-notify-item small{color:#9dc7ef}
+#jdrNotifyPanel button{padding:8px 10px;background:#125394;color:white;border:1px solid #398bda;border-radius:8px;margin-top:8px}
 </style>
 </head>
 
@@ -1305,11 +1314,12 @@ html{scroll-behavior:smooth}
  <div class="business-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span>🎮 Non-Trophy UNLI SWAP <small>₱700 / month (default)</small></span><button type="button" id="jdrNonTrophyToggle" disabled>Loading…</button></div>
  <p id="jdrUnliAdminStatus" class="business-muted" role="status">Checking availability…</p>
 </section>
+<div id="jdrNotifyDock" hidden><button id="jdrNotifyButton" type="button">🔔 Waiting List <span id="jdrNotifyCount">0</span></button><div id="jdrNotifyPanel"><strong>🔔 New Waiting List Requests</strong><div id="jdrNotifyItems" style="margin-top:10px">Loading…</div><button id="jdrNotifyRead" type="button">✓ Mark all as read</button><p style="font-size:11px;color:#9dc7ef">Notifications work while the dashboard is open. Requests are not deleted when marked read.</p></div></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
-  getFirestore,collection,doc,getDocs,onSnapshot,
+  getFirestore,collection,doc,getDocs,onSnapshot,query,orderBy,limit,
   setDoc,getDoc,updateDoc,deleteDoc,writeBatch,runTransaction,serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import {getStorage,ref as storageRef,uploadBytes,getBlob,deleteObject} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
@@ -2029,8 +2039,7 @@ async function loadAdminGames(){
     alertBox.appendChild(row);
   }
 
-  const waiting=await getDocs(collection(db,"waitingList"));
-  $("waitingGames").textContent=waiting.size;
+  // Waiting-list total is updated by the bounded notification listener.
 }
 function updateManageSlotUI(slot){
   const prefix=slot==="trophy"?"manageTrophy":"manageNonTrophy";
@@ -2923,28 +2932,7 @@ async function loadWaitingList(){
       collection(db,"waitingList")
     );
 
-    // Publish anonymized counters for older reservations, too.
-    // Admin-only writes; customer names never enter the public collection.
-    for(let i=0;i<snapshot.docs.length;i+=400){
-      const chunk=snapshot.docs.slice(i,i+400);
-      const publicDocs=await Promise.all(chunk.map(d=>
-        getDoc(doc(db,"publicWaitingList",d.id))
-      ));
-      const batch=writeBatch(db);
-      let changes=0;
-      chunk.forEach((d,j)=>{
-        if(publicDocs[j].exists())return;
-        const r=d.data();
-        batch.set(doc(db,"publicWaitingList",d.id),{
-          gameId:String(r.gameId||""),
-          gameName:String(r.gameName||r.gameId||"Unknown Game"),
-          accountType:String(r.accountType||"Trophy")
-        });
-        changes++;
-      });
-      if(changes)await batch.commit();
-    }
-
+    // Read-only waiting-list display. Never scan each record with getDoc on opening.
     const reservations=snapshot.docs.map(d=>({
       id:d.id,
       ...d.data()
@@ -3143,6 +3131,48 @@ for(const [button,modal] of [
       closeModal(modal);
     }
   });
+}
+
+
+/* V6.8: One bounded listener, no background collection polling. */
+let jdrNotifyUnsubscribe=null;
+let jdrNotifyDocs=[];
+let jdrNotifyInitialized=false;
+const jdrNotifySeenKey='jdr-waiting-notify-seen-v68';
+function jdrNotifySeen(){try{return new Set(JSON.parse(localStorage.getItem(jdrNotifySeenKey)||'[]'));}catch{return new Set();}}
+function jdrRenderNotifications(){
+ const seen=jdrNotifySeen();const fresh=jdrNotifyDocs.filter(x=>!seen.has(x.id));
+ document.getElementById('jdrNotifyCount').textContent=String(fresh.length);
+ const box=document.getElementById('jdrNotifyItems');box.replaceChildren();
+ if(!fresh.length){box.textContent='No unread requests.';return;}
+ fresh.forEach(r=>{
+  const el=document.createElement('div');el.className='jdr-notify-item';
+  const heading=document.createElement('strong');heading.textContent='🎮 '+String(r.gameName||r.gameId||'Game request');
+  const info=document.createElement('small');info.textContent='👤 '+String(r.name||r.customerName||r.renterName||'Customer')+' • '+String(r.accountType||'Account not specified')+' • '+String(r.period||r.rentalPeriod||'');
+  el.append(heading,info);box.append(el);
+ });
+}
+function jdrStartWaitingNotifications(){
+ if(jdrNotifyUnsubscribe)return;
+ document.getElementById('jdrNotifyDock').hidden=false;
+ const button=document.getElementById('jdrNotifyButton');
+ button.onclick=()=>document.getElementById('jdrNotifyPanel').classList.toggle('active');
+ document.getElementById('jdrNotifyRead').onclick=()=>{
+  const seen=jdrNotifySeen();jdrNotifyDocs.forEach(x=>seen.add(x.id));
+  localStorage.setItem(jdrNotifySeenKey,JSON.stringify([...seen].slice(-500)));
+  jdrRenderNotifications();
+ };
+ // Limit to 20 most recently created entries, avoiding a listener over the entire collection.
+ jdrNotifyUnsubscribe=onSnapshot(query(collection(db,'waitingList'),orderBy('createdAt','desc'),limit(20)),snap=>{
+  jdrNotifyDocs=snap.docs.map(d=>({id:d.id,...d.data()}));
+  if(!jdrNotifyInitialized){
+   jdrNotifyInitialized=true;
+   // First open establishes a baseline; only later arrivals count as new.
+   const seen=jdrNotifySeen();jdrNotifyDocs.forEach(x=>seen.add(x.id));
+   localStorage.setItem(jdrNotifySeenKey,JSON.stringify([...seen].slice(-500)));
+  }
+  jdrRenderNotifications();
+ },error=>{document.getElementById('jdrNotifyItems').textContent='Unable to load notifications: '+error.message;});
 }
 
 /* LOGOUT */
@@ -4387,16 +4417,7 @@ onAuthStateChanged(auth,user=>{
   });
 });
 
-/* AUTO REFRESH EVERY 60 SECONDS */
-
-setInterval(()=>{
-  if(auth.currentUser?.uid===ADMIN_UID){
-    loadAdminGames().then(()=>{v4RenderCalendar();renderPsnExpiryAlerts();return psnSyncFromGames();}).catch(console.error);
-    loadBusinessOverview().catch(console.error);
-    refreshCustomerSafetyAlerts().catch(console.error);
-    renderPsnExpiryAlerts();
-  }
-},60000);
+/* V6.8: No automatic full-collection polling. Changes are refreshed after admin actions. */
 
 </script>
 <div class="evidence-lightbox" id="evidenceLightbox" role="dialog" aria-modal="true" aria-label="Private screenshot viewer"><button type="button" id="evidenceLightboxClose">✕ Close screenshot</button><img id="evidenceLightboxImage" alt="Private evidence screenshot"></div>
