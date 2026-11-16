@@ -6773,5 +6773,78 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<style id="jdr-v6-cinematic-css">
+/* JDR V6 cinematic visual layer — additive, no Firebase changes */
+body{background-color:#030814}
+.hero{background:radial-gradient(ellipse at 75% 20%,rgba(5,90,190,.19),transparent 65%),linear-gradient(125deg,rgba(2,6,17,.96),rgba(4,17,39,.76))!important}
+.hero-art.jdr-featured-slider{border-radius:23px!important;border:1px solid #3f9ffb!important;box-shadow:0 22px 55px #0009,0 0 35px #078cff48!important}
+.jdr-featured-slider .jdr-featured-photo{filter:saturate(1.12) contrast(1.06)}
+.hero h1{filter:drop-shadow(0 7px 16px #0008)}
+#rentalModal .rental-modal-card{overflow-y:auto!important;overscroll-behavior:contain;max-height:94dvh!important;position:relative;border:1px solid #4aafff!important;box-shadow:0 24px 80px #000d,0 0 30px #087cff30!important}
+#rentalModal .jdr-v6-art{height:210px;position:relative;margin:-24px -20px 20px;overflow:hidden;background:linear-gradient(140deg,#08234c,#020713)}
+#rentalModal .jdr-v6-art img{width:100%;height:100%;object-fit:cover;object-position:center 35%;display:block}
+#rentalModal .jdr-v6-art::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#081a32 0%,transparent 75%)}
+#rentalModal .jdr-v6-art-label{position:absolute;z-index:1;bottom:15px;left:18px;color:#e7f7ff;font-size:10px;font-weight:900;letter-spacing:2px;text-shadow:0 2px 12px #000}
+#rentalModal .modal-close{z-index:5!important}
+#rentalModal .jdr-v6-overview{padding:11px 13px;margin:0 0 15px;border:1px solid #286398;border-radius:13px;background:linear-gradient(125deg,#082344,#061328);font-size:12px;color:#d8e9ff}
+#rentalModal .jdr-v6-overview strong{display:block;color:#6fc8ff;margin-bottom:6px}
+#rentalModal .jdr-v6-status{display:flex;flex-wrap:wrap;gap:7px}
+#rentalModal .jdr-v6-status span{padding:5px 8px;border:1px solid #32638e;border-radius:9px}
+#rentalModal .jdr-v6-status .ok{color:#71ffc4;border-color:#18865b}
+#rentalModal .jdr-v6-status .busy{color:#ffadbf;border-color:#a44563}
+@media(max-width:600px){.hero-art.jdr-featured-slider{min-height:310px!important}#rentalModal .jdr-v6-art{height:190px;margin:-22px -15px 17px}#rentalModal .rental-modal-card{max-height:95dvh!important}}
+@media(prefers-reduced-motion:reduce){.jdr-featured-slider *{transition:none!important;animation:none!important}}
+</style>
+
+<script id="jdr-v6-cinematic-details">
+/* Display-only cinematic enhancement. Existing rental form remains authoritative. */
+(function(){
+ 'use strict';
+ function init(){
+  const modal=document.getElementById('rentalModal');
+  const card=modal?.querySelector('.rental-modal-card');
+  const title=document.getElementById('modalTitle');
+  if(!modal||!card||!title||card.querySelector('.jdr-v6-art'))return;
+  const art=document.createElement('div');art.className='jdr-v6-art';
+  const pic=document.createElement('img');pic.alt='Game artwork';
+  const label=document.createElement('div');label.className='jdr-v6-art-label';label.textContent='JDIGITALSRENTAL · GAME DETAILS';
+  art.append(pic,label);
+  const info=document.createElement('div');info.className='jdr-v6-overview';
+  const heading=document.createElement('strong');heading.textContent='LIVE ACCOUNT AVAILABILITY';
+  const statuses=document.createElement('div');statuses.className='jdr-v6-status';
+  info.append(heading,statuses);
+  const eyebrow=card.querySelector('.modal-eyebrow');
+  if(eyebrow)eyebrow.before(art);else card.prepend(art);
+  title.after(info);
+  function refresh(){
+   const name=title.textContent.replace(/^Rent\s*[—–-]\s*/i,'').trim();
+   let match;
+   try{match=Array.isArray(games)?games.find(g=>g.name===name):null}catch(e){}
+   art.hidden=!match;info.hidden=!match;
+   if(!match)return;
+   if(pic.getAttribute('src')!==match.image)pic.src=match.image||'';
+   pic.alt=match.name+' cover art';
+   statuses.replaceChildren();
+   for(const [key,caption] of [['trophy','🏆 Trophy'],['nonTrophy','🎮 Non-Trophy']]){
+    let rented=false;
+    try{rented=typeof slotIsRented==='function'?slotIsRented(match,key):false}catch(e){}
+    const span=document.createElement('span');span.className=rented?'busy':'ok';
+    const date=key==='trophy'?match.trophyDate:match.nonTrophyDate;
+    span.textContent=caption+': '+(rented?'Currently Rented'+(date?' · '+date:''):'Available Now');
+    statuses.append(span);
+   }
+  }
+  let wasOpen=false;
+  new MutationObserver(()=>{
+   const isOpen=modal.classList.contains('active');
+   if(isOpen&&!wasOpen)refresh();
+   wasOpen=isOpen;
+  }).observe(modal,{attributes:true,attributeFilter:['class']});
+  if(modal.classList.contains('active'))refresh();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body>
 </html>
