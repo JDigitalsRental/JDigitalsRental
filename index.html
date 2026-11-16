@@ -4899,7 +4899,7 @@ function render() {
           <div class="jdr-compact-hint">Full prices, return dates &amp; rental plans in <b>View Details</b></div>
 
           <button class="rent" type="button">
-            ${bothRented ? "Join Waiting List ↗" : "Rent Now ↗"}
+            ✦ View Details
           </button>
         </div>
       </div>
@@ -4907,7 +4907,9 @@ function render() {
 
     card.querySelector(".rent")
       .addEventListener("click", () => {
-        openRentalModal(game);
+        // Reuse the existing Game Details click handler on the cover image.
+        const coverImage = card.querySelector(".cover-wrap img");
+        if (coverImage) coverImage.click();
       });
 
     card.querySelector(".mega-favorite")
@@ -6040,7 +6042,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   function updateCards(){
     for(const card of grid.querySelectorAll('.game-card')){
       const name=card.querySelector('h3')?.textContent;const g=availableGames().find(x=>x.name===name);if(!g)continue;
-      const cover=card.querySelector('.cover-wrap');if(cover&&!cover.querySelector('.jdr-cover-open')){const b=document.createElement('button');b.type='button';b.className='jdr-cover-open';b.textContent='✦ View Details';b.addEventListener('click',()=>{const img=cover.querySelector('img');if(img)img.click()});cover.appendChild(b)}
+      // The main card button now opens Game Details; no duplicate cover button.
       const boxes=card.querySelectorAll('.availability');[['trophy','trophyDate'],['nonTrophy','nonTrophyDate']].forEach(([slot,key],i)=>{const box=boxes[i];if(!box)return;let timer=box.querySelector('.jdr-return-timer');const rented=typeof slotIsRented==='function'&&slotIsRented(g,slot);const date=readDate(g[key]);if(!rented||!date){timer?.remove();return}if(!timer){timer=document.createElement('div');timer.className='jdr-return-timer';box.appendChild(timer)}timer.textContent=countdownText(date);timer.classList.toggle('overdue',date.getTime()<Date.now())});
     }
   }
