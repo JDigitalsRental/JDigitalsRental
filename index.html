@@ -6886,5 +6886,68 @@ body{background-color:var(--jdr-night)}
 @media(prefers-reduced-motion:reduce){.jdr-details-panel,.hero-art,.game-card{animation:none!important;transition:none!important}}
 </style>
 
+
+<!-- V6.1 visual polish: presentation only; booking and Firebase untouched. -->
+<style id="jdr-v61-polish">
+/* Readable brand headline */
+.hero h1,.hero-title{filter:none!important}
+.hero h1 em,.hero h1 span,.hero-title em,.hero-title span{opacity:1!important}
+/* The details dialog becomes a cinematic banner rather than a small portrait. */
+@media(max-width:640px){
+ #jdrDetails .jdr-details-panel{max-height:94dvh!important;overflow-x:hidden}
+ #jdrDetails .jdr-details-visual{padding:0!important;position:relative;background:#040c1b!important}
+ #jdrDetailsImage{width:100%!important;height:230px!important;max-height:none!important;object-fit:cover!important;object-position:center 32%!important;border-radius:0!important}
+ #jdrDetails .jdr-details-visual:after{content:"";position:absolute;left:0;right:0;top:140px;height:90px;background:linear-gradient(transparent,#07172d);pointer-events:none}
+ #jdrDetailsGallery{position:relative;z-index:1;padding:0 15px 10px;margin-top:-38px!important}
+ #jdrDetails .jdr-details-content{padding:16px 17px 26px!important}
+ #jdrDetails .jdr-details-close{position:sticky!important;top:8px!important;float:right!important;margin:9px 9px -47px 0!important;z-index:30!important}
+ #jdrDetails .jdr-details-availability{gap:8px}
+ #jdrDetails .jdr-details-actions{gap:9px}
+ .jdr2-chat{right:8px!important;bottom:calc(96px + env(safe-area-inset-bottom))!important;width:36px!important;height:36px!important}
+ .jdr2-scrolltop{right:10px!important;bottom:calc(141px + env(safe-area-inset-bottom))!important;width:30px!important;height:30px!important}
+}
+/* Trailer can be expanded on demand without changing playback logic. */
+#jdrDetails .jdr-v61-trailer-toggle{display:block;width:100%;padding:12px;margin:12px 0;border:1px solid #3477b6;border-radius:12px;background:#0a2546;color:#e4f4ff;font-weight:750;text-align:left;cursor:pointer}
+#jdrDetails .jdr-v61-trailer-wrap[hidden]{display:none!important}
+</style>
+<script id="jdr-v61-safe-enhancements">
+(function(){
+ const descriptions={
+  'phantom blade zero':'An action RPG featuring fast-paced sword combat, martial-arts-inspired encounters and a dark, mysterious world.',
+  'final fantasy vii rebirth':'Continue Cloud and his companions’ journey beyond Midgar in a sprawling RPG filled with exploration, battles and memorable characters.',
+  'the witcher 3: wild hunt – remastered':'Play as Geralt of Rivia in a vast fantasy world of monster contracts, difficult choices and story-driven adventures.',
+  'the witcher 3: wild hunt - remastered':'Play as Geralt of Rivia in a vast fantasy world of monster contracts, difficult choices and story-driven adventures.',
+  'marvel’s wolverine':'Take on a superhero action adventure centered on Wolverine and his fierce close-quarters combat.',
+  "marvel's wolverine":'Take on a superhero action adventure centered on Wolverine and his fierce close-quarters combat.',
+  'onimusha: way of the sword':'Enter a dark samurai action adventure featuring swordplay and supernatural enemies.',
+  'castlevania belmont’s curse':'Explore a gothic action adventure in the Castlevania universe.',
+  "castlevania belmont's curse":'Explore a gothic action adventure in the Castlevania universe.',
+  'control resonant':'Explore a supernatural action adventure set in the world of Control.',
+  'the blood of dawnwalker':'Enter a dark fantasy role-playing adventure with a vampire-themed world.',
+  'grand theft auto vi':'Explore the fictional state of Leonida in an open-world crime adventure featuring Jason and Lucia.'
+ };
+ function enhance(){
+  const overlay=document.getElementById('jdrDetails');if(!overlay)return;
+  const title=overlay.querySelector('#jdrDetailsTitle');const desc=overlay.querySelector('#jdrDetailsDescription');
+  if(title&&desc){const key=title.textContent.trim().toLowerCase();const value=descriptions[key];if(value&&(!desc.textContent.trim()||/explore this ps5 title through/i.test(desc.textContent)))desc.textContent=value;}
+  /* Don't hide or replace external trailer controls: only wrap when the site has a trailer container. */
+  const trailer=overlay.querySelector('.jdr-trailer-container,.jdr-details-trailer-container');
+  if(trailer&&!trailer.closest('.jdr-v61-trailer-wrap')){
+   const wrap=document.createElement('div');wrap.className='jdr-v61-trailer-wrap';wrap.hidden=true;
+   trailer.parentNode.insertBefore(wrap,trailer);wrap.appendChild(trailer);
+   const toggle=document.createElement('button');toggle.type='button';toggle.className='jdr-v61-trailer-toggle';toggle.textContent='▶ Show Game Trailer';
+   wrap.parentNode.insertBefore(toggle,wrap);
+   toggle.addEventListener('click',()=>{wrap.hidden=!wrap.hidden;toggle.textContent=wrap.hidden?'▶ Show Game Trailer':'▼ Hide Game Trailer';});
+  }
+ }
+ document.addEventListener('DOMContentLoaded',()=>{
+  const overlay=document.getElementById('jdrDetails');if(!overlay)return;
+  let scheduled=false;
+  new MutationObserver(()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;enhance();});}).observe(overlay,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class']});
+  enhance();
+ });
+})();
+</script>
+
 </body>
 </html>
