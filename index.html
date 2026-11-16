@@ -6846,5 +6846,45 @@ body{background-color:#030814}
 })();
 </script>
 
+
+<!-- JDR V6 FINAL: consolidated mobile visual polish. No database writes. -->
+<style id="jdr-v6-final-polish">
+:root{--jdr-night:#030916;--jdr-navy:#081d3b;--jdr-electric:#139bff}
+html{scroll-padding-top:95px}
+body{background-color:var(--jdr-night)}
+.section{scroll-margin-top:90px}
+/* More cohesive cinematic surfaces without changing content or prices */
+#about,#upcoming,#games,#reviews,#plans,#how,#rules,#faq{position:relative}
+#gameGrid .game-card,.upcoming-game-card{overflow:hidden;border-color:#367bb9a8!important;background:linear-gradient(160deg,#0d284c,#061126 80%)!important}
+#gameGrid .game-card:focus-within,.upcoming-game-card:focus-within{outline:2px solid #62c7ff;outline-offset:2px}
+#gameGrid .game-card button:focus-visible,.upcoming-game-card button:focus-visible{outline:2px solid #c5edff;outline-offset:2px}
+.jdr-details-panel{border-color:#65baff!important;background:linear-gradient(145deg,#0d284a,#030b1b 75%)!important}
+.jdr-details-visual img{object-fit:cover}
+#rentalModal .rental-modal-card{background:linear-gradient(155deg,#0b294d,#030b1b 75%)!important}
+/* Preserve all rental information; reduce excessive empty space */
+#upcomingGames .upcoming-game-card{min-width:0}
+#upcomingGames .upcoming-game-card .availability{overflow-wrap:anywhere}
+#games .section-heading,#reviews .section-heading{margin-bottom:18px}
+/* Floating help controls are smaller and don't stack over important CTAs */
+@media(max-width:700px){
+ body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+ .section{scroll-margin-top:85px}
+ .hero{min-height:0!important}
+ .hero-art.jdr-featured-slider{box-shadow:0 12px 35px #000b,0 0 22px #087cff3a!important}
+ .jdr2-chat{width:39px!important;height:39px!important;right:10px!important;bottom:calc(92px + env(safe-area-inset-bottom))!important;padding:7px!important;opacity:.88;box-shadow:0 5px 15px #0008!important}
+ .jdr2-chat span{font-size:18px!important}
+ .jdr2-scrolltop{width:33px!important;height:33px!important;right:13px!important;bottom:calc(138px + env(safe-area-inset-bottom))!important;font-size:17px!important;opacity:0}
+ .jdr2-scrolltop.is-visible{opacity:.84}
+ .jdr-dock{z-index:900!important}
+ #upcomingGames .upcoming-game-card{border-radius:15px!important}
+ #upcomingGames .upcoming-game-card .cover-wrap{min-width:0}
+ #gameGrid .game-card{min-width:0;border-radius:15px!important}
+ #gameGrid .game-card h3{overflow-wrap:anywhere}
+ .jdr-details-overlay .jdr-details-panel{width:100%;max-height:95dvh;border-radius:19px 19px 0 0}
+ #rentalModal .rental-modal-card{max-height:94dvh!important}
+}
+@media(prefers-reduced-motion:reduce){.jdr-details-panel,.hero-art,.game-card{animation:none!important;transition:none!important}}
+</style>
+
 </body>
 </html>
