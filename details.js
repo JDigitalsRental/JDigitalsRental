@@ -27,6 +27,8 @@
     const image = $('jdrDetailsImage');
     image.src = sources[0] || '';
     image.alt = escapeText(game.name) + ' cover';
+    image.style.objectFit = 'cover';
+    image.style.objectPosition = 'center 32%';
     for (const src of sources) {
       const button = document.createElement('button');
       button.type = 'button';
@@ -70,6 +72,7 @@
   fallback.style.cssText = 'display:inline-block;color:#a5d6ff;margin-top:9px;font-size:12px';
   trailerBox.append(trailerHead,trailerFrameWrap,fallback);
   trailerLink.closest('.jdr-details-actions').insertAdjacentElement('afterend',trailerBox);
+  trailerLink.textContent = '▶ Show Game Trailer';
   const note = overlay.querySelector('.jdr-details-note');
   if(note) note.textContent = 'Trailers with a YouTube link start automatically on mute. Tap Unmute for sound. Some videos or browsers may block embedded autoplay.';
   function trailerVideoId(urlText) {
@@ -95,6 +98,7 @@
   function stopTrailer() {
     trailerFrameWrap.replaceChildren(); // Removing iframe stops the trailer.
     trailerBox.hidden = true;
+    trailerLink.textContent = '▶ Show Game Trailer';
     trailerMuted = true;
     soundButton.textContent = '🔊 Unmute';
   }
@@ -115,6 +119,7 @@
     fallback.href = 'https://www.youtube.com/watch?v=' + videoId;
     soundButton.textContent = muted ? '🔊 Unmute' : '🔇 Mute';
     trailerBox.hidden = false;
+    trailerLink.textContent = '▼ Hide Game Trailer';
     return true;
   }
   soundButton.addEventListener('click', () => {
@@ -212,12 +217,12 @@
     const trailer = $('jdrDetailsTrailer');
     const validTrailer = !!trailerVideoId(game.trailerUrl);
     trailer.href = validTrailer ? game.trailerUrl : 'https://www.youtube.com/results?search_query=' + encodeURIComponent(game.name + ' official game trailer');
-    trailer.textContent = validTrailer ? '▶ Replay / Close Trailer' : '▶ Find Game Trailer ↗';
+    trailer.textContent = validTrailer ? '▶ Show Game Trailer' : '▶ Find Game Trailer ↗';
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     $('jdrDetailsClose').focus();
-    if (validTrailer) playTrailer(game, true); // Muted autoplay when details open.
+    // Trailer loads only after a customer taps Show Game Trailer.
   }
   function close() {
     stopTrailer();
