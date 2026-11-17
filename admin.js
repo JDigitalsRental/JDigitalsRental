@@ -428,6 +428,32 @@ function getPrices(g){
   };
 }
 
+const rentplayPriceKeys=["weeklyTrophy","weeklyNonTrophy","twoWeeksTrophy","twoWeeksNonTrophy","singleMonthlyTrophy","singleMonthlyNonTrophy","monthlyTrophy","monthlyNonTrophy"];
+function rentplayPricesFromForm(prefix,existing){
+  const base=existing?.rentplayPrices||{};
+  const original=prefix==="new"?pricesFromForm("new"):getPrices(existing||{});
+  const result={};
+  for(const key of rentplayPriceKeys){
+    const field=$(prefix+"Rentplay"+key.charAt(0).toUpperCase()+key.slice(1));
+    if(!field)throw Error("RENTPLAY PH price fields missing. Refresh admin.html.");
+    const raw=field.value.trim();
+    if(raw===""){
+      result[key]=Number(base[key]??original[key]);
+    }else{
+      const value=Number(raw);
+      if(!Number.isFinite(value)||value<0)throw Error("Invalid RENTPLAY PH price: "+key);
+      result[key]=value;
+    }
+  }
+  return result;
+}
+function fillRentplayPrices(prefix,game){
+  for(const key of rentplayPriceKeys){
+    const field=$(prefix+"Rentplay"+key.charAt(0).toUpperCase()+key.slice(1));
+    if(field)field.value=game?.rentplayPrices?.[key]??"";
+  }
+}
+
 function slotFields(slot){
   return slot==="trophy"
     ?{status:"trophyStatus",date:"trophyDate"}
@@ -895,6 +921,7 @@ function openManage(id){
   showCover("manage",g.image||"");
 
   const p=getPrices(g);
+  fillRentplayPrices("manage",g);
 
   fillMediaForm("manage",g);
 
@@ -1103,7 +1130,7 @@ $("saveGameChanges").addEventListener("click",async()=>{
   try{
     if($("manageGameCover").files.length && !coverData.manage)
       throw Error("Please wait for the cover to finish processing.");
-    const updates={...formGameData("manage"),...mediaFromForm("manage")};
+    const updates={...formGameData("manage"),...mediaFromForm("manage"),rentplayPrices:rentplayPricesFromForm("manage",gameCache.get(selectedGameId))};
     if(coverData.manage)updates.image=coverData.manage;
 
     btn.disabled=true;
@@ -1487,6 +1514,7 @@ for(const prefix of ["newGameStatus","manageStatus"]){
 
 $("addGameButton").addEventListener("click",()=>{
   fillMediaForm("new",{});
+  fillRentplayPrices("new",{});
   coverData.new=null;
   $("newGameCover").value="";
   $("newGameCoverHint").textContent="Choose a photo. It will be resized automatically before saving.";
@@ -1510,7 +1538,7 @@ $("saveNewGame").addEventListener("click",async()=>{
       );
     }
 
-    const data={...formGameData("new"),...mediaFromForm("new")};
+    const data={...formGameData("new"),...mediaFromForm("new"),rentplayPrices:rentplayPricesFromForm("new",{})};
 
     const gameId=title.toLowerCase()
       .replace(/[^a-z0-9]+/g,"-")
