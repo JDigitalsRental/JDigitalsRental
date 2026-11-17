@@ -397,7 +397,7 @@ function pricesFromForm(prefix){
   const twoWeeksTrophy=numberFrom(prefix+"TwoWeeksTrophy");
   const twoWeeksNonTrophy=numberFrom(prefix+"TwoWeeksNonTrophy");
   const monthlyTrophy=numberFrom(prefix+"MonthlyTrophy");
-  const monthlyNonTrophy=numberFrom(prefix+"MonthlyNonTrophy");
+  const monthlyNonTrophy=monthlyTrophy; // One shared UNLI SWAP price for both slots
   const singleMonthlyTrophy=numberFrom(prefix+"SingleMonthlyTrophy");
   const singleMonthlyNonTrophy=numberFrom(prefix+"SingleMonthlyNonTrophy");
 
@@ -421,8 +421,8 @@ function getPrices(g){
     weeklyNonTrophy:Number(g.weeklyNonTrophy??300),
     twoWeeksTrophy:Number(g.twoWeeksTrophy??650),
     twoWeeksNonTrophy:Number(g.twoWeeksNonTrophy??550),
-    monthlyTrophy:Number(g.monthlyTrophy??800),
-    monthlyNonTrophy:Number(g.monthlyNonTrophy??700),
+    monthlyTrophy:Number(g.monthlyTrophy??850),
+    monthlyNonTrophy:Number(g.monthlyTrophy??850),
     singleMonthlyTrophy:Number(g.singleMonthlyTrophy??500),
     singleMonthlyNonTrophy:Number(g.singleMonthlyNonTrophy??400)
   };
@@ -921,7 +921,7 @@ function openManage(id){
   showCover("manage",g.image||"");
 
   const p=getPrices(g);
-  fillRentplayPrices("manage",g);
+  // RENTPLAY PH uses the same game prices; no separate pricing form.
 
   fillMediaForm("manage",g);
 
@@ -1130,7 +1130,7 @@ $("saveGameChanges").addEventListener("click",async()=>{
   try{
     if($("manageGameCover").files.length && !coverData.manage)
       throw Error("Please wait for the cover to finish processing.");
-    const updates={...formGameData("manage"),...mediaFromForm("manage"),rentplayPrices:rentplayPricesFromForm("manage",gameCache.get(selectedGameId))};
+    const updates={...formGameData("manage"),...mediaFromForm("manage")};
     if(coverData.manage)updates.image=coverData.manage;
 
     btn.disabled=true;
@@ -1514,7 +1514,7 @@ for(const prefix of ["newGameStatus","manageStatus"]){
 
 $("addGameButton").addEventListener("click",()=>{
   fillMediaForm("new",{});
-  fillRentplayPrices("new",{});
+  // RENTPLAY PH uses the same game prices; no separate pricing form.
   coverData.new=null;
   $("newGameCover").value="";
   $("newGameCoverHint").textContent="Choose a photo. It will be resized automatically before saving.";
@@ -1538,7 +1538,7 @@ $("saveNewGame").addEventListener("click",async()=>{
       );
     }
 
-    const data={...formGameData("new"),...mediaFromForm("new"),rentplayPrices:rentplayPricesFromForm("new",{})};
+    const data={...formGameData("new"),...mediaFromForm("new")};
 
     const gameId=title.toLowerCase()
       .replace(/[^a-z0-9]+/g,"-")
@@ -3220,3 +3220,29 @@ document.addEventListener('DOMContentLoaded',function(){
   const hash=location.hash.slice(1);if(pages[hash])selectPage(hash);
 });
 }
+// Shared pricing UI: retain existing HTML IDs without duplicate Firebase price fields.
+(function setupSharedPricingUI() {
+  function setup(prefix) {
+    const trophy=document.getElementById(prefix+"MonthlyTrophy");
+    const non=document.getElementById(prefix+"MonthlyNonTrophy");
+    if(trophy&&non) {
+      trophy.addEventListener("input",()=>{non.value=trophy.value;});
+      non.readOnly=true;
+      non.setAttribute("aria-label","Same as Trophy UNLI SWAP price");
+      non.title="Automatically matches Trophy UNLI SWAP";
+    }
+    const keys=["WeeklyTrophy","WeeklyNonTrophy","TwoWeeksTrophy","TwoWeeksNonTrophy",
+      "SingleMonthlyTrophy","SingleMonthlyNonTrophy","MonthlyTrophy","MonthlyNonTrophy"];
+    for(const key of keys) {
+      const input=document.getElementById(prefix+"Rentplay"+key);
+      if(input) {
+        input.disabled=true;
+        const wrapper=input.closest(".price-field, .form-group, .field, label");
+        input.style.display="none";
+        const label=document.querySelector('label[for="'+input.id+'"]');
+        if(label)label.style.display="none";
+      }
+    }
+  }
+  setup("new"); setup("manage");
+})();
