@@ -1743,6 +1743,10 @@ async function loadWaitingList(){
           details.textContent=
             `${r.rentalPeriod||"N/A"} • ${date}`;
 
+          const source=document.createElement("div");
+          source.style.cssText="display:inline-block;margin:7px 0;padding:5px 9px;border-radius:8px;background:#16345c;color:#c8e4ff;font-weight:700;font-size:11px";
+          source.textContent=r.source==="rentplay-ph"?"🌐 RENTPLAY PH":r.source==="jdigitalsrental"?"🌐 JDIGITALSRENTAL":"🌐 Unknown Source";
+
           const remove=document.createElement("button");
           remove.textContent="🗑 Delete";
 
@@ -1773,6 +1777,7 @@ async function loadWaitingList(){
             number,
             customer,
             details,
+            source,
             remove
           );
 
