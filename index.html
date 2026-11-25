@@ -6843,6 +6843,9 @@ body{background-color:var(--jdr-night)}
 </script>
 
 <style id="jdr-int-css">.jdr-int-box{margin:12px 0;padding:12px;border:1px solid #315c89;border-radius:12px;background:#0b203b;color:#d9edff;font-size:13px}.jdr-int-box[hidden]{display:none!important}.jdr-int-box label,.jdr-int-box small{display:block;margin:5px 0}.jdr-int-box select{max-width:100%;width:100%}.jdr-int-est{display:block;color:#8bd3ff;font-size:11px;white-space:normal}.jdr-int-box img{display:block;width:220px;max-width:100%;margin:10px auto}.jdr-int-box summary{cursor:pointer}.jdr-int-box p{margin:8px 0}#gameGrid .jdr-compact-price{flex-wrap:wrap}</style>
+<style id="jdr-currency-premium-css">
+.jdr-currency-premium{background:linear-gradient(125deg,#102c4c,#081526 75%);border:1px solid #367bb4;border-radius:16px;padding:15px 18px;box-shadow:0 8px 25px #0004;position:relative}.jdr-currency-premium [hidden]{display:none!important}.jdr-currency-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.jdr-currency-head strong{font-size:16px;color:#e7f5ff}.jdr-currency-head small{color:#a2bad4;font-size:11px}.jdr-currency-trigger{background:#08192e;border:1px solid #438dc8;border-radius:10px;color:#e5f5ff;padding:12px 15px;font-weight:700;text-align:left;max-width:100%}.jdr-currency-trigger:hover{border-color:#83d4ff}.jdr-currency-premium #jdrIntRate{color:#a4c8e7;font-size:11px;margin-top:10px}.jdr-currency-premium #jdrCurrencyMenu{margin-top:12px;padding:10px;background:#071426;border:1px solid #315c89;border-radius:12px}.jdr-currency-premium input{width:100%;margin-bottom:8px}.jdr-currency-list{max-height:260px;overflow:auto;display:grid;gap:4px}.jdr-currency-option{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:10px;border:1px solid transparent;border-radius:8px;background:#10243d;color:#e2efff;font-size:13px}.jdr-currency-option b{color:#8bd3ff;white-space:nowrap}.jdr-currency-option:hover,.jdr-currency-option[aria-pressed=true]{background:#153c65;border-color:#438dc8}@media(max-width:600px){.jdr-currency-trigger{width:100%}.jdr-currency-premium{padding:12px}}
+</style>
 <script id="jdr-int-js">
 (()=>{
 'use strict';
@@ -6856,7 +6859,18 @@ function init(){
  Object.keys(countries).sort((a,b)=>names.of(a).localeCompare(names.of(b))).forEach(c=>select.add(new Option(names.of(c)+' — '+countries[c],c)));
  let manual=false, rates=null, stamp='', currency='PHP';
  try{const saved=localStorage.getItem('jdrIntCountry');if(countries[saved]){select.value=saved;manual=true;}}catch(e){}
- if(!manual){let region;try{region=new Intl.Locale(navigator.language).maximize().region;}catch(e){}select.value=countries[region]?region:'PH';}
+ if(!manual){let region;try{region=new Intl.Locale(navigator.language).region;}catch(e){}select.value=countries[region]&&region!=='UM'?region:'PH';}else if(select.value==='UM'){select.value='PH';try{localStorage.setItem('jdrIntCountry','PH');}catch(e){}}
+ box.classList.add('jdr-currency-premium');select.hidden=true;box.querySelector('label').remove();
+ const ui=document.createElement('div');ui.innerHTML=`<div class="jdr-currency-head"><div><strong>🌐 Global currency</strong><small>Shop in your preferred currency</small></div><button type="button" class="jdr-currency-trigger" aria-expanded="false" aria-controls="jdrCurrencyMenu"></button></div><div id="jdrCurrencyMenu" hidden><input type="search" placeholder="Search country or currency…" aria-label="Search country or currency"><div class="jdr-currency-list"></div></div>`;box.prepend(ui);
+ const trigger=ui.querySelector('button'),menu=ui.querySelector('#jdrCurrencyMenu'),input=menu.querySelector('input'),list=menu.querySelector('.jdr-currency-list');
+ const flag=c=>String.fromCodePoint(...[...c].map(x=>127397+x.charCodeAt(0)));
+ const popular=['PH','US','SG','GB','AU','CA','JP','HK','AE','ZM'];
+ const sorted=[...popular.filter(c=>countries[c]),...Object.keys(countries).filter(c=>!popular.includes(c)).sort((a,b)=>names.of(a).localeCompare(names.of(b)))];
+ function sync(){const c=select.value||'PH';trigger.textContent=flag(c)+'  '+names.of(c)+' · '+countries[c]+'  ▾';}
+ function close(){menu.hidden=true;trigger.setAttribute('aria-expanded','false');}
+ function draw(){const q=input.value.trim().toLowerCase();list.replaceChildren();for(const c of sorted){if(q&&!(`${names.of(c)} ${countries[c]} ${c}`.toLowerCase().includes(q)))continue;const b=document.createElement('button');b.type='button';b.className='jdr-currency-option';b.setAttribute('aria-pressed',String(c===select.value));const a=document.createElement('span'),v=document.createElement('b');a.textContent=flag(c)+'  '+names.of(c);v.textContent=countries[c]+(c===select.value?' ✓':'');b.append(a,v);b.onclick=()=>{select.value=c;select.dispatchEvent(new Event('change',{bubbles:true}));sync();close();trigger.focus();};list.append(b);}if(!list.children.length)list.textContent='No matching countries.';}
+ trigger.onclick=()=>{if(!menu.hidden){close();return;}menu.hidden=false;trigger.setAttribute('aria-expanded','true');input.value='';draw();input.focus();};input.addEventListener('input',draw);box.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){close();trigger.focus();}});document.addEventListener('click',e=>{if(!box.contains(e.target))close();});sync();
+
  const fmt=(n,c)=>new Intl.NumberFormat('en',{style:'currency',currency:c,currencyDisplay:'code'}).format(n);
  const amount=t=>{const m=t.match(/₱\s*([\d,]+(?:\.\d+)?)/);return m?Number(m[1].replace(/,/g,'')):null;};
  const targets='#gameGrid .jdr-compact-price strong,#jdrDetailsPrices strong,#jdrDetailsPrices span,#jdrBuilderTotal';
