@@ -2543,8 +2543,8 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
 
 
 
-<section class="jdr-v4-showcase" aria-label="Featured PS5 games" id="jdrV4Showcase">
- <div class="jdr-v4-section-heading"><div><p class="jdr-v4-overline">EXPLORE THE COLLECTION</p><h2>🔥 FEATURED <span>GAMES</span></h2><p>Discover titles from our actual PS5 game library.</p></div><a href="#games">View all games ↗</a></div>
+<section class="jdr-v4-showcase" aria-label="Latest PS5 releases" id="jdrV4Showcase">
+ <div class="jdr-v4-section-heading"><div><p class="jdr-v4-overline">EXPLORE THE COLLECTION</p><h2>🔥 LATEST <span>RELEASES</span></h2><p>Discover the newest released games in our PS5 library.</p></div><a href="#games">View all games ↗</a></div>
  <div class="jdr-v4-showcase-track" id="jdrV4ShowcaseTrack"><p class="jdr-v4-loading">Loading game artwork…</p></div>
 </section>
 
@@ -6361,34 +6361,31 @@ body{background-color:#020916!important;background-image:linear-gradient(180deg,
 @media(prefers-reduced-motion:reduce){.jdr-v4-feature{transition:none!important}}
 </style>
 
+<style id="jdr-latest-release-style">
+#jdrV4Showcase .jdr-v4-showcase-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;overflow:visible}
+#jdrV4Showcase .jdr-v4-feature{height:auto;display:flex;flex-direction:column;text-decoration:none;background:linear-gradient(145deg,#102c4d,#071327);border:1px solid #367fb7;border-radius:16px;overflow:hidden;min-width:0}
+#jdrV4Showcase .jdr-v4-feature:after{display:none}
+#jdrV4Showcase .jdr-release-art{position:relative;aspect-ratio:4/3;background:#06152b;overflow:hidden}
+#jdrV4Showcase .jdr-release-art img{width:100%;height:100%;object-fit:contain;object-position:center}
+#jdrV4Showcase .jdr-release-art:before{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#06152b55,transparent 40%);pointer-events:none}
+#jdrV4Showcase .jdr-release-badge{position:absolute;top:9px;left:9px;background:#087bdc;color:white;border-radius:6px;padding:5px 8px;font-size:9px;font-weight:900;letter-spacing:.6px}
+#jdrV4Showcase .jdr-release-info{padding:13px;display:flex;flex-direction:column;gap:7px;flex:1}
+#jdrV4Showcase .jdr-release-info strong{position:static;font-size:15px;line-height:1.3;min-height:2.6em;text-shadow:none}
+#jdrV4Showcase .jdr-release-date{color:#9bbbd8;font-size:11px}
+#jdrV4Showcase .jdr-release-status{font-size:11px;color:#6af1b5;font-weight:700}
+#jdrV4Showcase .jdr-release-status.busy{color:#ff9cae}
+#jdrV4Showcase .jdr-release-cta{border-top:1px solid #285078;padding-top:9px;color:#76caff;font-size:12px;font-weight:800;margin-top:auto}
+@media(max-width:700px){#jdrV4Showcase .jdr-v4-showcase-track{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#jdrV4Showcase .jdr-release-info{padding:10px}#jdrV4Showcase .jdr-release-info strong{font-size:13px}}
+</style>
 <script id="jdr-v4-showcase-script">
 (function(){
- const track=document.getElementById('jdrV4ShowcaseTrack');
- if(!track)return;
- function dateValue(v){
-  if(v==null||v==='')return 0;
-  if(typeof v.toMillis==='function')return v.toMillis();
-  if(typeof v.seconds==='number')return v.seconds*1000;
-  const n=typeof v==='number'?(v<1e12?v*1000:v):Date.parse(v);
-  return Number.isFinite(n)?n:0;
+ const track=document.getElementById('jdrV4ShowcaseTrack');if(!track)return;
+ function released(g){const v=g.releaseDate??g.release_date??g.launchDate??g.launch_date;if(!v)return NaN;if(typeof v.toMillis==='function')return v.toMillis();if(typeof v.seconds==='number')return v.seconds*1000;if(typeof v==='number')return v<1e12?v*1000:v;const m=String(v).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);return d.getFullYear()===+m[1]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[3]?d.getTime():NaN;}return Date.parse(v);}
+ function el(tag,cls,text){const n=document.createElement(tag);n.className=cls;if(text)n.textContent=text;return n;}
+ function fill(){if(!Array.isArray(window.firestoreGames))return;const now=new Date();const end=new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999).getTime();const items=window.firestoreGames.filter(g=>g&&String(g.status||'').toLowerCase()!=='upcoming').map(g=>({g,date:released(g)})).filter(x=>Number.isFinite(x.date)&&x.date<=end).sort((a,b)=>b.date-a.date||String(a.g.name).localeCompare(String(b.g.name))).slice(0,4);track.replaceChildren();if(!items.length){track.append(el('p','jdr-v4-loading','Release dates have not been added to the library yet.'));return;}
+ for(const {g,date} of items){const a=el('a','jdr-v4-feature');a.href='#games';const art=el('div','jdr-release-art');if(g.image){const img=el('img','');img.src=g.image;img.alt=g.name||'PS5 game';img.loading='lazy';art.append(img);}if(end-date<=60*86400000)art.append(el('span','jdr-release-badge','NEW RELEASE'));const info=el('div','jdr-release-info');info.append(el('strong','',g.name||'PS5 game'),el('span','jdr-release-date','Released '+new Date(date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})));let busy;try{if(typeof slotIsRented==='function')busy=slotIsRented(g,'trophy')&&slotIsRented(g,'nonTrophy');}catch(e){}if(typeof busy==='boolean')info.append(el('span','jdr-release-status'+(busy?' busy':''),busy?'● Currently Rented':'● Available Now'));info.append(el('span','jdr-release-cta','View Details ↗'));a.append(art,info);a.addEventListener('click',e=>{const find=()=>Array.from(document.querySelectorAll('#gameGrid .game-card')).find(c=>c.querySelector('h3')?.textContent.trim()===g.name);let card=find();if(!card){const search=document.querySelector('#games input[type="search"],#games input');if(search){search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));}document.querySelector('#games [data-availability="all"]')?.click();document.querySelector('#games .filter[data-filter="all"]')?.click();card=find();}const button=card?.querySelector('.rent');if(button){e.preventDefault();button.click();}});track.append(a);}
  }
- function added(g){return dateValue(g.libraryAddedAt)||dateValue(g.addedAt)||dateValue(g.createdAt)||dateValue(g.created_at);}
- function released(g){return dateValue(g.releaseDate??g.release_date??g.launchDate??g.launch_date);}
- function fill(){
-  if(!Array.isArray(window.firestoreGames))return;
-  const items=window.firestoreGames.filter(g=>g&&String(g.status||'').toLowerCase()!=='upcoming'&&String(g.image||'').trim());
-  items.sort((a,b)=>added(b)-added(a)||released(b)-released(a)||String(a.name||'').localeCompare(String(b.name||'')));
-  track.replaceChildren();
-  if(!items.length){const p=document.createElement('p');p.className='jdr-v4-loading';p.textContent='No games in the library yet.';track.append(p);return;}
-  items.slice(0,4).forEach(g=>{
-   const a=document.createElement('a');a.className='jdr-v4-feature';a.href='#games';
-   const photo=document.createElement('img');photo.src=g.image;photo.alt=g.name||'PS5 game';photo.loading='lazy';
-   const name=document.createElement('strong');name.textContent=g.name||'Explore game';
-   a.append(photo,name);track.append(a);
-  });
- }
- window.addEventListener('firestoreGamesLoaded',fill);
- fill();
+ window.addEventListener('firestoreGamesLoaded',fill);fill();
 })();
 </script>
 
