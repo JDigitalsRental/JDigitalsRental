@@ -2814,8 +2814,8 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
       </div>
     </div>
     <div class="steps jdr-five-plans">
-      <article><b>01</b><h3>📅 7 Days Rental</h3><p>Price depends on the game and account type.</p><p>✓ 7 days</p><p>✓ Includes 1 game swap</p><p>✓ One game at a time</p></article>
-      <article><b>02</b><h3>📆 14 Days Rental</h3><p>Price depends on the game and account type.</p><p>✓ 14 days</p><p>✓ One game at a time</p><p>✓ Subject to availability</p></article>
+      <article><b>01</b><h3>📅 7 Days Rental</h3><p>Price depends on the game and account type.</p><p>✓ 7 days</p><p>✓ No game swaps</p><p>✓ One game at a time</p></article>
+      <article><b>02</b><h3>📆 14 Days Rental</h3><p>Price depends on the game and account type.</p><p>✓ 14 days</p><p>✓ No game swaps</p><p>✓ One game at a time</p><p>✓ Subject to availability</p></article>
       <article><b>03</b><h3>🎮 1 Month Single Game</h3><p>Price depends on the game and Trophy / Non-Trophy account type.</p><p>✓ One game for 1 month</p><p>✓ No game swaps</p></article>
       <article><b>04</b><h3>♾️ Monthly UNLI SWAP</h3><p class="rental-plan-price">₱850 / Month</p><p>✓ Same fixed price for Trophy and Non-Trophy</p><p>✓ Maximum 1 swap per week</p><p>✓ One game at a time</p></article>
     </div>
@@ -2945,8 +2945,7 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
       <h3>Game swaps</h3>
 
       <p>
-        Weekly rentals include
-        1 game swap.
+        Only Monthly UNLI SWAP includes game swaps. All other rental plans have no swaps.
       </p>
 
       <p>
@@ -3040,8 +3039,7 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
     </summary>
 
     <p>
-      Weekly rental includes
-      1 game swap.
+      Only Monthly UNLI SWAP includes game swaps. All other rental plans have no swaps.
     </p>
 
     <p>
@@ -3278,7 +3276,7 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
       </p>
 
       <p>
-        ✓ Includes 1 game swap.
+        ✓ No game swaps.
       </p>
 
       <div class="plan-divider"></div>
@@ -3491,8 +3489,7 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
       </strong>
 
       <p>
-        Regular weekly game price
-        with 1 game swap.
+        Regular weekly game price. No game swaps.
       </p>
 
       <div class="plan-divider"></div>
@@ -4449,16 +4446,16 @@ function planLabel(period) {
       : "Monthly UNLI SWAP";
 }
 
-function swapRules(period) {
+function swapMessage(period, price) {
   const plan = normalizedPeriod(period);
+  if (plan !== "month") return "";
+  return "SWAP RULES:\n" + swapRules(period) + "\n\n";
+}
 
-  return plan === "week"
-    ? "Includes 1 game swap during the rental period. One game at a time, subject to availability."
-    : plan === "twoWeeks"
-      ? "14-day rental. Swap eligibility is subject to confirmation with JDigitalsRental; one game at a time and subject to availability."
-    : plan === "single"
-      ? "No game swaps. One selected game for the full month."
-      : "Unlimited game swaps, maximum 1 swap per week. One game at a time, subject to availability.";
+function swapRules(period) {
+  return normalizedPeriod(period) === "month"
+    ? "Unlimited game swaps, maximum 1 swap per week. One game at a time, subject to availability."
+    : "No game swaps.";
 }
 
 /* ==========================================
@@ -5151,10 +5148,7 @@ Account Type: ${accountLabel(selectedAccount)}
 Price: ${money(price)}
 Payment Method: ${document.getElementById("jdrPaymentMethod")?.value || "To be confirmed"}
 
-SWAP RULES:
-${swapRules(selectedPeriod)}
-
-📌 My name matches the name on my Facebook account.
+${swapMessage(selectedPeriod, price)}📌 My name matches the name on my Facebook account.
 
 ${waiting
   ? "Please let me know when a slot becomes available."
@@ -5248,7 +5242,7 @@ function renderUpcomingGames() {
         </div>
 
         <div class="mega-savings">
-          🔄 Weekly: 1 game swap
+          Weekly and 14 Days: No Swap
           <br>
           ${(singlePlanVisibility(game).trophy || singlePlanVisibility(game).nonTrophy) ? "🎮 Monthly Single Game: No Swap<br>" : ""}
           ♾️ Monthly UNLI SWAP: Max 1 swap/week
@@ -5483,10 +5477,7 @@ Account Type: ${accountLabel(selectedUpcomingAccount)}
 Price: ${money(price)}
 Available Date: ${game.availableDate || "Date TBA"}
 
-SWAP RULES:
-${swapRules(selectedUpcomingPeriod)}
-
-📌 My name matches the name on my Facebook account.
+${swapMessage(selectedUpcomingPeriod, price)}📌 My name matches the name on my Facebook account.
 
 Please let me know when a slot becomes available.
 
@@ -6515,7 +6506,7 @@ function init(){
  if(!card||!name||!submit||!price)return;
  modal.dataset.smartBuilder='v6.2';
  const tabs=document.createElement('div');tabs.className='jdr-builder-tabs';
- tabs.innerHTML='<button type="button" class="jdr-builder-tab active" data-mode="new">🎮 New Rental</button><button type="button" class="jdr-builder-tab" data-mode="swap">🔄 Existing Renter — Swap</button>';
+ tabs.innerHTML='<button type="button" class="jdr-builder-tab active" data-mode="new">🎮 New Rental</button><button type="button" class="jdr-builder-tab" data-mode="swap">🔄 Existing UNLI SWAP Renter</button>';
  const info=document.createElement('div');info.className='jdr-builder-note';info.textContent='Choose your rental details below. Availability and final payment instructions will be confirmed by JDigitalsRental.';
  const fields=document.createElement('div');
  fields.innerHTML=`<div class="jdr-builder-field"><label for="jdrSlotChoice">Account Type</label><select id="jdrSlotChoice"><option value="">Choose account type</option><option value="trophy">🏆 Trophy</option><option value="nonTrophy">🎮 Non-Trophy</option></select></div>
@@ -6523,7 +6514,7 @@ function init(){
  <div class="jdr-builder-field"><label for="jdrPaymentMethod">Payment Method</label><select id="jdrPaymentMethod"><option value="GCash">GCash</option><option value="Maya">Maya</option><option value="PayPal (international)">PayPal — International</option><option value="Wise (international)">Wise — International</option></select></div>`;
  const summary=document.createElement('div');summary.className='jdr-builder-summary';summary.innerHTML='<h3>PRICE SUMMARY</h3><div class="jdr-builder-total" id="jdrBuilderTotal">Select plan and account</div><div class="jdr-builder-line"><span>Game</span><strong id="jdrBuilderGame">—</strong></div><div class="jdr-builder-line"><span>Account</span><strong id="jdrBuilderSlot">—</strong></div><div class="jdr-builder-line"><span>Plan</span><strong id="jdrBuilderPlan">—</strong></div><div class="jdr-builder-line"><span>Payment</span><strong id="jdrBuilderPayment">GCash</strong></div><div class="jdr-builder-line"><span>Slot</span><strong id="jdrBuilderStatus">Select account</strong></div>';
  const swapButton=document.createElement('button');swapButton.type='button';swapButton.className='jdr-builder-swap-button';swapButton.textContent='Review Swap Request';
- const footnote=document.createElement('p');footnote.className='jdr-builder-footnote';footnote.textContent='Payment first, after slot confirmation. We will send the correct payment details. Swap requests are subject to your active plan, weekly limit, and slot availability.';
+ const footnote=document.createElement('p');footnote.className='jdr-builder-footnote';footnote.textContent='Payment first, after slot confirmation. We will send the correct payment details. Swap requests are only for active Monthly UNLI SWAP renters, subject to weekly limit and slot availability.';
  const eyebrow=card.querySelector('.modal-eyebrow');eyebrow.after(tabs,info);
  name.before(fields);
  const oldPeriod=card.querySelector('.modal-options');const oldAccounts=card.querySelector('.upcoming-account-cards');const oldInfo=card.querySelector('.rental-plan-info');const oldPrice=card.querySelector('.modal-price');
@@ -6542,7 +6533,7 @@ function init(){
   document.getElementById('jdrBuilderTotal').textContent=mode==='swap'?'Existing plan — verify eligibility':price.textContent.trim();
   const status=document.getElementById('continueRental')?.textContent||'';
   document.getElementById('jdrBuilderStatus').textContent=!slot.value?'Select account':status.includes('Waiting')?'Waiting list / confirm availability':'Confirm availability with admin';
-  if(mode==='swap')info.textContent='Already renting? Request a game swap through Messenger. We will verify your active rental plan and swap eligibility. This does not create a new rental or waiting-list entry.';
+  if(mode==='swap')info.textContent='Active Monthly UNLI SWAP renter? Request a game swap through Messenger. We will verify your active rental plan and swap eligibility. This does not create a new rental or waiting-list entry.';
   else info.textContent='New rental: select account, plan, and payment. If the slot is rented, the existing waiting-list process applies.';
  }
  function choose(type,value){
@@ -6567,7 +6558,7 @@ function init(){
   const check=modal.querySelector('.jdr-return-agree');
   if(check&&!check.checked){const error=modal.querySelector('.jdr-return-error');if(error)error.hidden=false;check.focus();return}
   const game=document.getElementById('jdrBuilderGame').textContent;
-  const msg=`Hi JDigitalsRental! 🎮\n\nI am an EXISTING RENTER requesting a game swap. Please check my active rental and swap eligibility.\n\nName: ${customer}\nRequested Game: ${game}\nRequested Account: ${slot.selectedOptions[0].textContent}\nPayment Method (if needed): ${payment.value}\n\nI understand swaps are subject to my active plan, maximum weekly swap rules, and available slots. Please confirm before processing. Thank you!`;
+  const msg=`Hi JDigitalsRental! 🎮\n\nI am a MONTHLY UNLI SWAP RENTER requesting a game swap. Please check my active rental and swap eligibility.\n\nName: ${customer}\nRequested Game: ${game}\nRequested Account: ${slot.selectedOptions[0].textContent}\nPayment Method (if needed): ${payment.value}\n\nI understand swaps are subject to my active plan, maximum weekly swap rules, and available slots. Please confirm before processing. Thank you!`;
   modal.classList.remove('active');
   if(typeof window.showFacebookReminder==='function')window.showFacebookReminder(msg);
   else {navigator.clipboard?.writeText(msg).catch(()=>{});alert('Copy your swap details and send them to our Facebook Page.');window.open('https://www.facebook.com/share/1DajrF4mTy/','_blank','noopener,noreferrer')}
