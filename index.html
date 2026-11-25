@@ -2409,6 +2409,7 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
 @media(max-width:849px){.jdr-five-plans{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.jdr-five-plans{grid-template-columns:1fr}}
 </style>
+<style>#jdrIntPayment [hidden],#jdrIntPayment[hidden]{display:none!important}</style>
 </head>
 
 <body>
@@ -5146,7 +5147,7 @@ Rental Period: ${periodLabel(selectedPeriod)}
 Rental Plan: ${planLabel(selectedPeriod)}
 Account Type: ${accountLabel(selectedAccount)}
 Price: ${money(price)}
-Payment Method: ${document.getElementById("jdrPaymentMethod")?.value || "To be confirmed"}${!waiting && document.getElementById("jdrPaymentMethod")?.value.startsWith("PayPal") && window.jdrPayPalEstimate?.(price) ? `\nEstimated business cost-recovery amount (PHP): ${money(window.jdrPayPalEstimate(price).gross)}\nThis is an estimate only, not an amount due. Please confirm final payment and currency with admin.` : ""}
+Payment Method: ${document.getElementById("jdrPaymentMethod")?.value || "To be confirmed"}${document.getElementById("jdrPaymentMethod")?.value.startsWith("PayPal") && window.jdrPayPalEstimate?.(price) ? `\nEstimated business cost-recovery amount (PHP): ${money(window.jdrPayPalEstimate(price).gross)}\nThis is an estimate only, not an amount due. Please confirm final payment and currency with admin. Do not pay until your rental slot is confirmed.` : ""}
 
 ${swapMessage(selectedPeriod, price)}📌 My name matches the name on my Facebook account.
 
@@ -6900,10 +6901,12 @@ function init(){
  if(!payment||!total)return;
  let panel=document.getElementById('jdrIntPayment');if(!panel){panel=document.createElement('div');panel.id='jdrIntPayment';panel.className='jdr-int-box';panel.innerHTML='<strong>International payment</strong><p></p><details><summary>Show payment QR (after admin confirmation)</summary><img alt="Payment QR code"><small>Confirm recipient and final amount with our Facebook page before paying. Payment is verified manually.</small></details>';total.parentElement.append(panel);}
  const method=payment.value,international=method.startsWith('PayPal');const n=amount(total.textContent);
- panel.hidden=!international||n===null||document.getElementById('rentalModal').classList.contains('jdr-swap-mode')||/waiting/i.test(document.getElementById('continueRental')?.textContent||'');
+ panel.hidden=!international||n===null||document.getElementById('rentalModal').classList.contains('jdr-swap-mode');
  if(panel.hidden||!Number.isFinite(n)||n<=0){panel.hidden=true;return;}
+ const waiting=/waiting/i.test(document.getElementById('continueRental')?.textContent||'');
+ const qr=panel.querySelector('details');qr.hidden=waiting;if(waiting)qr.open=false;
  const q=window.jdrPayPalEstimate(n);
- const msg='Rental: '+fmt(n,'PHP')+(rate&&currency!=='PHP'?' (≈ '+fmt(n*rate,currency)+')':'')+'. Commercial payment in PHP. Final payment amount must be confirmed by admin.';
+ const msg=(waiting?'Waiting list — do not send payment until your rental slot is confirmed. ':'')+'Rental: '+fmt(n,'PHP')+(rate&&currency!=='PHP'?' (≈ '+fmt(n*rate,currency)+')':'')+'. Commercial payment in PHP. Final payment amount must be confirmed by admin.';
  let breakdown=panel.querySelector('.jdr-paypal-breakdown');
  if(!breakdown){breakdown=document.createElement('div');breakdown.className='jdr-paypal-breakdown';panel.querySelector('p').after(breakdown);}
  const foreign=rate&&currency!=='PHP'?' (≈ '+fmt(q.gross*rate,currency)+')':'';
