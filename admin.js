@@ -1745,7 +1745,10 @@ async function loadWaitingList(){
 
           const source=document.createElement("div");
           source.style.cssText="display:inline-block;margin:7px 0;padding:5px 9px;border-radius:8px;background:#16345c;color:#c8e4ff;font-weight:700;font-size:11px";
-          source.textContent=r.source==="rentplay-ph"?"🌐 RENTPLAY PH":r.source==="jdigitalsrental"?"🌐 JDIGITALSRENTAL":"🌐 Unknown Source";
+          const brand=String(r.source||"").trim().toLowerCase();
+          source.textContent=brand==="rentplay-ph"?"🌐 RENTPLAY PH":brand==="jdigitalsrental"?"🌐 JDIGITALSRENTAL":"🌐 Unverified Source";
+          if(brand==="rentplay-ph"){source.style.background="#39245c";source.style.color="#e4caff";}
+          else if(brand!=="jdigitalsrental"){source.style.background="#303846";source.style.color="#d0d5df";}
 
           const remove=document.createElement("button");
           remove.textContent="🗑 Delete";
