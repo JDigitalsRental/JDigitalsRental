@@ -807,6 +807,7 @@ html{scroll-behavior:smooth}
   <h3>👤 Assign / Update Renter</h3>
   <form id="psnRentalForm">
    <input id="psnRentalEditId" type="hidden">
+   <label for="jdrSwapPlan">Rental plan (new rentals)</label><select id="jdrSwapPlan"><option value="">Select plan</option><option value="weekly">1 Week</option><option value="fortnight">14 Days</option><option value="single">1 Month Single Game</option><option value="unli">1 Month UNLI SWAP</option></select><small class="psn-muted">For existing rentals, use Swap Game to configure the plan.</small>
    <label for="psnRentalAccount">PSN Account *</label><select id="psnRentalAccount" required></select>
    <label for="psnRentalGame">Game on this account *</label><select id="psnRentalGame" required></select>
    <div class="psn-two"><div><label for="psnRentalSlot">Slot *</label><select id="psnRentalSlot"><option value="trophy">🏆 Trophy</option><option value="nonTrophy">🎮 Non-Trophy</option></select></div>
@@ -1300,7 +1301,7 @@ html{scroll-behavior:smooth}
  <p id="jdrUnliAdminStatus" class="business-muted" role="status">Checking availability…</p>
 </section>
 
-<script type="module" src="admin.js"></script>
+<script type="module" src="admin.js?v=7.0"></script>
 <div class="evidence-lightbox" id="evidenceLightbox" role="dialog" aria-modal="true" aria-label="Private screenshot viewer"><button type="button" id="evidenceLightboxClose">✕ Close screenshot</button><img id="evidenceLightboxImage" alt="Private evidence screenshot"></div>
 <div id="v42RentalModal" class="v42-modal" role="dialog" aria-modal="true" aria-label="Rental details" hidden>
   <div class="v42-dialog">
