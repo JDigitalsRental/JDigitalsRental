@@ -464,7 +464,9 @@ html{scroll-behavior:smooth}
 .jdr-notify-item small{color:#9dc7ef}
 #jdrNotifyPanel button{padding:8px 10px;background:#125394;color:white;border:1px solid #398bda;border-radius:8px;margin-top:8px}
 </style>
-</head>
+<style>
+.jdr-premium-dialog{box-sizing:border-box;width:min(92vw,440px);max-height:85dvh;overflow:auto;background:linear-gradient(145deg,#122944,#081526);color:#edf6ff;border:1px solid #376b9d;border-radius:22px;padding:26px;box-shadow:0 24px 90px #000b;text-align:center;animation:jdrDialogIn .2s ease-out}.jdr-premium-dialog::backdrop{background:#020713b8;backdrop-filter:blur(3px)}.jdr-premium-dialog h2{margin:14px 0;font-size:22px}.jdr-premium-dialog p{white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;background:#061324;padding:15px;border-radius:12px;color:#c4d9ef;line-height:1.6}.jdr-dialog-icon{display:grid;place-items:center;margin:auto;width:64px;height:64px;border-radius:50%;background:#163b60;color:#80caff;font-size:36px;font-weight:bold}.jdr-dialog-icon.success{background:#123d32;color:#63e9ad}.jdr-dialog-icon.error{background:#4a2030;color:#ff9aa8}.jdr-dialog-actions{display:flex;gap:10px;margin-top:18px}.jdr-dialog-actions button{flex:1;padding:12px;border-radius:10px;background:#1760a4;color:white;border:1px solid #438ac9;cursor:pointer}.jdr-dialog-actions .jdr-dialog-cancel{background:#182b40}@keyframes jdrDialogIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.jdr-premium-dialog{animation:none}}
+</style></head>
 
 <body>
 
@@ -807,7 +809,7 @@ html{scroll-behavior:smooth}
   <h3>👤 Assign / Update Renter</h3>
   <form id="psnRentalForm">
    <input id="psnRentalEditId" type="hidden">
-   <label for="jdrSwapPlan">Rental plan (new rentals)</label><select id="jdrSwapPlan"><option value="">Select plan</option><option value="weekly">1 Week</option><option value="fortnight">14 Days</option><option value="single">1 Month Single Game</option><option value="unli">1 Month UNLI SWAP</option></select><small class="psn-muted">For existing rentals, use Swap Game to configure the plan.</small>
+   <label for="jdrSwapPlan">Rental plan</label><select id="jdrSwapPlan"><option value="">Select plan</option><option value="weekly">1 Week</option><option value="fortnight">14 Days</option><option value="single">1 Month Single Game</option><option value="unli">1 Month UNLI SWAP</option></select><small class="psn-muted">Existing plans are retained. Configure legacy rentals here once.</small><div id="jdrLegacyHistory" hidden><label for="jdrLegacyDates">Previous swap dates (YYYY-MM-DD, comma separated)</label><input id="jdrLegacyDates" placeholder="Leave blank if none"></div>
    <label for="psnRentalAccount">PSN Account *</label><select id="psnRentalAccount" required></select>
    <label for="psnRentalGame">Game on this account *</label><select id="psnRentalGame" required></select>
    <div class="psn-two"><div><label for="psnRentalSlot">Slot *</label><select id="psnRentalSlot"><option value="trophy">🏆 Trophy</option><option value="nonTrophy">🎮 Non-Trophy</option></select></div>
@@ -1301,7 +1303,7 @@ html{scroll-behavior:smooth}
  <p id="jdrUnliAdminStatus" class="business-muted" role="status">Checking availability…</p>
 </section>
 
-<script type="module" src="admin.js?v=7.0"></script>
+<script type="module" src="admin.js?v=7.1"></script>
 <div class="evidence-lightbox" id="evidenceLightbox" role="dialog" aria-modal="true" aria-label="Private screenshot viewer"><button type="button" id="evidenceLightboxClose">✕ Close screenshot</button><img id="evidenceLightboxImage" alt="Private evidence screenshot"></div>
 <div id="v42RentalModal" class="v42-modal" role="dialog" aria-modal="true" aria-label="Rental details" hidden>
   <div class="v42-dialog">
