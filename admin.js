@@ -3274,38 +3274,51 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 // V7.0 Smart Swap — same rental ID, no financial write.
 const jdrSwapLabels={weekly:'1 Week',fortnight:'14 Days',single:'1 Month Single Game',unli:'1 Month UNLI SWAP'};
-function jdrSwapEligible(r,day){
+function jdrSwapWarning(r,day){
  if(r.status!=='rented'||!r.returnDate||r.returnDate<day)throw Error('Rental expired or not active.');
- const dates=r.swapDates||[];
  if(!jdrSwapLabels[r.rentalPlan])throw Error('Configure rental plan first.');
- if(r.rentalPlan==='single')throw Error('Single-game plan has no swaps.');
- if(r.rentalPlan==='weekly'&&dates.length>=1||r.rentalPlan==='fortnight'&&dates.length>=2)throw Error('Swap allowance used.');
- if(dates.some(d=>Date.parse(day)-Date.parse(d)<7*86400000))throw Error('Maximum one swap per rolling 7 days.');
+ const dates=r.swapDates||[];
+ if(r.rentalPlan==='single')return 'Single-game plan has no swaps.';
+ if((r.rentalPlan==='weekly'&&dates.length>=1)||(r.rentalPlan==='fortnight'&&dates.length>=2))return 'Swap allowance used.';
+ if(dates.some(d=>Date.parse(day)-Date.parse(d)<7*86400000))return 'Maximum one swap per rolling 7 days.';
+ return '';
 }
+function jdrSwapFingerprint(r){return JSON.stringify([r.rentalPlan,r.swapDates||[],r.swapCount||0]);}
+function jdrSwapApproval(warning){return new Promise(resolve=>{
+ const d=document.createElement('dialog');d.className='jdr-premium-dialog';
+ d.innerHTML='<div class="jdr-dialog-icon info">!</div><h2>Swap Limit Reached</h2><p></p><label>Reason for override (optional)<textarea rows="2" maxlength="500" style="width:100%;box-sizing:border-box"></textarea></label><label style="display:block;margin:12px 0"><input type="checkbox" style="width:auto"> I authorize this additional game swap.</label><div class="jdr-dialog-actions"><button type="button" class="jdr-dialog-cancel">Cancel</button><button type="button" disabled>Approve &amp; Continue Swap</button></div>';
+ d.querySelector('p').textContent=warning+' Admin approval is required.';
+ const check=d.querySelector('input'), buttons=d.querySelectorAll('button');let result=null;
+ check.onchange=()=>buttons[1].disabled=!check.checked;
+ buttons[0].onclick=()=>d.close();buttons[1].onclick=()=>{if(check.checked){result={reason:d.querySelector('textarea').value.trim()};d.close();}};
+ document.body.append(d);d.addEventListener('close',()=>{d.remove();resolve(result);},{once:true});d.showModal();buttons[0].focus();
+});}
 async function jdrOpenSwap(r){
  if(auth.currentUser?.uid!==ADMIN_UID)return;
  if(!jdrSwapLabels[r.rentalPlan]){jdrNotice('Configure the rental plan and previous swap dates in Edit Renter first.');return;}
- try{jdrSwapEligible(r,todayISO());}catch(e){jdrNotice(e.message);return;}
+ let warning;try{warning=jdrSwapWarning(r,todayISO());}catch(e){jdrNotice(e.message);return;}
+ const approval=warning?await jdrSwapApproval(warning):null;if(warning&&!approval)return;
+ const approvedFingerprint=jdrSwapFingerprint(r);
  const dlg=document.createElement('dialog');dlg.style.cssText='width:min(92vw,480px);max-height:85vh;overflow:auto;background:#09172c;color:white;border:1px solid #31558d;border-radius:14px;padding:20px';
  dlg.innerHTML=`<div class="psn-panel"><h3>🔄 Smart Swap Game</h3><p id="jdrSwapInfo"></p><p id="jdrSwapSummary"></p><label>Available game and PSN account</label><select id="jdrSwapTarget"></select><label><input type="checkbox" id="jdrSwapProof" style="width:auto"> Verified return / disable proof and account access secured</label><p id="jdrSwapMessage" role="status"></p><button type="button" id="jdrSwapConfirm">Confirm swap</button> <button type="button" id="jdrSwapClose">Close</button></div>`;
  document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove());dlg.showModal();
  const q=id=>dlg.querySelector('#'+id),msg=q('jdrSwapMessage'),btn=q('jdrSwapConfirm'),close=q('jdrSwapClose');
  q('jdrSwapInfo').textContent=r.renterName+' • '+psnGameTitle(r.gameId)+' • '+psnSlotLabel(r.slot)+' • Expiry: '+r.returnDate;
- q('jdrSwapSummary').textContent=jdrSwapLabels[r.rentalPlan]+' • Recorded swaps: '+(r.swapCount||0)+' • Eligible to swap';
+ q('jdrSwapSummary').textContent=jdrSwapLabels[r.rentalPlan]+' • Recorded swaps: '+(r.swapCount||0)+(warning?' • Admin override approved':' • Eligible to swap');
  close.onclick=()=>dlg.close();dlg.addEventListener('cancel',e=>{if(btn.disabled&&close.disabled)e.preventDefault()});
  const targets=[];for(const a of psnAccounts)for(const gid of a.gameIds||[]){if(gid===r.gameId||!gameCache.has(gid)||gameCache.get(gid).status==='upcoming')continue;if(psnRentals.some(x=>x.status==='rented'&&x.accountId===a.id&&x.slot===r.slot))continue;targets.push({accountId:a.id,gameId:gid});const o=document.createElement('option');o.value=String(targets.length-1);o.textContent=psnGameTitle(gid)+' — '+a.email;q('jdrSwapTarget').append(o);}
  if(!targets.length)msg.textContent='No eligible free account slots. Refresh rentals and retry.';
  btn.onclick=async()=>{if(!q('jdrSwapProof').checked){msg.textContent='Verify return proof first.';return;}const target=targets[Number(q('jdrSwapTarget').value)];if(!target)return;btn.disabled=close.disabled=true;try{
- const day=todayISO();jdrSwapEligible(r,day);
+ const day=todayISO();if(auth.currentUser?.uid!==ADMIN_UID)throw Error('Admin access required.');
  const [as,rs]=await Promise.all([getDocs(collection(db,'psnAccounts')),getDocs(collection(db,'psnRentals'))]);
  const gids=[r.gameId,target.gameId], ar=as.docs.filter(d=>(d.data().gameIds||[]).some(g=>gids.includes(g))).map(d=>d.ref), rr=rs.docs.filter(d=>d.id!==r.id&&(gids.includes(d.data().gameId)||d.data().accountId===target.accountId)).map(d=>d.ref);
  const ref=doc(db,'psnRentals',r.id),gr=gids.map(g=>doc(db,'games',g)),hr=doc(collection(db,'psnRentalHistory'));
- await runTransaction(db,async tx=>{const [current,g1,g2,...rest]=await Promise.all([tx.get(ref),...gr.map(x=>tx.get(x)),...ar.map(x=>tx.get(x)),...rr.map(x=>tx.get(x))]);if(!current.exists()||!g1.exists()||!g2.exists()||g2.data().status==='upcoming')throw Error('Rental or game unavailable.');const f=current.data();if(f.gameId!==r.gameId||f.accountId!==r.accountId||f.slot!==r.slot||f.returnDate!==r.returnDate)throw Error('Rental changed. Refresh.');jdrSwapEligible(f,day);
+ await runTransaction(db,async tx=>{const [current,g1,g2,...rest]=await Promise.all([tx.get(ref),...gr.map(x=>tx.get(x)),...ar.map(x=>tx.get(x)),...rr.map(x=>tx.get(x))]);if(!current.exists()||!g1.exists()||!g2.exists()||g2.data().status==='upcoming')throw Error('Rental or game unavailable.');const f=current.data();if(f.gameId!==r.gameId||f.accountId!==r.accountId||f.slot!==r.slot||f.returnDate!==r.returnDate)throw Error('Rental changed. Refresh.');const liveWarning=jdrSwapWarning(f,day);if(jdrSwapFingerprint(f)!==approvedFingerprint||liveWarning!==warning)throw Error('Swap eligibility changed. Close and reopen to review.');if(liveWarning&&!approval)throw Error('Admin approval required.');
  const accounts=rest.slice(0,ar.length).filter(x=>x.exists()).map(x=>({id:x.id,...x.data()})),others=rest.slice(ar.length).filter(x=>x.exists()).map(x=>({id:x.id,...x.data()}));
  if(!accounts.some(a=>a.id===target.accountId&&(a.gameIds||[]).includes(target.gameId))||others.some(x=>x.status==='rented'&&x.accountId===target.accountId&&x.slot===f.slot))throw Error('Target slot no longer available.');
  const dates=[...(f.swapDates||[]),day],next={...f,...target,swapDates:dates,swapCount:dates.length};
  for(let i=0;i<gids.length;i++){const pub=jdrPublicSlotFromRentals(gids[i],f.slot,accounts,[...others,{...next,id:r.id}]);if(!pub)throw Error('Cannot verify public slot capacity.');const fields=slotFields(f.slot);tx.update(gr[i],{[fields.status]:pub.status,[fields.date]:pub.date,updatedAt:serverTimestamp()});}
- tx.update(ref,{...target,gameName:psnGameTitle(target.gameId),swapDates:dates,swapCount:dates.length,updatedAt:serverTimestamp()});tx.set(hr,{action:'Game Swap',rentalId:r.id,accountId:target.accountId,gameId:target.gameId,gameName:psnGameTitle(target.gameId),slot:f.slot,renterName:f.renterName,previousGameId:f.gameId,previousAccountId:f.accountId,details:psnGameTitle(f.gameId)+' → '+psnGameTitle(target.gameId)+'; expiry '+f.returnDate+'; no payment',createdAt:serverTimestamp()});});
+ tx.update(ref,{...target,gameName:psnGameTitle(target.gameId),swapDates:dates,swapCount:dates.length,updatedAt:serverTimestamp()});tx.set(hr,{action:'Game Swap',rentalId:r.id,accountId:target.accountId,gameId:target.gameId,gameName:psnGameTitle(target.gameId),slot:f.slot,renterName:f.renterName,previousGameId:f.gameId,previousAccountId:f.accountId,adminOverride:!!liveWarning,overrideReason:liveWarning?(approval?.reason||''):'',overrideWarning:liveWarning,approvedBy:liveWarning?auth.currentUser.uid:'',details:psnGameTitle(f.gameId)+' → '+psnGameTitle(target.gameId)+'; expiry '+f.returnDate+'; no payment',createdAt:serverTimestamp()});});
  dlg.close();psnClearRental();await Promise.allSettled([loadAdminGames(),psnLoad()]);jdrNotice(psnGameTitle(r.gameId)+' → '+psnGameTitle(target.gameId)+'\nExpiry: '+r.returnDate+'\nAdditional charge: ₱0.00\nRecorded swaps: '+((r.swapDates||[]).length+1)+'\nOriginal expiry and payment retained.','Swap Successful!','success');
  }catch(e){msg.textContent=e.message;btn.disabled=close.disabled=false;}};
 }
