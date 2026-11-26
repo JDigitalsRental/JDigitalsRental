@@ -6959,5 +6959,34 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){entry.target.classList.add('jdr7-revealed');observer.unobserve(entry.target);}}},{threshold:.12});document.querySelectorAll('.section-heading').forEach(el=>observer.observe(el));}
 })();
 </script>
+<style id="jdr-v71">
+@keyframes jdr71-neon{0%,100%{box-shadow:0 10px 28px #0008,0 0 12px #168cff66}50%{box-shadow:0 10px 28px #0008,0 0 26px #49caffaa}}
+@keyframes jdr71-modal{from{opacity:.3;scale:.96;translate:0 12px}to{opacity:1;scale:1;translate:0 0}}
+@keyframes jdr71-logo{from{opacity:.4;scale:.88}to{opacity:1;scale:1}}
+@keyframes jdr71-splash{0%,65%{opacity:1}100%{opacity:0;visibility:hidden}}
+@media(hover:hover) and (pointer:fine){
+.game-card:hover,.upcoming-game-card:hover{transform:perspective(950px) translateY(-4px) rotateX(var(--j71x,0deg)) rotateY(var(--j71y,0deg))!important;animation:jdr71-neon 1.8s ease-in-out infinite;outline:1px solid #65baff88;position:relative}
+.game-card:hover::after,.upcoming-game-card:hover::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at var(--j71px,50%) var(--j71py,50%),#69caff29,transparent 60%);z-index:2}
+}
+#jdrDetails.open{backdrop-filter:blur(9px)}
+#jdrDetails.open .jdr-details-panel{animation:jdr71-modal .32s cubic-bezier(.2,.8,.2,1) both!important}
+@media(pointer:coarse){.game-card:active,.upcoming-game-card:active{scale:.985;transition:scale .15s ease!important}.btn:active{scale:.97}}
+#jdr71Splash{position:fixed;inset:0;z-index:99999;display:grid;place-content:center;justify-items:center;gap:16px;background:#040b1b;color:#b8e5ff;pointer-events:none;animation:jdr71-splash .8s ease both;font:700 12px system-ui;letter-spacing:3px}
+#jdr71Splash img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 0 20px #168cff);animation:jdr71-logo .5s ease both}
+@media(prefers-reduced-motion:reduce){#jdr71Splash{display:none!important}.game-card:hover,.upcoming-game-card:hover{animation:none!important;transform:none!important;scale:1!important}.game-card:hover .cover,.upcoming-game-card:hover .cover{scale:1!important}#jdrDetails.open .jdr-details-panel{animation:none!important}.game-card:active,.upcoming-game-card:active,.btn:active{scale:1!important}}
+</style>
+<script id="jdr-v71-js">
+(()=>{
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ if(reduced.matches)return;
+ try{if(!sessionStorage.getItem('jdr71Intro')){sessionStorage.setItem('jdr71Intro','1');const splash=document.createElement('div');splash.id='jdr71Splash';splash.setAttribute('aria-hidden','true');splash.innerHTML='<img src="assets/jdigitals-logo.png" alt=""><span>JDIGITALSRENTAL</span>';document.body.append(splash);setTimeout(()=>splash.remove(),900);}}catch(e){}
+ const fine=matchMedia('(hover:hover) and (pointer:fine)');
+ const selector='.game-card,.upcoming-game-card';let active=null,frame=0,point=null;
+ function reset(){if(active){for(const key of ['--j71x','--j71y','--j71px','--j71py'])active.style.removeProperty(key);active=null;}}
+ document.addEventListener('pointermove',e=>{if(!fine.matches||reduced.matches||e.pointerType!=='mouse')return;const card=e.target.closest(selector);if(card!==active){reset();active=card;}if(!card)return;point=[e.clientX,e.clientY];if(frame)return;frame=requestAnimationFrame(()=>{frame=0;if(!active||!active.isConnected)return;const r=active.getBoundingClientRect();if(!r.width||!r.height)return;const x=Math.max(0,Math.min(1,(point[0]-r.left)/r.width)),y=Math.max(0,Math.min(1,(point[1]-r.top)/r.height));active.style.setProperty('--j71x',((.5-y)*8)+'deg');active.style.setProperty('--j71y',((x-.5)*8)+'deg');active.style.setProperty('--j71px',(x*100)+'%');active.style.setProperty('--j71py',(y*100)+'%');});},{passive:true});
+ document.addEventListener('pointerout',e=>{if(active&&!active.contains(e.relatedTarget instanceof Node?e.relatedTarget:null))reset();});window.addEventListener('blur',reset);window.addEventListener('scroll',reset,{passive:true});
+})();
+</script>
+
 </body>
 </html>
