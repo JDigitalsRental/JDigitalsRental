@@ -50,7 +50,7 @@ function jdrStartUnliAdmin(){
    try{
     // Update only the selected field; do not overwrite the other switch.
     await setDoc(jdrUnliRef,{[key]:jdrUnliState[key]===false,updatedAt:serverTimestamp()},{merge:true});
-   }catch(error){alert("Could not update UNLI SWAP: "+error.message)}
+   }catch(error){jdrNotice("Could not update UNLI SWAP: "+error.message)}
    finally{jdrPaintUnliAdmin()}
   });
  }
@@ -238,10 +238,10 @@ $("refreshHistory").addEventListener("click",loadActivityHistory);
 $("clearHistory").addEventListener("click",async()=>{
   const button=$("clearHistory");
   if(!auth.currentUser||auth.currentUser.uid!==ADMIN_UID){
-    alert("Admin access is required.");
+    jdrNotice("Admin access is required.");
     return;
   }
-  const approved=confirm(
+  const approved=await jdrConfirm(
     "PERMANENTLY DELETE ALL Rental Activity History?\n\n"+
     "This removes activity log records from Firebase and cannot be undone.\n"+
     "Games, rental slots, waiting list, and prices will NOT be deleted.\n\n"+
@@ -264,11 +264,11 @@ $("clearHistory").addEventListener("click",async()=>{
     }
     historyVisible=15;
     await loadActivityHistory();
-    alert(deleted?`✅ Cleared ${deleted} activity records.`:"Activity History is already empty.");
+    jdrNotice(deleted?`✅ Cleared ${deleted} activity records.`:"Activity History is already empty.");
   }catch(error){
     console.error("Clear history failed:",error);
     await loadActivityHistory();
-    alert("Unable to clear all activity history. " +
+    jdrNotice("Unable to clear all activity history. " +
       (error.code==="permission-denied"?"Firestore delete permission is not enabled. No rules were changed.":error.message||"Please retry.")+
       (deleted?`\n${deleted} records were already deleted before the error.`:""));
   }finally{
@@ -1115,7 +1115,7 @@ for(const prefix of ["new","manage"]){
     }catch(err){
       e.target.value="";
       $(prefix+"GameCoverHint").textContent="❌ "+err.message;
-      alert(err.message);
+      jdrNotice(err.message);
     }
   });
 }
@@ -1180,11 +1180,11 @@ $("saveGameChanges").addEventListener("click",async()=>{
     await psnSyncFromGames();
     await loadActivityHistory();
 
-    alert("Game and slot statuses updated successfully! 🎮");
+    jdrNotice("Game and slot statuses updated successfully! 🎮");
 
   }catch(error){
     console.error(error);
-    alert(error.message||"Unable to save changes.");
+    jdrNotice(error.message||"Unable to save changes.");
   }finally{
     btn.disabled=false;
   }
@@ -1203,11 +1203,11 @@ async function confirmReturn(slot){
   const fields=slotFields(slot);
 
   if(getSlotStatus(g,slot)==="available"){
-    alert(label+" slot is already available.");
+    jdrNotice(label+" slot is already available.");
     return;
   }
 
-  if(!confirm(
+  if(!await jdrConfirm(
     "Have you checked the renter's disable video?\n\n"+
     "Confirm return of "+label+" slot for "+
     (g.name||g.title)+"?"
@@ -1252,14 +1252,14 @@ async function confirmReturn(slot){
     await psnSyncFromGames();
     await loadActivityHistory();
 
-    alert(
+    jdrNotice(
       "✅ "+label+
       " return confirmed! Slot is now available."
     );
 
   }catch(error){
     console.error(error);
-    alert("Unable to confirm return.");
+    jdrNotice("Unable to confirm return.");
   }finally{
     btn.disabled=false;
   }
@@ -1380,14 +1380,14 @@ async function extendRental(slot){
   const fields=slotFields(slot);
 
   if(getSlotStatus(game,slot)!=="currently-rented"){
-    alert("This slot is not currently rented.");
+    jdrNotice("This slot is not currently rented.");
     return;
   }
 
   const oldDate=dateToInput(game[fields.date]);
 
   if(!oldDate||oldDate!==el.date.value){
-    alert(
+    jdrNotice(
       "Please save or reload the current return date before extending."
     );
     return;
@@ -1397,14 +1397,14 @@ async function extendRental(slot){
   const newDate=getExtendedDate(oldDate,period);
 
   if(!newDate){
-    alert("Invalid return date.");
+    jdrNotice("Invalid return date.");
     return;
   }
 
   const label=slot==="trophy"?"Trophy":"Non-Trophy";
   const duration=period==="week"?"1 Week":"1 Month";
 
-  if(!confirm(
+  if(!await jdrConfirm(
     "Please confirm payment has been received.\n\n"+
     "Game: "+(game.name||game.title)+"\n"+
     "Slot: "+label+"\n"+
@@ -1451,7 +1451,7 @@ async function extendRental(slot){
     await psnSyncFromGames();
     await loadActivityHistory();
 
-    alert(
+    jdrNotice(
       "✅ Rental extended successfully!\n\n"+
       label+" Slot\nNew Return Date: "+
       dateToText(newDate)
@@ -1459,7 +1459,7 @@ async function extendRental(slot){
 
   }catch(error){
     console.error(error);
-    alert("Unable to save rental extension.");
+    jdrNotice("Unable to save rental extension.");
   }finally{
     el.button.disabled=false;
   }
@@ -1584,11 +1584,11 @@ $("saveNewGame").addEventListener("click",async()=>{
     await psnSyncFromGames();
     await loadActivityHistory();
 
-    alert("New game added successfully! 🎮");
+    jdrNotice("New game added successfully! 🎮");
 
   }catch(error){
     console.error(error);
-    alert(error.message||"Unable to add game.");
+    jdrNotice(error.message||"Unable to add game.");
   }finally{
     btn.disabled=false;
   }
@@ -1599,7 +1599,7 @@ $("saveNewGame").addEventListener("click",async()=>{
 $("deleteGame").addEventListener("click",async()=>{
   if(!selectedGameId)return;
 
-  if(!confirm("Delete this game permanently?")){
+  if(!await jdrConfirm("Delete this game permanently?")){
     return;
   }
 
@@ -1622,11 +1622,11 @@ $("deleteGame").addEventListener("click",async()=>{
     await psnSyncFromGames();
     await loadActivityHistory();
 
-    alert("Game deleted successfully.");
+    jdrNotice("Game deleted successfully.");
 
   }catch(error){
     console.error(error);
-    alert("Unable to delete game.");
+    jdrNotice("Unable to delete game.");
   }
 });
 
@@ -1754,7 +1754,7 @@ async function loadWaitingList(){
           remove.textContent="🗑 Delete";
 
           remove.addEventListener("click",async()=>{
-            if(!confirm(
+            if(!await jdrConfirm(
               "Delete this waiting-list reservation?"
             ))return;
 
@@ -1771,7 +1771,7 @@ async function loadWaitingList(){
 
             }catch(error){
               console.error(error);
-              alert("Unable to delete reservation.");
+              jdrNotice("Unable to delete reservation.");
               remove.disabled=false;
             }
           });
@@ -2013,13 +2013,13 @@ async function loadAdminReviews(){
           toggle.disabled=true;
           await updateDoc(doc(db,"reviews",r.id),{published:!r.published,updatedAt:serverTimestamp()});
           await loadAdminReviews();
-        }catch(e){alert("Unable to update review: "+e.message);toggle.disabled=false;}
+        }catch(e){jdrNotice("Unable to update review: "+e.message);toggle.disabled=false;}
       };
       const del=document.createElement("button");del.className="danger";del.textContent="🗑️ Delete";
       del.onclick=async()=>{
-        if(!confirm("Permanently delete this review by "+(r.customerName||"customer")+"?"))return;
+        if(!await jdrConfirm("Permanently delete this review by "+(r.customerName||"customer")+"?"))return;
         try{del.disabled=true;await deleteDoc(doc(db,"reviews",r.id));reviewReset();await loadAdminReviews();}
-        catch(e){alert("Unable to delete review: "+e.message);del.disabled=false;}
+        catch(e){jdrNotice("Unable to delete review: "+e.message);del.disabled=false;}
       };
       actions.append(edit,toggle,del);
       row.append(name,status,body,actions);
@@ -2075,8 +2075,8 @@ async function setCustomerVerification(request,record,decision){
     :"DIFFERENT PERSON: You have verified this waiting-list renter is NOT the person in the safety record. Enter a brief verification reason:";
   const reason=prompt(promptText);
   if(reason===null)return;
-  if(!reason.trim()||reason.trim().length<8){alert("Please enter a reason of at least 8 characters.");return;}
-  if(!confirm((isConfirmed?"Confirm identity match":"Mark as a different person")+" for this specific waiting-list request?\nThis will be recorded in private verification history."))return;
+  if(!reason.trim()||reason.trim().length<8){jdrNotice("Please enter a reason of at least 8 characters.");return;}
+  if(!await jdrConfirm((isConfirmed?"Confirm identity match":"Mark as a different person")+" for this specific waiting-list request?\nThis will be recorded in private verification history."))return;
   const key=verificationKey(request.id,record.id);
   const ref=doc(db,"customerVerifications",key);
   const existing=await getDoc(ref);
@@ -2179,7 +2179,7 @@ async function refreshCustomerSafetyAlerts(){
         button.addEventListener("click",async()=>{
           safe.disabled=confirmBtn.disabled=true;
           try{await setCustomerVerification(request,record,value)}
-          catch(e){alert("Unable to save verification: "+e.message)}
+          catch(e){jdrNotice("Unable to save verification: "+e.message)}
           finally{safe.disabled=confirmBtn.disabled=false}
         });
       }
@@ -2234,8 +2234,8 @@ async function loadEvidenceGallery(recordId,box){
    const remove=document.createElement("button");remove.type="button";remove.textContent="🗑️ Delete";
    let cached=null;
    const fetchImage=async()=>{if(!cached)cached=await getBlob(storageRef(evidenceStorage,e.path));return cached;};
-   open.onclick=async()=>{try{evidenceShow(await fetchImage());}catch(err){alert("Cannot open evidence: "+err.message);}};
-   remove.onclick=async()=>{if(!confirm("Permanently delete this screenshot?"))return;try{remove.disabled=true;await deleteObject(storageRef(evidenceStorage,e.path));await deleteDoc(d.ref);await loadEvidenceGallery(recordId,box);}catch(err){alert("Delete failed: "+err.message);remove.disabled=false;}};
+   open.onclick=async()=>{try{evidenceShow(await fetchImage());}catch(err){jdrNotice("Cannot open evidence: "+err.message);}};
+   remove.onclick=async()=>{if(!await jdrConfirm("Permanently delete this screenshot?"))return;try{remove.disabled=true;await deleteObject(storageRef(evidenceStorage,e.path));await deleteDoc(d.ref);await loadEvidenceGallery(recordId,box);}catch(err){jdrNotice("Delete failed: "+err.message);remove.disabled=false;}};
    tile.append(img,label,open,remove);box.append(tile);
    fetchImage().then(blob=>{if(img.isConnected){const url=URL.createObjectURL(blob);img.src=url;img.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});}}).catch(()=>{img.alt="Preview unavailable — tap View";});
   }
@@ -2306,12 +2306,12 @@ function renderBlacklist(){
    };
    const del=document.createElement("button");del.type="button";del.textContent="🗑️ Delete";
    del.onclick=async()=>{
-     if(!confirm("Permanently delete the private record for "+r.customerName+"?"))return;
+     if(!await jdrConfirm("Permanently delete the private record for "+r.customerName+"?"))return;
      try{del.disabled=true;await deleteAllEvidence(r.id);await deleteDoc(doc(db,"customerSafety",r.id));await loadBlacklist();await refreshCustomerSafetyAlerts();}
-     catch(e){alert("Delete failed: "+e.message);del.disabled=false;}
+     catch(e){jdrNotice("Delete failed: "+e.message);del.disabled=false;}
    };
    const upload=document.createElement("button");upload.type="button";upload.textContent="📸 Upload to Google Drive";
-   upload.onclick=()=>{const base=GOOGLE_DRIVE_UPLOAD_URL;if(!base||base.includes("PASTE_YOUR")){alert("Set GOOGLE_DRIVE_UPLOAD_URL in admin.html after deploying your Apps Script web app.");return;}const url=new URL(base);url.searchParams.set("customer",r.customerName||"");window.open(url.toString(),"_blank","noopener,noreferrer");};
+   upload.onclick=()=>{const base=GOOGLE_DRIVE_UPLOAD_URL;if(!base||base.includes("PASTE_YOUR")){jdrNotice("Set GOOGLE_DRIVE_UPLOAD_URL in admin.html after deploying your Apps Script web app.");return;}const url=new URL(base);url.searchParams.set("customer",r.customerName||"");window.open(url.toString(),"_blank","noopener,noreferrer");};
    actions.append(edit,upload,del);row.append(actions);list.append(row);
  }
 }
@@ -2458,7 +2458,7 @@ function psnRender(){
   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit Account";
   edit.onclick=()=>{$("psnAccountEditId").value=a.id;$("psnEmail").value=a.email;$("psnRegion").value=a.region||"";$("psnOnlineId").value=a.onlineId||"";$("psnNotes").value=a.notes||"";for(const o of $("psnGames").options)o.selected=(a.gameIds||[]).includes(o.value);$("psnAccountSave").textContent="💾 Update Account";$("psnAccountForm").scrollIntoView({behavior:"smooth",block:"center"});};
   const del=document.createElement("button");del.type="button";del.className="psn-danger";del.textContent="🗑️ Delete Account";
-  del.onclick=async()=>{if(psnRentals.some(r=>r.accountId===a.id&&r.status!=="returned")){alert("Return or reassign active renters first.");return;}if(!confirm("Delete this PSN account? Rental history remains."))return;try{await deleteDoc(doc(db,"psnAccounts",a.id));await psnLoad();await Promise.all((a.gameIds||[]).map(gid=>jdrRefreshPublicSlotsForGame(gid)));}catch(e){alert(e.message);}};
+  del.onclick=async()=>{if(psnRentals.some(r=>r.accountId===a.id&&r.status!=="returned")){jdrNotice("Return or reassign active renters first.");return;}if(!await jdrConfirm("Delete this PSN account? Rental history remains."))return;try{await deleteDoc(doc(db,"psnAccounts",a.id));await psnLoad();await Promise.all((a.gameIds||[]).map(gid=>jdrRefreshPublicSlotsForGame(gid)));}catch(e){jdrNotice(e.message);}};
   actions.append(edit,del);card.append(actions);box.append(card);
  }
  const rentalBox=$("rentalList");rentalBox.replaceChildren();
@@ -2593,7 +2593,7 @@ $("psnExtendApply").onclick=async()=>{
   const currentReturn=rental.returnDate;
   const newReturn=jdrAddPaidExtensionDate(currentReturn,period);
   const label=period==='month'?'1 Month':'1 Week';
-  if(!confirm(`Confirm payment received?\n\nRenter: ${rental.renterName}\nGame: ${psnGameTitle(rental.gameId)}\nAccount: ${psnAccounts.find(a=>a.id===rental.accountId)?.email||'Unknown'}\nSlot: ${psnSlotLabel(rental.slot)}\nExtension: ${label}\nReturn: ${currentReturn} → ${newReturn}\nPaid: ₱${amount.toFixed(2)}\n\nOther PSN renters will remain unchanged.`))return;
+  if(!await jdrConfirm(`Confirm payment received?\n\nRenter: ${rental.renterName}\nGame: ${psnGameTitle(rental.gameId)}\nAccount: ${psnAccounts.find(a=>a.id===rental.accountId)?.email||'Unknown'}\nSlot: ${psnSlotLabel(rental.slot)}\nExtension: ${label}\nReturn: ${currentReturn} → ${newReturn}\nPaid: ₱${amount.toFixed(2)}\n\nOther PSN renters will remain unchanged.`))return;
   jdrPaidExtensionBusy=true;btn.disabled=true;message.textContent='⏳ Verifying records and confirming payment…';
   // Load ALL account/rental records; aggregate across independent PSN accounts.
   const [accountList,rentalList]=await Promise.all([getDocs(collection(db,'psnAccounts')),getDocs(collection(db,'psnRentals'))]);
@@ -2644,8 +2644,13 @@ $("psnExtendApply").onclick=async()=>{
  finally{jdrPaidExtensionBusy=false;btn.disabled=false;}
 };
 // New rental payment and assignment are written atomically to prevent partial saves.
+let jdrLastEditId=null;
 function jdrToggleNewRentalPayment(){
- const fresh=!$("psnRentalEditId").value;
+ const editId=$("psnRentalEditId").value, fresh=!editId;
+ const existing=psnRentals.find(r=>r.id===editId);
+ if(jdrLastEditId!==editId){jdrLastEditId=editId;$('jdrSwapPlan').value=existing?.rentalPlan||'';$('jdrLegacyDates').value='';}
+ $('jdrSwapPlan').disabled=!!existing?.rentalPlan;
+ $('jdrLegacyHistory').hidden=fresh||!!existing?.rentalPlan;
  $("jdrNewRentalPaymentBox").style.display=fresh?"grid":"none";
  $("jdrNewRentalHelp").style.display=fresh?"block":"none";
  $("psnRentalSave").textContent=fresh?"💳 Confirm Payment & Save Rental":"💾 Update Assignment";
@@ -2673,7 +2678,11 @@ $("psnRentalForm").onsubmit=async e=>{
   if(id){
    if(old?.status==='rented'&&(old.gameId!==gameId||old.accountId!==accountId||old.slot!==slot))throw Error('Use Swap Game for active assignment changes.');
    // Existing rental edits never create initial-payment income.
-   await updateDoc(doc(db,"psnRentals",id),data);
+   if(!old?.rentalPlan && $('jdrSwapPlan').value){
+    const plan=$('jdrSwapPlan').value, dates=$('jdrLegacyDates').value.trim()?$('jdrLegacyDates').value.split(',').map(x=>x.trim()):[];
+    if(!jdrSwapLabels[plan]||dates.some(d=>!/^\d{4}-\d{2}-\d{2}$/.test(d)||!Number.isFinite(Date.parse(d))||new Date(d).toISOString().slice(0,10)!==d||d>todayISO()||d<startDate)||new Set(dates).size!==dates.length)throw Error('Check plan and prior swap dates.');
+    await runTransaction(db,async tx=>{const ref=doc(db,'psnRentals',id),snap=await tx.get(ref);if(!snap.exists()||snap.data().rentalPlan)throw Error('Rental changed. Refresh.');tx.update(ref,{...data,rentalPlan:plan,swapDates:dates,swapCount:dates.length});});
+   }else await updateDoc(doc(db,"psnRentals",id),data);
    await jdrRefreshPublicSlotsForGame(gameId);
    if(old && (old.gameId!==gameId || old.slot!==slot))await jdrRefreshPublicSlotsForGame(old.gameId);
    try{await psnLog(status==="returned"?"Returned":"Assignment Updated",data,old?`Previous: ${old.status}, ${old.returnDate}`:"");}catch(err){console.error("PSN history:",err);}
@@ -2686,7 +2695,7 @@ $("psnRentalForm").onsubmit=async e=>{
    const amount=Number($("jdrNewRentalAmount").value);
    if(!Number.isFinite(amount)||amount<=0||amount>100000000||Math.round(amount*100)!==amount*100)throw Error("Enter the actual confirmed payment (up to 2 decimals).");
    const note=$("jdrNewRentalNote").value.trim();
-   if(!confirm(`Confirm payment received and save NEW rental?\n\nRenter: ${renterName}\nGame: ${psnGameTitle(gameId)}\nPSN: ${psnAccounts.find(a=>a.id===accountId)?.email||''}\nSlot: ${psnSlotLabel(slot)}\nReturn: ${returnDate}\nPaid: ₱${amount.toFixed(2)}\n\nThis will create ONE rental and ONE income entry.`))return;
+   if(!await jdrConfirm(`Confirm payment received and save NEW rental?\n\nRenter: ${renterName}\nGame: ${psnGameTitle(gameId)}\nPSN: ${psnAccounts.find(a=>a.id===accountId)?.email||''}\nSlot: ${psnSlotLabel(slot)}\nReturn: ${returnDate}\nPaid: ₱${amount.toFixed(2)}\n\nThis will create ONE rental and ONE income entry.`))return;
    // Use a single transaction for rental, finance, history and aggregate public availability.
    const [aList,rList]=await Promise.all([getDocs(collection(db,'psnAccounts')),getDocs(collection(db,'psnRentals'))]);
    const accounts=aList.docs.map(d=>({id:d.id,...d.data()}));
@@ -2746,7 +2755,7 @@ $("psnRentalForm").onsubmit=async e=>{
    if(count)await batch.commit();
    await loadAdminGames();
    button.textContent=`✅ ${count} game(s) synced to customer website`;
-  }catch(e){console.error(e);button.textContent="❌ Sync failed — tap to retry";alert("Public availability sync failed: "+e.message);}
+  }catch(e){console.error(e);button.textContent="❌ Sync failed — tap to retry";jdrNotice("Public availability sync failed: "+e.message);}
   finally{button.disabled=false;}
  });
 })();
@@ -2778,7 +2787,7 @@ async function jdrRefreshPublicSlotsForGame(gameId){
 async function jdrConfirmPsnReturn(rental){
  await updateDoc(doc(db,"psnRentals",rental.id),{status:"returned",updatedAt:serverTimestamp()});
  try{await jdrRefreshPublicSlotsForGame(rental.gameId);}
- catch(err){console.error("Public availability sync failed:",err);alert("Return saved, but customer availability could not be refreshed. Please refresh and check Game Management: "+err.message);}
+ catch(err){console.error("Public availability sync failed:",err);jdrNotice("Return saved, but customer availability could not be refreshed. Please refresh and check Game Management: "+err.message);}
 }
 // Reconcile admin game slot updates with existing renter assignments.
 // Does NOT invent renter identities or mark public slots rented from waiting-list requests.
@@ -2805,7 +2814,7 @@ function renderPsnExpiryAlerts(){
   const edit=document.createElement("button");edit.type="button";edit.textContent="✏️ Edit / Extend";
   edit.onclick=()=>{openModal("rentalManagementModal");$("psnRentalEditId").value=r.id;$("psnRentalAccount").value=r.accountId;psnRentalGameChoices();$("psnRentalGame").value=r.gameId;$("psnRentalSlot").value=r.slot;$("psnRenterName").value=r.renterName;$("psnStartDate").value=r.startDate||"";$("psnReturnDate").value=r.returnDate||"";$("psnRentalStatus").value=r.status;$("psnRentalSave").textContent="💾 Update Assignment";$("psnRentalForm").scrollIntoView({behavior:"smooth"});};
   const returned=document.createElement("button");returned.type="button";returned.textContent="✅ Mark Returned";
-  returned.onclick=async()=>{if(!confirm("Confirm that the PSN account was actually returned and disabled by "+r.renterName+"?"))return;returned.disabled=true;try{await jdrConfirmPsnReturn(r);await psnLog("Returned",r,"Confirmed by admin from PSN Rental Alert Center");await psnLoad();}catch(err){alert("Could not mark returned: "+err.message);returned.disabled=false;}};
+  returned.onclick=async()=>{if(!await jdrConfirm("Confirm that the PSN account was actually returned and disabled by "+r.renterName+"?"))return;returned.disabled=true;try{await jdrConfirmPsnReturn(r);await psnLog("Returned",r,"Confirmed by admin from PSN Rental Alert Center");await psnLoad();}catch(err){jdrNotice("Could not mark returned: "+err.message);returned.disabled=false;}};
   row.append(title,info,edit,returned);box.append(row);
  }
 }
@@ -2830,7 +2839,7 @@ function v4RenderFinance(){
   psnLine(left,"small",(t.date||"")+" • "+(t.category||"Other")+(t.reference?" • Ref: "+t.reference:""));
   const del=document.createElement("button");del.type="button";del.textContent="Delete";
   del.onclick=async()=>{
-   if(!confirm("Delete this financial transaction? This cannot be undone."))return;
+   if(!await jdrConfirm("Delete this financial transaction? This cannot be undone."))return;
    del.disabled=true;
    try{await deleteDoc(doc(db,"adminFinanceTransactions",t.id));await v4LoadFinance();}
    catch(e){$("v4FinanceStatus").textContent="❌ Delete failed: "+e.message;del.disabled=false;}
@@ -2905,14 +2914,14 @@ function v42ShowRental(r){
  };
  const returned=document.createElement("button");returned.type="button";returned.textContent="✅ Mark Returned";
  returned.onclick=async()=>{
-  if(!confirm("Confirm that "+(r.renterName||"this renter")+" has returned the PSN account and disabled console sharing? This will mark this rental as returned."))return;
+  if(!await jdrConfirm("Confirm that "+(r.renterName||"this renter")+" has returned the PSN account and disabled console sharing? This will mark this rental as returned."))return;
   returned.disabled=true;edit.disabled=true;
   try{
    await jdrConfirmPsnReturn(r);
    await psnLog("Returned",r,"Confirmed by admin from Rental Calendar");
    modal.hidden=true;
    await psnLoad();
-  }catch(err){alert("Could not complete return: "+err.message);returned.disabled=false;edit.disabled=false;}
+  }catch(err){jdrNotice("Could not complete return: "+err.message);returned.disabled=false;edit.disabled=false;}
  };
  actions.append(edit,returned);host.append(actions);
  modal.hidden=false;
@@ -3122,7 +3131,7 @@ onAuthStateChanged(auth,user=>{
     return;
   }
   if(user.uid!==ADMIN_UID){
-    alert("This account is not authorized to access the admin dashboard.");
+    jdrNotice("This account is not authorized to access the admin dashboard.");
     signOut(auth).then(()=>location.href="admin-login.html");
     return;
   }
@@ -3275,16 +3284,17 @@ function jdrSwapEligible(r,day){
 }
 async function jdrOpenSwap(r){
  if(auth.currentUser?.uid!==ADMIN_UID)return;
+ if(!jdrSwapLabels[r.rentalPlan]){jdrNotice('Configure the rental plan and previous swap dates in Edit Renter first.');return;}
+ try{jdrSwapEligible(r,todayISO());}catch(e){jdrNotice(e.message);return;}
  const dlg=document.createElement('dialog');dlg.style.cssText='width:min(92vw,480px);max-height:85vh;overflow:auto;background:#09172c;color:white;border:1px solid #31558d;border-radius:14px;padding:20px';
- dlg.innerHTML=`<div class="psn-panel"><h3>🔄 Smart Swap Game</h3><p id="jdrSwapInfo"></p><label>Rental plan</label><select id="jdrSwapExistingPlan"><option value="">Select plan</option>${Object.entries(jdrSwapLabels).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><label>Previous swap dates (legacy rentals only, YYYY-MM-DD separated by commas)</label><input id="jdrSwapPrior" placeholder="Leave blank if none"><button type="button" id="jdrSwapSavePlan">Save plan / history</button><label>Available game and PSN account</label><select id="jdrSwapTarget"></select><label><input type="checkbox" id="jdrSwapProof" style="width:auto"> Verified return / disable proof and account access secured</label><p id="jdrSwapMessage" role="status"></p><button type="button" id="jdrSwapConfirm">Confirm swap</button> <button type="button" id="jdrSwapClose">Close</button></div>`;
+ dlg.innerHTML=`<div class="psn-panel"><h3>🔄 Smart Swap Game</h3><p id="jdrSwapInfo"></p><p id="jdrSwapSummary"></p><label>Available game and PSN account</label><select id="jdrSwapTarget"></select><label><input type="checkbox" id="jdrSwapProof" style="width:auto"> Verified return / disable proof and account access secured</label><p id="jdrSwapMessage" role="status"></p><button type="button" id="jdrSwapConfirm">Confirm swap</button> <button type="button" id="jdrSwapClose">Close</button></div>`;
  document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove());dlg.showModal();
- const q=id=>dlg.querySelector('#'+id),msg=q('jdrSwapMessage'),plan=q('jdrSwapExistingPlan'),prior=q('jdrSwapPrior'),save=q('jdrSwapSavePlan'),btn=q('jdrSwapConfirm'),close=q('jdrSwapClose');
+ const q=id=>dlg.querySelector('#'+id),msg=q('jdrSwapMessage'),btn=q('jdrSwapConfirm'),close=q('jdrSwapClose');
  q('jdrSwapInfo').textContent=r.renterName+' • '+psnGameTitle(r.gameId)+' • '+psnSlotLabel(r.slot)+' • Expiry: '+r.returnDate;
- plan.value=r.rentalPlan||'';plan.disabled=prior.disabled=save.disabled=!!r.rentalPlan;
+ q('jdrSwapSummary').textContent=jdrSwapLabels[r.rentalPlan]+' • Recorded swaps: '+(r.swapCount||0)+' • Eligible to swap';
  close.onclick=()=>dlg.close();dlg.addEventListener('cancel',e=>{if(btn.disabled&&close.disabled)e.preventDefault()});
  const targets=[];for(const a of psnAccounts)for(const gid of a.gameIds||[]){if(gid===r.gameId||!gameCache.has(gid)||gameCache.get(gid).status==='upcoming')continue;if(psnRentals.some(x=>x.status==='rented'&&x.accountId===a.id&&x.slot===r.slot))continue;targets.push({accountId:a.id,gameId:gid});const o=document.createElement('option');o.value=String(targets.length-1);o.textContent=psnGameTitle(gid)+' — '+a.email;q('jdrSwapTarget').append(o);}
  if(!targets.length)msg.textContent='No eligible free account slots. Refresh rentals and retry.';
- save.onclick=async()=>{save.disabled=true;try{const dates=prior.value.trim()?prior.value.split(',').map(x=>x.trim()):[];if(!jdrSwapLabels[plan.value]||dates.some(d=>!/^\d{4}-\d{2}-\d{2}$/.test(d)||!Number.isFinite(Date.parse(d))||d>todayISO()||d<r.startDate)||new Set(dates).size!==dates.length)throw Error('Check plan and prior swap dates.');await runTransaction(db,async tx=>{const ref=doc(db,'psnRentals',r.id),snap=await tx.get(ref);if(!snap.exists()||snap.data().status!=='rented'||snap.data().rentalPlan)throw Error('Rental changed. Refresh.');tx.update(ref,{rentalPlan:plan.value,swapDates:dates,swapCount:dates.length,updatedAt:serverTimestamp()});});r={...r,rentalPlan:plan.value,swapDates:dates,swapCount:dates.length};plan.disabled=prior.disabled=true;msg.textContent='Plan saved.';await psnLoad();}catch(e){msg.textContent=e.message;save.disabled=false;}};
  btn.onclick=async()=>{if(!q('jdrSwapProof').checked){msg.textContent='Verify return proof first.';return;}const target=targets[Number(q('jdrSwapTarget').value)];if(!target)return;btn.disabled=close.disabled=true;try{
  const day=todayISO();jdrSwapEligible(r,day);
  const [as,rs]=await Promise.all([getDocs(collection(db,'psnAccounts')),getDocs(collection(db,'psnRentals'))]);
@@ -3296,6 +3306,21 @@ async function jdrOpenSwap(r){
  const dates=[...(f.swapDates||[]),day],next={...f,...target,swapDates:dates,swapCount:dates.length};
  for(let i=0;i<gids.length;i++){const pub=jdrPublicSlotFromRentals(gids[i],f.slot,accounts,[...others,{...next,id:r.id}]);if(!pub)throw Error('Cannot verify public slot capacity.');const fields=slotFields(f.slot);tx.update(gr[i],{[fields.status]:pub.status,[fields.date]:pub.date,updatedAt:serverTimestamp()});}
  tx.update(ref,{...target,gameName:psnGameTitle(target.gameId),swapDates:dates,swapCount:dates.length,updatedAt:serverTimestamp()});tx.set(hr,{action:'Game Swap',rentalId:r.id,accountId:target.accountId,gameId:target.gameId,gameName:psnGameTitle(target.gameId),slot:f.slot,renterName:f.renterName,previousGameId:f.gameId,previousAccountId:f.accountId,details:psnGameTitle(f.gameId)+' → '+psnGameTitle(target.gameId)+'; expiry '+f.returnDate+'; no payment',createdAt:serverTimestamp()});});
- dlg.close();psnClearRental();await Promise.allSettled([loadAdminGames(),psnLoad()]);alert('Swap saved. Original expiry and payment retained.');
+ dlg.close();psnClearRental();await Promise.allSettled([loadAdminGames(),psnLoad()]);jdrNotice(psnGameTitle(r.gameId)+' → '+psnGameTitle(target.gameId)+'\nExpiry: '+r.returnDate+'\nAdditional charge: ₱0.00\nRecorded swaps: '+((r.swapDates||[]).length+1)+'\nOriginal expiry and payment retained.','Swap Successful!','success');
  }catch(e){msg.textContent=e.message;btn.disabled=close.disabled=false;}};
 }
+
+// V7.1 premium dialogs; confirmations remain explicitly awaited.
+function jdrDialog(message,title,kind,ask=false){return new Promise(resolve=>{
+ const d=document.createElement('dialog');d.className='jdr-premium-dialog';
+ const icon=document.createElement('div');icon.className='jdr-dialog-icon '+kind;icon.textContent=kind==='success'?'✓':kind==='error'?'!':ask?'?':'i';
+ const heading=document.createElement('h2');heading.textContent=title;
+ const body=document.createElement('p');body.textContent=String(message);
+ const actions=document.createElement('div');actions.className='jdr-dialog-actions';
+ let result=false;const button=document.createElement('button');button.type='button';button.textContent=ask?'Confirm':'Done';button.onclick=()=>{result=true;d.close();};
+ if(ask){const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.className='jdr-dialog-cancel';cancel.onclick=()=>d.close();actions.append(cancel);}
+ actions.append(button);d.append(icon,heading,body,actions);document.body.append(d);d.addEventListener('close',()=>{d.remove();resolve(result);},{once:true});d.showModal();if(ask)actions.firstChild.focus();else button.focus();
+});}
+let jdrNoticeQueue=Promise.resolve();
+function jdrNotice(message,title,kind){const m=String(message);kind=kind||(/unable|failed|error|not authorized|cannot|invalid/i.test(m)?'error':/success|saved|updated|confirmed|deleted|cleared/i.test(m)?'success':'info');jdrNoticeQueue=jdrNoticeQueue.then(()=>jdrDialog(m,title||(kind==='success'?'Action Successful':kind==='error'?'Action Failed':'Admin Notice'),kind)).catch(console.error);}
+function jdrConfirm(message){return jdrDialog(message,'Confirm Action','info',true);}
