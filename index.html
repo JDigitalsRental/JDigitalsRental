@@ -6930,5 +6930,34 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 
 </script>
+<style id="jdr-cinematic-motion-v7">
+@keyframes jdr7-enter{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
+@keyframes jdr7-zoom{from{scale:1}to{scale:1.045}}
+@keyframes jdr7-stars{from{transform:translateY(0)}to{transform:translateY(-32px)}}
+@keyframes jdr7-pop{from{opacity:.6;translate:0 12px;scale:.985}to{opacity:1;translate:0 0;scale:1}}
+.hero-copy .eyebrow,.hero-copy h1,.hero-copy .hero-text,.hero-actions{animation:jdr7-enter .65s ease-out both}
+.hero-copy h1{animation-delay:.08s}.hero-copy .hero-text{animation-delay:.16s}.hero-actions{animation-delay:.24s}
+.hero-copy h1 span{color:#65baff!important;-webkit-text-fill-color:#65baff!important;text-shadow:0 0 22px #168cff66}
+.hero-copy{position:relative;isolation:isolate}
+.hero-copy::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:radial-gradient(circle,#76c7ff70 1px,transparent 2px),radial-gradient(circle,#4a8fff55 1px,transparent 2px);background-size:83px 97px,127px 113px;animation:jdr7-stars 12s ease-in-out infinite alternate;mask-image:linear-gradient(transparent,#000 25%,#000 75%,transparent)}
+.jdr7-slide-motion{animation:jdr7-zoom 5s ease-out both}
+.game-card,.upcoming-game-card{transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease!important}
+.game-card .cover,.upcoming-game-card .cover{transition:scale .45s ease!important}
+@media(hover:hover) and (pointer:fine){.game-card:hover,.upcoming-game-card:hover{transform:translateY(-5px);border-color:#65baff!important;box-shadow:0 12px 32px #0008,0 0 20px #168cff40!important}.game-card:hover .cover,.upcoming-game-card:hover .cover{scale:1.045}}
+.hero-actions .btn,.jdr-details-primary,.mega-favorite{transition:scale .16s ease,filter .2s ease!important}
+.hero-actions .btn:active,.jdr-details-primary:active,.mega-favorite:active{scale:.96}
+.jdr-details-overlay.open .jdr-details-panel{animation:jdr7-pop .24s ease-out both;background:linear-gradient(145deg,#153253,#071324 75%)!important}
+.jdr7-revealed{animation:jdr7-enter .48s ease-out both}
+@media(prefers-reduced-motion:reduce){#home *,#home *::before,.jdr7-revealed,.jdr7-slide-motion,.jdr-details-overlay.open .jdr-details-panel{animation:none!important;transition:none!important}.game-card .cover,.upcoming-game-card .cover{transition:none!important}}
+</style>
+<script id="jdr-cinematic-motion-js-v7">
+(()=>{
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ if(reduced.matches)return;
+ const photo=document.getElementById('jdrFeaturedPhoto');
+ if(photo){let last=photo.style.backgroundImage;const animate=()=>{photo.classList.remove('jdr7-slide-motion');void photo.offsetWidth;photo.classList.add('jdr7-slide-motion');};animate();new MutationObserver(()=>{const next=photo.style.backgroundImage;if(next!==last){last=next;animate();}}).observe(photo,{attributes:true,attributeFilter:['style']});}
+ if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){entry.target.classList.add('jdr7-revealed');observer.unobserve(entry.target);}}},{threshold:.12});document.querySelectorAll('.section-heading').forEach(el=>observer.observe(el));}
+})();
+</script>
 </body>
 </html>
