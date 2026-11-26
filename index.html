@@ -6988,5 +6988,26 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+
+<!-- V7.2: mobile-only viewport background; no JavaScript or Firebase changes. -->
+<style id="jdr-v72-mobile-background">
+@media (max-width: 900px) {
+  body { isolation:isolate; background:#030916!important; }
+  body::before {
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:linear-gradient(180deg,rgba(2,8,23,.36),rgba(2,8,23,.57)),url("assets/premium-bg.png") 18% center / cover no-repeat!important;
+    opacity:1!important; mask-image:none!important; -webkit-mask-image:none!important;
+  }
+  .hero { background:linear-gradient(135deg,rgba(2,8,23,.48),rgba(4,17,39,.38))!important; }
+  .section,#games,#upcoming,#about,#plans,#faq,#rules,#reviews { background-color:transparent!important; }
+  body::after {
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:radial-gradient(ellipse at 25% 35%,rgba(25,130,255,.16),transparent 65%);
+    animation:jdr72-light 9s ease-in-out infinite alternate;
+  }
+}
+@keyframes jdr72-light { from { opacity:.25; } to { opacity:.85; } }
+@media (prefers-reduced-motion:reduce) { body::after { animation:none!important; } }
+</style>
 </body>
 </html>
