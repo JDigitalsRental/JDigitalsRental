@@ -3422,13 +3422,25 @@ async function jdr85Complete(id,markReturned,expectedUid){
 async function jdr87Vip(uid){
  const period=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit'}).formatToParts(new Date());
  const year=period.find(x=>x.type==='year').value,month=period.find(x=>x.type==='month').value;
- const choice=prompt('VIP action: birthday (issue voucher), redeem (apply voucher), swap (record approved completed bonus swap)');if(choice===null)return;
- if(!['birthday','redeem','swap'].includes(choice))throw Error('Invalid VIP action.');
- const birthday=choice==='birthday'?prompt('Verified birthday month and day (MM-DD):'):null;
+ const rr=doc(db,'memberRewards',uid);
+ const [rs,bs,ss]=await Promise.all([getDoc(rr),getDoc(doc(db,'memberVouchers',uid,'records','birthday_'+year)),getDoc(doc(db,'memberVouchers',uid,'records','bonus_'+year+'_'+month))]);
+ const r=rs.data(),v=bs.data(),used=Number(ss.data()?.used||0),n=Number(r?.lifetimePoints||0),tier=n>=10000?4:n>=5000?3:n>=2500?2:n>=1000?1:0,max=tier===4?2:tier===3?1:0,active=r?.status==='active';
+ const result=await new Promise(resolve=>{
+ const d=document.createElement('dialog');d.style.cssText='width:min(480px,92vw);max-height:85vh;overflow:auto;background:#101e32;color:#edf6ff;border:1px solid #39638c;border-radius:18px;padding:22px;z-index:2147483647';
+ const line=(tag,t)=>{const e=document.createElement(tag);e.textContent=t;d.append(e);return e;};
+ line('h2','VIP Benefits Management · V8.7.1');line('p',['Bronze','Silver','Gold','Platinum','Legendary'][tier]+' Gamer · '+(r?.status||'inactive')+' · '+n+' lifetime points');
+ const date=line('input','');date.type='date';date.min=year+'-'+month+'-01';date.max=year+'-'+month+'-'+String(new Date(Number(year),Number(month),0).getDate()).padStart(2,'0');date.setAttribute('aria-label','Verified birthday (current month)');date.disabled=!active||!tier||bs.exists();
+ const note=line('textarea','');note.placeholder='Reference / verification note (no sensitive ID details)';note.style.cssText='display:block;width:100%;margin:12px 0;min-height:65px';
+ const msg=line('p','');const finish=x=>{d.close();d.remove();resolve(x);};
+ const add=(label,choice,enabled)=>{const b=line('button',label);b.type='button';b.disabled=!enabled;b.style.cssText='display:block;width:100%;margin:8px 0;padding:10px;border-radius:9px;background:#153657;color:white;border:1px solid #49749c;opacity:'+(enabled?1:.45);b.onclick=()=>{if(choice==='birthday'&&(!date.value||!date.checkValidity())){msg.textContent='Choose a verified birthday in the current month.';return;}if(!note.value.trim()){msg.textContent='Enter a reference or verification note.';return;}finish({choice,birthday:date.value.slice(5),reason:note.value.trim()});};};
+ line('p','Birthday voucher: '+(tier?'₱'+[0,25,50,75,100][tier]:'Unlocks at Silver')+' · '+(v?.status||'Not issued'));
+ add('Issue Birthday Voucher','birthday',active&&tier>0&&!bs.exists());add('Redeem Voucher','redeem',active&&v?.kind==='birthday'&&v?.status==='issued');
+ line('p','Monthly bonus swaps: '+used+' / '+max+' · '+(max?'Remaining: '+Math.max(0,max-used):'Unlocks at Platinum'));
+ add('Record Completed Bonus Swap','swap',active&&used<max);const cancel=line('button','Close');cancel.type='button';cancel.onclick=()=>finish(null);d.addEventListener('cancel',e=>{e.preventDefault();finish(null);});document.body.append(d);d.showModal();
+ });if(!result)return;const {choice,birthday,reason}=result;
  if(choice==='birthday'&&(!birthday||!/^\d{2}-\d{2}$/.test(birthday)||birthday.slice(0,2)!==month||Number(birthday.slice(3))<1||Number(birthday.slice(3))>new Date(Number(year),Number(month),0).getDate()))throw Error('Enter a verified birthday in the current Philippine calendar month.');
- const reason=prompt('Reference / verification note (do not enter sensitive ID details):')?.trim();if(!reason)return;
  if(!await jdrConfirm('Confirm '+choice+' for this member? For swaps, record only an already completed approved swap; for redemption, apply the discount only once.'))return;
- const rr=doc(db,'memberRewards',uid),vr=doc(db,'memberVouchers',uid,'records',choice==='swap'?'bonus_'+year+'_'+month:'birthday_'+year);
+ const vr=doc(db,'memberVouchers',uid,'records',choice==='swap'?'bonus_'+year+'_'+month:'birthday_'+year);
  await runTransaction(db,async tx=>{const [rs,vs]=await Promise.all([tx.get(rr),tx.get(vr)]);const r=rs.data(),v=vs.data();if(r?.status!=='active')throw Error('Active membership required.');const n=Number(r.lifetimePoints||0),tier=n>=10000?4:n>=5000?3:n>=2500?2:n>=1000?1:0;
  if(choice==='birthday'){if(!tier||vs.exists())throw Error('Not eligible or birthday voucher already issued this year.');tx.set(vr,{kind:'birthday',year,amount:[0,25,50,75,100][tier],status:'issued',reason,createdAt:serverTimestamp()});}
  else if(choice==='redeem'){if(v?.status!=='issued'||v.kind!=='birthday')throw Error('No unused birthday voucher this year.');tx.update(vr,{status:'redeemed',redeemedAt:serverTimestamp(),redemptionNote:reason});}
