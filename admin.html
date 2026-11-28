@@ -500,6 +500,7 @@ html{scroll-behavior:smooth}
 
   <!-- Quick access: customer reviews and safety -->
   <section id="v4Psn" class="management-shortcuts" aria-label="Customer management tools">
+<button id="openMembersPanel" type="button"><strong>💎 Members & Rewards ↗</strong><small>Membership, points and customer safety</small></button>
 <button id="openReviewsPanel" type="button"><strong>⭐ Facebook Customer Reviews ↗</strong><small>Open, add, edit and publish customer reviews</small></button>
 <button id="openBlacklistPanel" type="button"><strong>🛡️ Customer Safety & Blacklist ↗</strong><small>Open customer records, search, warnings and blacklist</small></button>
  <button id="openPsnLibrary" type="button"><strong>📚 PSN Email & Game Library ↗</strong><small>Saved accounts and owned games • Table / Card view</small></button>
@@ -1303,7 +1304,7 @@ html{scroll-behavior:smooth}
  <p id="jdrUnliAdminStatus" class="business-muted" role="status">Checking availability…</p>
 </section>
 
-<script type="module" src="admin.js?v=7.1"></script>
+<div id="jdrMembersModal" class="manage-modal"><div class="manage-modal-card management-modal-card psn-panel"><button id="closeMembersPanel" class="manage-close" type="button">×</button><h2>Members & Rewards</h2><p id="jdrMembersStats"></p><input id="jdrMembersSearch" placeholder="Search name, email or UID"><button id="jdrMembersRefresh" type="button">Refresh</button><p id="jdrMembersMessage" role="status"></p><div id="jdrMembersList"></div></div></div><script type="module" src="admin.js?v=8.2"></script>
 <div class="evidence-lightbox" id="evidenceLightbox" role="dialog" aria-modal="true" aria-label="Private screenshot viewer"><button type="button" id="evidenceLightboxClose">✕ Close screenshot</button><img id="evidenceLightboxImage" alt="Private evidence screenshot"></div>
 <div id="v42RentalModal" class="v42-modal" role="dialog" aria-modal="true" aria-label="Rental details" hidden>
   <div class="v42-dialog">
