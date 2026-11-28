@@ -7020,12 +7020,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <button id="jdr8-google" type="button" style="width:100%;margin-bottom:12px">Continue with Google</button>
 <form id="jdr8-form"><label id="jdr8-name-wrap" hidden>Full name<input id="jdr8-name" autocomplete="name" maxlength="100"></label><label>Email address<input id="jdr8-email" type="email" autocomplete="email" required></label><label>Password<input id="jdr8-password" type="password" autocomplete="current-password" required minlength="6"></label><button class="jdr8-primary" id="jdr8-submit">Sign In</button></form>
 <div class="jdr8-links" style="margin-top:12px"><button id="jdr8-toggle" type="button">Create account</button><button id="jdr8-reset" type="button">Forgot password?</button></div><button id="jdr8-continue" type="button" style="width:100%;margin-top:12px">Continue as Guest</button></div>
-<div id="jdr8-profile" hidden><strong id="jdr8-display"></strong><span id="jdr8-email-display"></span><p id="jdr8-verification"></p><button id="jdr8-resend" type="button">Resend verification email</button><button id="jdr8-refresh" type="button">I've verified my email</button><section id="jdr8-membercard" hidden style="padding:16px;border:1px solid #386ca2;border-radius:14px;background:#0a192d"><p>MEMBER PROFILE</p><strong id="jdr8-rank"></strong><p id="jdr8-points"></p><p id="jdr8-memberstatus"></p><p id="jdr8-uid" style="font-size:11px"></p><button id="jdr8-copyid" type="button">Copy Member ID</button><p>Reward earning and rental history are coming in a future update.</p></section><p id="jdr8-syncstatus" role="status"></p><button id="jdr8-retry" type="button" hidden>Retry member profile</button><button id="jdr8-logout" type="button">Sign Out</button></div>
+<div id="jdr8-profile" hidden><strong id="jdr8-display"></strong><span id="jdr8-email-display"></span><p id="jdr8-verification"></p><button id="jdr8-resend" type="button">Resend verification email</button><button id="jdr8-refresh" type="button">I've verified my email</button><section id="jdr8-membercard" hidden style="padding:16px;border:1px solid #386ca2;border-radius:14px;background:#0a192d"><p>MEMBER PROFILE</p><strong id="jdr8-rank"></strong><p id="jdr8-points"></p><p id="jdr8-memberstatus"></p><p id="jdr8-uid" style="font-size:11px"></p><button id="jdr8-copyid" type="button">Copy Member ID</button><p id="jdr8-progress"></p><p>Earn points on eligible completed rentals. Admin confirms payment and return before crediting rewards.</p><p>100 points = ₱25 · 200 = ₱50 · 400 = ₱100 · 800 = ₱200. Contact our page to redeem.</p><details><summary>Membership levels</summary><p>Bronze: 1× · Silver (500): 1.1× · Gold (1,000): 1.25× · Platinum (2,000): 1.5× · Legendary (5,000): 2×. Levels use lifetime points.</p></details><button id="jdr8-history" type="button">View rental & points history</button><div id="jdr8-historyout" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px"></div></section><p id="jdr8-syncstatus" role="status"></p><button id="jdr8-retry" type="button" hidden>Retry member profile</button><button id="jdr8-logout" type="button">Sign Out</button></div>
 <p id="jdr8-status" role="status" aria-live="polite"></p></dialog>
 <script type="module" id="jdr8-auth">
 import {getApp} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,signInWithPopup,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,updateProfile,onAuthStateChanged,signOut,reload} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
-import {getFirestore,doc,getDoc,runTransaction,serverTimestamp} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import {getFirestore,doc,getDoc,runTransaction,serverTimestamp,collection,getDocs,query,orderBy,limit} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 const el=id=>document.getElementById('jdr8-'+id), dialog=document.getElementById('jdr8');
 const auth=getAuth(getApp());let register=false,busy=false;
 const msg=t=>el('status').textContent=t;
@@ -7042,7 +7042,7 @@ let syncVersion=0;
 async function syncMember(u){
  const version=++syncVersion;
  const current=()=>version===syncVersion&&auth.currentUser?.uid===u?.uid;
- el('membercard').hidden=true;el('retry').hidden=true;el('syncstatus').textContent='';
+ el('membercard').hidden=true;el('historyout').textContent='';el('retry').hidden=true;el('syncstatus').textContent='';
  if(!u||!u.emailVerified)return;
  el('syncstatus').textContent='Loading member profile…';
  try{
@@ -7063,9 +7063,10 @@ async function syncMember(u){
   el('rank').textContent=r?(r.rank||'Rank not assigned'):'Bronze Gamer · Starter tier';
   el('points').textContent=r&&Number.isFinite(r.points)?r.points+' reward points': 'Rewards not activated yet';
   el('memberstatus').textContent=r&&r.status?'Status: '+r.status:'Account status not assigned';
-  el('membercard').hidden=false;el('syncstatus').textContent='Member profile saved.';
+  const life=Number(r?.lifetimePoints||0),next=[500,1000,2000,5000].find(n=>n>life);el('progress').textContent=life+' lifetime points · '+(next?(next-life)+' to next level':'Highest level');el('membercard').hidden=false;el('syncstatus').textContent='Member profile saved.';
  }catch(e){if(current()){console.error('Member profile sync',e);el('syncstatus').textContent='Unable to load member profile ('+(e.code||'error')+').';el('retry').hidden=false;}}
 }
+el('history').onclick=async()=>{const u=auth.currentUser,v=syncVersion;if(!u?.emailVerified)return;const out=el('historyout');out.textContent='Loading…';try{const [a,b]=await Promise.all(['memberRentalHistory','memberPointsHistory'].map(c=>getDocs(query(collection(memberDb,c,u.uid,'records'),orderBy(c==='memberRentalHistory'?'updatedAt':'createdAt','desc'),limit(30)))));if(auth.currentUser?.uid!==u.uid||v!==syncVersion)return;out.textContent='RENTALS\n'+(a.docs.map(d=>{const r=d.data();return [r.gameName,r.slot,r.status,r.returnDate].join(' · ')}).join('\n')||'No linked rentals')+'\n\nPOINTS\n'+(b.docs.map(d=>{const r=d.data();return [r.kind,r.delta,r.createdAt?.toDate?.().toLocaleDateString()||''].join(' · ')}).join('\n')||'No transactions');}catch(e){if(v===syncVersion)out.textContent='Unable to load history. Try again.';}};
 onAuthStateChanged(auth,u=>{paint(u);syncMember(u);},()=>msg('Unable to load account.'));
 el('retry').onclick=()=>syncMember(auth.currentUser);
 el('copyid').onclick=async()=>{try{await navigator.clipboard.writeText(auth.currentUser.uid);el('syncstatus').textContent='Member ID copied.';}catch(e){el('syncstatus').textContent='Please select and copy your Member ID manually.';}};
