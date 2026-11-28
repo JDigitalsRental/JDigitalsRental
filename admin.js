@@ -2685,8 +2685,8 @@ $("psnRentalForm").onsubmit=async e=>{
    if(!old?.rentalPlan && $('jdrSwapPlan').value){
     const plan=$('jdrSwapPlan').value, dates=$('jdrLegacyDates').value.trim()?$('jdrLegacyDates').value.split(',').map(x=>x.trim()):[];
     if(!jdrSwapLabels[plan]||dates.some(d=>!/^\d{4}-\d{2}-\d{2}$/.test(d)||!Number.isFinite(Date.parse(d))||new Date(d).toISOString().slice(0,10)!==d||d>todayISO()||d<startDate)||new Set(dates).size!==dates.length)throw Error('Check plan and prior swap dates.');
-    await runTransaction(db,async tx=>{const ref=doc(db,'psnRentals',id),snap=await tx.get(ref);if(!snap.exists()||snap.data().rentalPlan)throw Error('Rental changed. Refresh.');tx.update(ref,{...data,rentalPlan:plan,swapDates:dates,swapCount:dates.length});if(snap.data().memberUid)jdr85History(tx,snap.data().memberUid,id,{...snap.data(),...data});});
-   }else await runTransaction(db,async tx=>{const ref=doc(db,"psnRentals",id),snap=await tx.get(ref);if(!snap.exists()||snap.data().status!==old?.status)throw Error("Rental changed. Refresh.");tx.update(ref,data);if(snap.data().memberUid)jdr85History(tx,snap.data().memberUid,id,{...snap.data(),...data});});
+    await runTransaction(db,async tx=>{const ref=doc(db,'psnRentals',id),snap=await tx.get(ref);if(!snap.exists()||snap.data().rentalPlan||jdr90RentalFingerprint(snap.data())!==jdr90RentalFingerprint(old))throw Error('Rental changed. Refresh.');tx.update(ref,{...data,rentalPlan:plan,swapDates:dates,swapCount:dates.length});if(snap.data().memberUid)jdr85History(tx,snap.data().memberUid,id,{...snap.data(),...data});});
+   }else await runTransaction(db,async tx=>{const ref=doc(db,"psnRentals",id),snap=await tx.get(ref);if(!snap.exists()||!old||jdr90RentalFingerprint(snap.data())!==jdr90RentalFingerprint(old))throw Error("Rental changed. Refresh.");tx.update(ref,data);if(snap.data().memberUid)jdr85History(tx,snap.data().memberUid,id,{...snap.data(),...data});});
    await jdrRefreshPublicSlotsForGame(gameId);
    if(old && (old.gameId!==gameId || old.slot!==slot))await jdrRefreshPublicSlotsForGame(old.gameId);
    try{await psnLog(status==="returned"?"Returned":"Assignment Updated",data,old?`Previous: ${old.status}, ${old.returnDate}`:"");}catch(err){console.error("PSN history:",err);}
@@ -2792,7 +2792,8 @@ async function jdrRefreshPublicSlotsForGame(gameId){
 }
 async function jdrConfirmPsnReturn(rental){
  const rr=doc(db,"psnRentals",rental.id);
- const result=await jdr85Complete(rental.id,true);
+ const current=await getDoc(rr);if(!current.exists()||jdr90RentalFingerprint(current.data())!==jdr90RentalFingerprint(rental))throw Error("Rental changed since display. Refresh before confirming return.");
+ const result=await jdr85Complete(rental.id,true,undefined,jdr90RentalFingerprint(rental));
  if(result)jdrNotice(result);
  try{await jdrRefreshPublicSlotsForGame(rental.gameId);}
  catch(err){console.error("Public availability sync failed:",err);jdrNotice("Return saved, but customer availability could not be refreshed. Please refresh and check Game Management: "+err.message);}
@@ -3326,8 +3327,8 @@ async function jdrOpenSwap(r){
  if(!accounts.some(a=>a.id===target.accountId&&(a.gameIds||[]).includes(target.gameId))||others.some(x=>x.status==='rented'&&x.accountId===target.accountId&&x.slot===f.slot))throw Error('Target slot no longer available.');
  const dates=[...(f.swapDates||[]),day],next={...f,...target,swapDates:dates,swapCount:dates.length};
  for(let i=0;i<gids.length;i++){const pub=jdrPublicSlotFromRentals(gids[i],f.slot,accounts,[...others,{...next,id:r.id}]);if(!pub)throw Error('Cannot verify public slot capacity.');const fields=slotFields(f.slot);tx.update(gr[i],{[fields.status]:pub.status,[fields.date]:pub.date,updatedAt:serverTimestamp()});}
- tx.update(ref,{...target,gameName:psnGameTitle(target.gameId),swapDates:dates,swapCount:dates.length,updatedAt:serverTimestamp()});if(f.memberUid)jdr85History(tx,f.memberUid,r.id,next);tx.set(hr,{action:'Game Swap',rentalId:r.id,accountId:target.accountId,gameId:target.gameId,gameName:psnGameTitle(target.gameId),slot:f.slot,renterName:f.renterName,previousGameId:f.gameId,previousAccountId:f.accountId,adminOverride:!!liveWarning,overrideReason:liveWarning?(approval?.reason||''):'',overrideWarning:liveWarning,approvedBy:liveWarning?auth.currentUser.uid:'',details:psnGameTitle(f.gameId)+' → '+psnGameTitle(target.gameId)+'; expiry '+f.returnDate+'; no payment',createdAt:serverTimestamp()});});
- dlg.close();psnClearRental();await Promise.allSettled([loadAdminGames(),psnLoad()]);jdrNotice(psnGameTitle(r.gameId)+' → '+psnGameTitle(target.gameId)+'\nExpiry: '+r.returnDate+'\nAdditional charge: ₱0.00\nRecorded swaps: '+((r.swapDates||[]).length+1)+'\nOriginal expiry and payment retained.','Swap Successful!','success');
+ tx.update(ref,{...target,gameName:psnGameTitle(target.gameId),swapDates:dates,swapCount:dates.length,updatedAt:serverTimestamp()});if(f.memberUid)jdr85History(tx,f.memberUid,r.id,next);tx.set(hr,{action:'Game Swap',rentalId:r.id,memberUid:f.memberUid||'',accountId:target.accountId,gameId:target.gameId,gameName:psnGameTitle(target.gameId),slot:f.slot,renterName:f.renterName,previousGameId:f.gameId,previousAccountId:f.accountId,adminOverride:!!liveWarning,overrideReason:liveWarning?(approval?.reason||''):'',overrideWarning:liveWarning,approvedBy:liveWarning?auth.currentUser.uid:'',details:psnGameTitle(f.gameId)+' → '+psnGameTitle(target.gameId)+'; expiry '+f.returnDate+'; no payment',createdAt:serverTimestamp()});});
+ dlg.close();psnClearRental();await Promise.allSettled([loadAdminGames(),psnLoad()]);jdrNotice(psnGameTitle(r.gameId)+' → '+psnGameTitle(target.gameId)+'\nExpiry: '+r.returnDate+'\nAdditional charge: ₱0.00\nRecorded swaps: '+((r.swapDates||[]).length+1)+'\nOriginal expiry and payment retained.\nSwap history ID: '+hr.id,'Swap Successful!','success');
  }catch(e){msg.textContent=e.message;btn.disabled=close.disabled=false;}};
 }
 
@@ -3387,14 +3388,18 @@ function jdrConfirm(message){return jdrDialog(message,'Confirm Action','info',tr
 }
 // V8.5 — optional verified member assignment and idempotent rewards.
 function jdr85History(tx,u,id,r){tx.set(doc(db,'memberRentalHistory',u,'records',id),{rentalId:id,gameName:psnGameTitle(r.gameId),slot:r.slot,startDate:r.startDate||'',returnDate:r.returnDate||'',status:r.status,...(Number.isFinite(r.estimatePaid)?{estimatePaid:r.estimatePaid}:{}),updatedAt:serverTimestamp()});}
-async function jdr85Complete(id,markReturned,expectedUid){
+// V9.0: reject stale rental snapshots, including concurrent paid extensions.
+function jdr90RentalFingerprint(r){return JSON.stringify([r.status,r.memberUid||'',r.accountId,r.gameId,r.slot,r.renterName,r.startDate,r.returnDate,r.initialPaymentId||'',r.lastPaidExtensionId||'',r.estimatePaid??null,r.updatedAt?.seconds??null,r.updatedAt?.nanoseconds??null]);}
+async function jdr85Complete(id,markReturned,expectedUid,expectedFingerprint){
  if(auth.currentUser?.uid!==ADMIN_UID)throw Error('Admin only');
  const rr=doc(db,'psnRentals',id);
  const initial=await getDoc(rr);if(!initial.exists())throw Error('Rental missing');
- const uid=initial.data().memberUid;
+ const baseline=initial.data(),uid=baseline.memberUid;
+ if(expectedFingerprint&&jdr90RentalFingerprint(baseline)!==expectedFingerprint)throw Error("Rental changed. Refresh before confirming return.");
  const payments=uid?await getDocs(query(collection(db,'adminFinanceTransactions'),where('rentalId','==',id))):null;
  return runTransaction(db,async tx=>{
  const snap=await tx.get(rr);if(!snap.exists())throw Error('Rental missing');const r=snap.data();
+ if(jdr90RentalFingerprint(r)!==jdr90RentalFingerprint(baseline))throw Error('Rental or payment changed during confirmation. Refresh and retry.');
  if(r.memberUid!==uid||(expectedUid&&uid!==expectedUid))throw Error('Member link changed. Refresh and retry.');
  if(r.status!=='returned'&&(!markReturned||r.status!=='rented'))throw Error('Requires confirmed return.');
  let message='Return saved.';
@@ -3405,8 +3410,8 @@ async function jdr85Complete(id,markReturned,expectedUid){
  const base=valid.filter(p=>p.data().category==='New rental');
  const paid=valid.reduce((a,p)=>a+Math.round(Number(p.data().amount)*100),0)/100;
  if(l.exists())message='Rental already rewarded. No duplicate points.';
- else if(!m.exists()||m.data().status!=='active')message='Return saved; rewards skipped: membership not active.';
- else if(base.length!==1||!Number.isFinite(paid)||paid<=0||(r.initialPaymentId&&base[0].id!==r.initialPaymentId)||(r.lastPaidExtensionId&&!valid.some(p=>p.id===r.lastPaidExtensionId)))message='Return saved; rewards skipped: confirmed payment records incomplete. Review and use Credit completed rental.';
+ else if(r.rewardBlockedAtReturn||!m.exists()||m.data().status!=='active'){message='Rewards skipped: membership not active at return or currently restricted.';if(markReturned&&r.status==='rented')tx.update(rr,{rewardBlockedAtReturn:true});}
+ else if(base.length!==1||!Number.isFinite(paid)||paid<=0||(r.initialPaymentId&&base[0].id!==r.initialPaymentId)||(r.lastPaidExtensionId&&!valid.some(p=>p.id===r.lastPaidExtensionId))||(Number.isFinite(r.estimatePaid)&&Math.round(r.estimatePaid*100)!==Math.round(paid*100)))message='Return saved; rewards skipped: confirmed payment records incomplete. Review and use Credit completed rental.';
  else {const x=m.data(),life=Number(x.lifetimePoints||0),balance=Number(x.points||0),mult=life>=10000?2:life>=5000?1.5:life>=2500?1.25:life>=1000?1.1:1,delta=Math.floor(Math.floor(paid/10)*mult+1e-9),next=life+delta;
  if(!Number.isSafeInteger(next)||!Number.isSafeInteger(balance+delta)||balance<0||life<0)throw Error('Invalid member points.');
  tx.update(mr,{points:balance+delta,lifetimePoints:next,rank:next>=10000?'Legendary Gamer':next>=5000?'Platinum Gamer':next>=2500?'Gold Gamer':next>=1000?'Silver Gamer':'Bronze Gamer',completedRentals:Number(x.completedRentals||0)+1,updatedAt:serverTimestamp()});
@@ -3428,23 +3433,26 @@ async function jdr87Vip(uid){
  const result=await new Promise(resolve=>{
  const d=document.createElement('dialog');d.style.cssText='width:min(480px,92vw);max-height:85vh;overflow:auto;background:#101e32;color:#edf6ff;border:1px solid #39638c;border-radius:18px;padding:22px;z-index:2147483647';
  const line=(tag,t)=>{const e=document.createElement(tag);e.textContent=t;d.append(e);return e;};
- line('h2','VIP Benefits Management · V8.7.1');line('p',['Bronze','Silver','Gold','Platinum','Legendary'][tier]+' Gamer · '+(r?.status||'inactive')+' · '+n+' lifetime points');
- const date=line('input','');date.type='date';date.min=year+'-'+month+'-01';date.max=year+'-'+month+'-'+String(new Date(Number(year),Number(month),0).getDate()).padStart(2,'0');date.setAttribute('aria-label','Verified birthday (current month)');date.disabled=!active||!tier||bs.exists();
+ line('h2','VIP Benefits Management · V9.0');line('p',['Bronze','Silver','Gold','Platinum','Legendary'][tier]+' Gamer · '+(r?.status||'inactive')+' · '+n+' lifetime points');
+ const date=line('input','');date.type='date';date.min=year+'-'+month+'-01';date.max=year+'-'+month+'-'+String(new Date(Number(year),Number(month),0).getDate()).padStart(2,'0');date.setAttribute('aria-label','Verified birthday (current month)');date.disabled=!active||!tier||bs.exists()||!!r?.verifiedBirthday; if(r?.verifiedBirthday){date.value=year+'-'+r.verifiedBirthday;line('p','Verified birthday (MM-DD): '+r.verifiedBirthday);}
  const note=line('textarea','');note.placeholder='Reference / verification note (no sensitive ID details)';note.style.cssText='display:block;width:100%;margin:12px 0;min-height:65px';
+ const swapId=line('input','');swapId.placeholder='Completed Game Swap history document ID';swapId.style.cssText='display:block;width:100%;margin:8px 0';
  const msg=line('p','');const finish=x=>{d.close();d.remove();resolve(x);};
- const add=(label,choice,enabled)=>{const b=line('button',label);b.type='button';b.disabled=!enabled;b.style.cssText='display:block;width:100%;margin:8px 0;padding:10px;border-radius:9px;background:#153657;color:white;border:1px solid #49749c;opacity:'+(enabled?1:.45);b.onclick=()=>{if(choice==='birthday'&&(!date.value||!date.checkValidity())){msg.textContent='Choose a verified birthday in the current month.';return;}if(!note.value.trim()){msg.textContent='Enter a reference or verification note.';return;}finish({choice,birthday:date.value.slice(5),reason:note.value.trim()});};};
+ const add=(label,choice,enabled)=>{const b=line('button',label);b.type='button';b.disabled=!enabled;b.style.cssText='display:block;width:100%;margin:8px 0;padding:10px;border-radius:9px;background:#153657;color:white;border:1px solid #49749c;opacity:'+(enabled?1:.45);b.onclick=()=>{if(choice==='birthday'&&(!date.value||!date.checkValidity())){msg.textContent='Choose a verified birthday in the current month.';return;}if(!note.value.trim()){msg.textContent='Enter a reference or verification note.';return;}if(choice==='swap'&&!/^[A-Za-z0-9_-]{1,150}$/.test(swapId.value.trim())){msg.textContent='Enter the actual Game Swap history document ID.';return;}finish({choice,birthday:date.value.slice(5),reason:note.value.trim(),swapId:swapId.value.trim()});};};
  line('p','Birthday voucher: '+(tier?'₱'+[0,25,50,75,100][tier]:'Unlocks at Silver')+' · '+(v?.status||'Not issued'));
  add('Issue Birthday Voucher','birthday',active&&tier>0&&!bs.exists());add('Redeem Voucher','redeem',active&&v?.kind==='birthday'&&v?.status==='issued');
  line('p','Monthly bonus swaps: '+used+' / '+max+' · '+(max?'Remaining: '+Math.max(0,max-used):'Unlocks at Platinum'));
  add('Record Completed Bonus Swap','swap',active&&used<max);const cancel=line('button','Close');cancel.type='button';cancel.onclick=()=>finish(null);d.addEventListener('cancel',e=>{e.preventDefault();finish(null);});document.body.append(d);d.showModal();
- });if(!result)return;const {choice,birthday,reason}=result;
+ });if(!result)return;const {choice,birthday,reason,swapId}=result;
  if(choice==='birthday'&&(!birthday||!/^\d{2}-\d{2}$/.test(birthday)||birthday.slice(0,2)!==month||Number(birthday.slice(3))<1||Number(birthday.slice(3))>new Date(Number(year),Number(month),0).getDate()))throw Error('Enter a verified birthday in the current Philippine calendar month.');
  if(!await jdrConfirm('Confirm '+choice+' for this member? For swaps, record only an already completed approved swap; for redemption, apply the discount only once.'))return;
  const vr=doc(db,'memberVouchers',uid,'records',choice==='swap'?'bonus_'+year+'_'+month:'birthday_'+year);
- await runTransaction(db,async tx=>{const [rs,vs]=await Promise.all([tx.get(rr),tx.get(vr)]);const r=rs.data(),v=vs.data();if(r?.status!=='active')throw Error('Active membership required.');const n=Number(r.lifetimePoints||0),tier=n>=10000?4:n>=5000?3:n>=2500?2:n>=1000?1:0;
- if(choice==='birthday'){if(!tier||vs.exists())throw Error('Not eligible or birthday voucher already issued this year.');tx.set(vr,{kind:'birthday',year,amount:[0,25,50,75,100][tier],status:'issued',reason,createdAt:serverTimestamp()});}
+ await runTransaction(db,async tx=>{if(todayISO().slice(0,7)!==year+'-'+month)throw Error('Calendar month changed. Reopen VIP benefits.');const [rs,vs]=await Promise.all([tx.get(rr),tx.get(vr)]);const r=rs.data(),v=vs.data();
+ let swapRecord;if(choice==='swap'){const hs=await tx.get(doc(db,'psnRentalHistory',swapId));swapRecord=hs.data();if(!swapRecord||swapRecord.action!=='Game Swap'||!swapRecord.rentalId)throw Error('Completed Game Swap record not found.');const rental=await tx.get(doc(db,'psnRentals',swapRecord.rentalId));if(!rental.exists()||rental.data().memberUid!==uid||swapRecord.memberUid!==uid)throw Error('Swap must have been completed for this member.');const dt=swapRecord.createdAt?.toDate?.();if(!dt||new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).format(dt).slice(0,7)!==year+'-'+month)throw Error('Swap must be from this Philippine calendar month.');}
+if(r?.status!=='active')throw Error('Active membership required.');const n=Number(r.lifetimePoints||0),tier=n>=10000?4:n>=5000?3:n>=2500?2:n>=1000?1:0;
+ if(choice==='birthday'){if(!tier||vs.exists())throw Error('Not eligible or birthday voucher already issued this year.');if(r.verifiedBirthday&&r.verifiedBirthday!==birthday)throw Error('Birthday differs from verified record.');if(!r.verifiedBirthday)tx.update(rr,{verifiedBirthday:birthday,birthdayVerifiedAt:serverTimestamp()});tx.set(vr,{kind:'birthday',year,amount:[0,25,50,75,100][tier],status:'issued',reason,createdAt:serverTimestamp()});}
  else if(choice==='redeem'){if(v?.status!=='issued'||v.kind!=='birthday')throw Error('No unused birthday voucher this year.');tx.update(vr,{status:'redeemed',redeemedAt:serverTimestamp(),redemptionNote:reason});}
- else{const max=tier===4?2:tier===3?1:0,used=Number(v?.used||0);if(used>=max)throw Error('Monthly bonus swap limit reached or not eligible.');if((v?.references||[]).includes(reason))throw Error('Reference already recorded.');tx.set(vr,{kind:'bonusSwap',year,month,used:used+1,references:[...(v?.references||[]),reason],updatedAt:serverTimestamp()});}
+ else{const max=tier===4?2:tier===3?1:0,used=Number(v?.used||0);if(used>=max)throw Error('Monthly bonus swap limit reached or not eligible.');if((v?.swapIds||[]).includes(swapId))throw Error('This completed swap is already recorded.');if((v?.references||[]).length>(v?.swapIds||[]).length)throw Error('Legacy bonus swap records require manual reconciliation before further claims this month.');tx.set(vr,{kind:'bonusSwap',year,month,used:used+1,references:[...(v?.references||[]),reason],swapIds:[...(v?.swapIds||[]),swapId],updatedAt:serverTimestamp()});}
  });jdrNotice('VIP record saved successfully.');
 }
 // V8.8 member notification center
