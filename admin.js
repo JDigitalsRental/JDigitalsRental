@@ -3478,3 +3478,39 @@ function jdr88RankNotice(uid,r,items){if(!r)return;const k='jdr88-rank-'+uid;con
  panel.style.maxHeight='min(70vh, 560px)';panel.style.overflowY='auto';
  panel.style.overscrollBehavior='contain';
  onAuthStateChanged(auth,u=>{center.reset();host.hidden=u?.uid!==ADMIN_UID;host.style.display=host.hidden?'none':'inline-block';});})();
+
+// V8.9 — Read-only membership analytics, explicitly loaded by admin.
+(function(){
+ const mount=()=>{
+ const page=$('jdrClean_analytics');if(!page||$('jdr89Analytics'))return;
+ const panel=document.createElement('section');panel.id='jdr89Analytics';panel.style.cssText='background:#0b192e;border:1px solid #315c89;border-radius:16px;padding:18px;margin:18px 0;color:#eaf4ff';
+ const add=(parent,tag,text,style='')=>{const e=document.createElement(tag);e.textContent=text;e.style.cssText=style;parent.append(e);return e;};
+ add(panel,'h2','💎 Membership Analytics · V8.9','margin:0 0 8px;font-size:21px');
+ add(panel,'p','Read-only reports. Load on demand to conserve Firebase reads.');
+ const load=add(panel,'button','Load / refresh membership analytics','padding:10px;border:1px solid #4385bb;border-radius:8px;background:#15375b;color:white;cursor:pointer');load.type='button';
+ const status=add(panel,'p','Not loaded.','color:#a9c7e4');const out=add(panel,'div','');let generation=0;
+ page.insertBefore(panel,page.children[2]||null);
+ const fmt=n=>n.toLocaleString('en-PH');const peso=n=>'₱'+n.toLocaleString('en-PH',{maximumFractionDigits:2});const num=n=>Number.isFinite(Number(n))?Number(n):0;
+ const tiers=['Bronze','Silver','Gold','Platinum','Legendary'];const tier=n=>n>=10000?4:n>=5000?3:n>=2500?2:n>=1000?1:0;
+ onAuthStateChanged(auth,u=>{generation++;out.replaceChildren();status.textContent='Not loaded.';load.disabled=false;panel.hidden=u?.uid!==ADMIN_UID;});
+ load.onclick=async()=>{
+ if(auth.currentUser?.uid!==ADMIN_UID)return;const g=++generation;const valid=()=>g===generation&&auth.currentUser?.uid===ADMIN_UID;load.disabled=true;out.replaceChildren();status.textContent='Loading member summaries…';
+ try{
+ const [a,b,c]=await Promise.all([getDocs(collection(db,'members')),getDocs(collection(db,'memberRewards')),getDocs(query(collection(db,'memberRedemptionRequests'),where('status','==','pending')))]);if(!valid())return;
+ const members=a.docs.map(d=>({id:d.id,...d.data()}));const rewards=new Map(b.docs.map(d=>[d.id,d.data()]));const rows=members.map(m=>({m,r:rewards.get(m.id)}));const activated=rows.filter(x=>x.r);const active=activated.filter(x=>x.r.status==='active');const sum=(list,k)=>list.reduce((s,x)=>s+num(x.r[k]),0);const points=sum(activated,'points');const lifetime=sum(activated,'lifetimePoints');
+ const grid=add(out,'div','','display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px');
+ const tile=(label,value)=>{const card=add(grid,'div','','padding:12px;background:#10243e;border:1px solid #294e74;border-radius:10px');add(card,'small',label,'color:#abc9e8');add(card,'strong',String(value),'display:block;font-size:23px;color:#8bcaff;margin-top:5px');};
+ const month=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit'});const now=month.format(new Date());const growth=members.filter(m=>m.createdAt?.toDate&&month.format(m.createdAt.toDate())===now).length;
+ for(const [l,v] of [['Total members',members.length],['Active members',active.length],['Restricted / warning',activated.length-active.length],['Pending activation',rows.length-activated.length],['New members this month',growth],['Outstanding points',fmt(points)],['Lifetime points issued',fmt(lifetime)],['Theoretical reward value',peso(points/4)],['Pending reward requests',c.size],['Rewarded rentals',fmt(sum(activated,'completedRentals'))]])tile(l,v);
+ add(out,'p','Theoretical value = outstanding points ÷ 4; not cash liability or guaranteed redeemable amount. Includes restricted balances.','font-size:12px;color:#a9c7e4');
+ add(out,'h3','Membership rank distribution');const counts=tiers.map((_,i)=>activated.filter(x=>tier(num(x.r.lifetimePoints))===i).length);
+ tiers.forEach((name,i)=>{const row=add(out,'div','','display:grid;grid-template-columns:85px 1fr 40px;gap:10px;align-items:center;margin:9px 0');add(row,'span',name);const track=add(row,'div','','height:9px;background:#20364d;border-radius:9px;overflow:hidden');add(track,'div','',`height:100%;width:${activated.length?100*counts[i]/activated.length:0}%;background:${['#cd955f','#cbd5e1','#eab308','#60a5fa','#a78bfa'][i]}`);add(row,'span',String(counts[i]));});
+ add(out,'h3','Most loyal members · lifetime points');for(const x of [...activated].sort((x,y)=>num(y.r.lifetimePoints)-num(x.r.lifetimePoints)).slice(0,10)){add(out,'p',`${x.m.fullName||'Member'} · ${tiers[tier(num(x.r.lifetimePoints))]} · ${fmt(num(x.r.lifetimePoints))} pts · ${x.r.status||'Unknown'}`,'padding:10px;border:1px solid #294e74;border-radius:8px');}
+ if(!activated.length)add(out,'p','No activated members.');
+ const ledgerButton=add(out,'button','Load historical redemption totals','padding:10px;border:1px solid #4385bb;border-radius:8px;background:#15375b;color:white;cursor:pointer');ledgerButton.type='button';const ledgerOut=add(out,'p','Optional: reads redemption ledger records for registered members.');
+ ledgerButton.onclick=async()=>{if(!valid())return;ledgerButton.disabled=true;ledgerOut.textContent='Loading redemption history…';let redeemed=0,approved=0,manual=0,failed=0;try{for(let i=0;i<members.length;i+=5){if(!valid())return;const batch=await Promise.allSettled(members.slice(i,i+5).map(m=>getDocs(query(collection(db,'memberPointsHistory',m.id,'records'),where('kind','==','redeem')))));for(const res of batch){if(res.status==='rejected'){failed++;continue;}for(const d of res.value.docs){const r=d.data();const n=-num(r.delta);if(n<=0)continue;redeemed+=n;if(r.requestId)approved+=n;else manual+=n;}}}if(valid())ledgerOut.textContent=(failed?`Partial totals (${failed} member queries failed). `:'')+`Redeemed points: ${fmt(redeemed)} · Approved request discounts: ${peso(approved/4)} · Manual redemption discounts: ${peso(manual/4)}. Recorded approvals, not verified payment deductions.`;}catch(e){if(valid())ledgerOut.textContent='Unable to load redemption totals: '+(e.code||e.message);}finally{if(valid())ledgerButton.disabled=false;}};
+ status.textContent='Loaded '+new Date().toLocaleString('en-PH',{timeZone:'Asia/Manila'})+' PHT.'+(b.size!==activated.length?' Unmatched reward profiles excluded.':'');
+ }catch(e){if(valid()){out.replaceChildren();status.textContent='Unable to load analytics: '+(e.code||e.message);}}finally{if(valid())load.disabled=false;}
+ };
+ };if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else if($('jdrClean_analytics'))mount();else document.addEventListener('DOMContentLoaded',mount);
+})();
