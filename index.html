@@ -2447,6 +2447,7 @@ body{background-image:radial-gradient(ellipse 65% 28% at 50% 0%,rgba(0,122,255,.
   </a>
 
 </header>
+<div id="jdr8-entry"><button id="jdr8-open" type="button">Members Club · Sign In / Register</button></div>
 
 
 <!-- JDR 2.0: visual trust / navigation strip; no backend changes -->
@@ -7009,5 +7010,34 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 @keyframes jdr72-light { from { opacity:.25; } to { opacity:.85; } }
 @media (prefers-reduced-motion:reduce) { body::after { animation:none!important; } }
 </style>
+<style id="jdr8-style">
+#jdr8-entry{display:flex;justify-content:center;padding:12px;background:#08172b;border-bottom:1px solid #25466b}#jdr8-entry button,#jdr8 button{font:inherit;cursor:pointer;border:1px solid #386ca2;border-radius:10px;padding:11px 16px;color:#eef7ff;background:#102b49}#jdr8-entry button,#jdr8 .jdr8-primary{background:linear-gradient(135deg,#168cff,#0754d9);font-weight:800}#jdr8{width:min(440px,calc(100% - 28px));max-height:90dvh;overflow:auto;color:#eef7ff;background:linear-gradient(150deg,#142b49,#080f20);border:1px solid #386ca2;border-radius:22px;padding:24px;box-shadow:0 24px 80px #0009;z-index:99999}#jdr8::backdrop{background:#020713c9;backdrop-filter:blur(5px)}#jdr8 h2{font-size:26px;margin:12px 0}#jdr8 p{font-size:13px;color:#b9cce3}#jdr8 form,#jdr8-profile{display:grid;gap:12px}#jdr8 label{display:grid;gap:5px;font-size:13px}#jdr8 input{width:100%;min-width:0}#jdr8 [hidden]{display:none!important}#jdr8-close{float:right}#jdr8-status{overflow-wrap:anywhere;min-height:20px}#jdr8 button:disabled{opacity:.5}#jdr8-email-display,#jdr8-uid{overflow-wrap:anywhere}#jdr8 .jdr8-links{display:flex;flex-wrap:wrap;gap:8px}#jdr8 .jdr8-links button{flex:1;font-size:12px}
+</style>
+<dialog id="jdr8" aria-labelledby="jdr8-title">
+<button id="jdr8-close" type="button" aria-label="Close">✕</button>
+<p class="eyebrow">JDIGITALS MEMBERS CLUB</p><h2 id="jdr8-title">Welcome, gamer.</h2>
+<div id="jdr8-guest"><p>Join for free. You can still browse and rent without an account.</p>
+<button id="jdr8-google" type="button" style="width:100%;margin-bottom:12px">Continue with Google</button>
+<form id="jdr8-form"><label id="jdr8-name-wrap" hidden>Full name<input id="jdr8-name" autocomplete="name" maxlength="100"></label><label>Email address<input id="jdr8-email" type="email" autocomplete="email" required></label><label>Password<input id="jdr8-password" type="password" autocomplete="current-password" required minlength="6"></label><button class="jdr8-primary" id="jdr8-submit">Sign In</button></form>
+<div class="jdr8-links" style="margin-top:12px"><button id="jdr8-toggle" type="button">Create account</button><button id="jdr8-reset" type="button">Forgot password?</button></div><button id="jdr8-continue" type="button" style="width:100%;margin-top:12px">Continue as Guest</button></div>
+<div id="jdr8-profile" hidden><strong id="jdr8-display"></strong><span id="jdr8-email-display"></span><p id="jdr8-verification"></p><button id="jdr8-resend" type="button">Resend verification email</button><button id="jdr8-refresh" type="button">I've verified my email</button><p>Rewards and rental history will be available in a future update.</p><button id="jdr8-logout" type="button">Sign Out</button></div>
+<p id="jdr8-status" role="status" aria-live="polite"></p></dialog>
+<script type="module" id="jdr8-auth">
+import {getApp} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
+import {getAuth,GoogleAuthProvider,signInWithPopup,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,updateProfile,onAuthStateChanged,signOut,reload} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+const el=id=>document.getElementById('jdr8-'+id), dialog=document.getElementById('jdr8');
+const auth=getAuth(getApp());let register=false,busy=false;
+const msg=t=>el('status').textContent=t;
+function mode(v){register=v;el('name-wrap').hidden=!v;el('name').required=v;el('password').autocomplete=v?'new-password':'current-password';el('submit').textContent=v?'Create free account':'Sign In';el('toggle').textContent=v?'Already a member? Sign in':'Create account';msg('');}
+function paint(u){el('guest').hidden=!!u;el('profile').hidden=!u;el('title').textContent=u?'My Account':'Welcome, gamer.';el('open').textContent=u?'My Account':'Members Club · Sign In / Register';if(u){el('display').textContent=u.displayName||'Member';el('email-display').textContent=u.email||'';el('verification').textContent=u.emailVerified?'Email verified':'Please verify your email before accessing future member rewards.';el('resend').hidden=u.emailVerified;el('refresh').hidden=u.emailVerified;el('password').value='';}}
+const errors={'auth/invalid-credential':'Incorrect email or password.','auth/email-already-in-use':'This email already has an account. Try signing in.','auth/popup-closed-by-user':'Google sign-in was cancelled.','auth/popup-blocked':'Allow popups in your browser and try again.','auth/unauthorized-domain':'This website domain is not authorized in Firebase.','auth/too-many-requests':'Too many attempts. Please try again later.','auth/network-request-failed':'Connection failed. Please try again.','auth/weak-password':'Choose a stronger password.'};
+async function run(fn){if(busy)return;busy=true;dialog.querySelectorAll('button').forEach(b=>b.disabled=true);msg('Please wait…');try{await fn();}catch(e){msg(errors[e.code]||'Unable to complete this action. Please try again. ('+(e.code||'error')+')');}finally{busy=false;dialog.querySelectorAll('button').forEach(b=>b.disabled=false);}}
+el('open').onclick=()=>{msg('');dialog.showModal();};el('close').onclick=el('continue').onclick=()=>dialog.close();el('toggle').onclick=()=>mode(!register);
+el('google').onclick=()=>run(async()=>{await signInWithPopup(auth,new GoogleAuthProvider());msg('Signed in successfully.');});
+el('form').onsubmit=e=>{e.preventDefault();run(async()=>{const email=el('email').value.trim(),password=el('password').value;if(register){const name=el('name').value.trim();if(!name){msg('Please enter your name.');return;}const {user}=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(user,{displayName:name});paint(user);await sendEmailVerification(user);msg('Account created. Check your inbox or spam folder for the verification link.');}else{await signInWithEmailAndPassword(auth,email,password);msg('Signed in successfully.');}});};
+el('reset').onclick=()=>run(async()=>{if(!el('email').reportValidity()) {msg('Enter your email first.');return;}await sendPasswordResetEmail(auth,el('email').value.trim());msg('If an account exists, check your inbox for a reset link.');});
+el('resend').onclick=()=>run(async()=>{await sendEmailVerification(auth.currentUser);msg('Verification email sent. Check your inbox or spam.');});el('refresh').onclick=()=>run(async()=>{await reload(auth.currentUser);await auth.currentUser.getIdToken(true);paint(auth.currentUser);msg(auth.currentUser.emailVerified?'Email verified successfully.':'Email not yet verified.');});el('logout').onclick=()=>run(async()=>{await signOut(auth);mode(false);msg('Signed out. You can continue as a guest.');});onAuthStateChanged(auth,paint,()=>msg('Unable to load account.'));
+</script>
+
 </body>
 </html>
