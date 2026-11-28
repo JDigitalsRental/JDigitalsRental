@@ -2620,6 +2620,7 @@ $("psnExtendApply").onclick=async()=>{
    if(freshOthers.some(r=>r.accountId===fresh.accountId&&r.status==='rented'))throw Error('Conflicting active renter on this PSN account.');
    const publicSlot=jdrPublicSlotFromRentals(fresh.gameId,fresh.slot,freshOwners,[...freshOthers,{id:rentalId,...fresh,returnDate:newReturn}]);
    tx.update(rentalRef,{returnDate:newReturn,updatedAt:serverTimestamp(),lastPaidExtensionId:financeId});
+   if(fresh.memberUid)jdr85History(tx,fresh.memberUid,rentalId,{...fresh,returnDate:newReturn});
    if(publicSlot){
     const fields=slotFields(fresh.slot);
     tx.update(gameRef,{[fields.status]:publicSlot.status,[fields.date]:publicSlot.date,updatedAt:serverTimestamp()});
@@ -2674,8 +2675,11 @@ $("psnRentalForm").onsubmit=async e=>{
   if(startDate&&returnDate<startDate)throw Error("Return date must not be before start date.");
   if(status==="rented"&&psnRentals.some(r=>r.id!==id&&r.accountId===accountId&&r.gameId===gameId&&r.slot===slot&&r.status==="rented"))throw Error("This PSN account/game/slot already has an active renter.");
   const data={accountId,gameId,slot,renterName,startDate,returnDate,status,updatedAt:serverTimestamp()};
+  if(!id && $("jdr85Member").value) data.memberUid=$("jdr85Member").value;
   const old=psnRentals.find(r=>r.id===id);
   if(id){
+   if(old?.status!=="returned" && status==="returned")throw Error("Use Mark Returned to verify return proof and credit rewards.");
+   if(old?.status==="returned" && status!=="returned")throw Error("Create a new rental instead of reopening a completed rental.");
    if(old?.status==='rented'&&(old.gameId!==gameId||old.accountId!==accountId||old.slot!==slot))throw Error('Use Swap Game for active assignment changes.');
    // Existing rental edits never create initial-payment income.
    if(!old?.rentalPlan && $('jdrSwapPlan').value){
@@ -2708,6 +2712,7 @@ $("psnRentalForm").onsubmit=async e=>{
    const ownerRefs=accounts.filter(a=>(a.gameIds||[]).includes(gameId)).map(a=>doc(db,'psnAccounts',a.id));
    await runTransaction(db,async tx=>{
     const [gameSnap,financeSnap,...rest]=await Promise.all([tx.get(gameRef),tx.get(financeRef),...otherRefs.map(r=>tx.get(r)),...ownerRefs.map(r=>tx.get(r))]);
+    if(data.memberUid){const m=await tx.get(doc(db,"memberRewards",data.memberUid));if(!m.exists()||m.data().status!=="active")throw Error("Member is not active.");}
     if(!gameSnap.exists())throw Error('Game was removed. No payment recorded.');
     if(financeSnap.exists())throw Error('This rental payment already exists.');
     const otherRentals=rest.slice(0,otherRefs.length).filter(x=>x.exists()).map(x=>({id:x.id,...x.data()}));
@@ -2716,6 +2721,7 @@ $("psnRentalForm").onsubmit=async e=>{
     if(otherRentals.some(r=>r.accountId===accountId&&r.status==='rented'))throw Error('This PSN account/game/slot already has an active renter. Nothing charged.');
     const publicSlot=jdrPublicSlotFromRentals(gameId,slot,owners,[...otherRentals,{...data,id:rentalRef.id}]);
     tx.set(rentalRef,{...data,createdAt:serverTimestamp(),initialPaymentId:financeRef.id});
+    if(data.memberUid)jdr85History(tx,data.memberUid,rentalRef.id,data);
     tx.set(financeRef,{type:'income',date:todayISO(),amount,category:'New rental',description:`${renterName} — ${psnGameTitle(gameId)} — ${psnSlotLabel(slot)}${note?' — '+note:''}`,reference:financeRef.id,rentalId:rentalRef.id,gameId,slot,accountId,createdAt:serverTimestamp(),createdBy:auth.currentUser.uid});
     tx.set(doc(collection(db,'psnRentalHistory')),{action:'New Rental + Payment',accountId,gameId,gameName:psnGameTitle(gameId),slot,renterName,details:`Return: ${returnDate}; confirmed paid ₱${amount.toFixed(2)}; finance ref ${financeRef.id}`,createdAt:serverTimestamp()});
     if(publicSlot){const fields=slotFields(slot);tx.update(gameRef,{[fields.status]:publicSlot.status,[fields.date]:publicSlot.date,updatedAt:serverTimestamp()});}
@@ -2724,7 +2730,7 @@ $("psnRentalForm").onsubmit=async e=>{
    await Promise.allSettled([v4LoadFinance(),loadAdminGames()]);
    psnMsg("psnRentalMessage",`✅ Rental and ₱${amount.toFixed(2)} payment saved together. Financial Report updated.`);
   }
-  psnClearRental();await psnLoad();jdrToggleNewRentalPayment();
+  $("jdr85Member").value="";psnClearRental();await psnLoad();jdrToggleNewRentalPayment();
  }catch(err){psnMsg("psnRentalMessage","❌ "+err.message);}finally{jdrNewRentalSaving=false;btn.disabled=false;jdrToggleNewRentalPayment();}
 };
 // V6.7 — Admin-only one-tap reconciliation for existing PSN account inventory.
@@ -2786,7 +2792,8 @@ async function jdrRefreshPublicSlotsForGame(gameId){
 }
 async function jdrConfirmPsnReturn(rental){
  const rr=doc(db,"psnRentals",rental.id);
- await runTransaction(db,async tx=>{const s=await tx.get(rr);if(!s.exists())throw Error('Rental missing');const r=s.data();tx.update(rr,{status:'returned',updatedAt:serverTimestamp()});if(r.memberUid)tx.set(doc(db,'memberRentalHistory',r.memberUid,'records',rental.id),{rentalId:rental.id,gameName:psnGameTitle(r.gameId),slot:r.slot,startDate:r.startDate||'',returnDate:r.returnDate||'',status:'returned',updatedAt:serverTimestamp()});});
+ const result=await jdr85Complete(rental.id,true);
+ if(result)jdrNotice(result);
  try{await jdrRefreshPublicSlotsForGame(rental.gameId);}
  catch(err){console.error("Public availability sync failed:",err);jdrNotice("Return saved, but customer availability could not be refreshed. Please refresh and check Game Management: "+err.message);}
 }
@@ -3362,7 +3369,7 @@ function jdrConfirm(message){return jdrDialog(message,'Confirm Action','info',tr
  return new Promise(resolve=>{let chosen='';function draw(){list.replaceChildren();const q=search.value.toLowerCase();for(const r of rows.filter(r=>[r.renterName,psnGameTitle(r.gameId),r.id].join(' ').toLowerCase().includes(q))){const b=document.createElement('button');b.textContent=[r.renterName,psnGameTitle(r.gameId),r.slot,r.status,r.returnDate].join(' · ');b.onclick=()=>{chosen=r.id;dlg.close()};list.append(b);}if(!list.children.length)list.textContent='No matching rentals.';}search.oninput=draw;cancel.onclick=()=>dlg.close();dlg.addEventListener('close',()=>{dlg.remove();resolve(chosen)},{once:true});draw();dlg.showModal();});
  }
  async function link(u){const id=await chooseRental(u);if(!id)return;if(id.includes('/'))throw Error('Invalid rental ID.');const rr=doc(db,'psnRentals',id),s=await getDoc(rr);if(!s.exists())throw Error('Rental not found.');const r=s.data();if(!await jdrConfirm('Link '+r.renterName+' / '+psnGameTitle(r.gameId)+' to '+members.find(m=>m.uid===u).email+'? Verify identity first.'))return;await runTransaction(db,async tx=>{const [a,b]=await Promise.all([tx.get(rr),tx.get(ref(u))]);if(!a.exists()||!b.exists())throw Error('Rental or active profile missing.');const x=a.data();if(x.memberUid&&x.memberUid!==u)throw Error('Rental already linked to another member.');if(b.data().status!=='active')throw Error('Member is not active.');tx.update(rr,{memberUid:u});tx.set(doc(db,'memberRentalHistory',u,'records',id),{rentalId:id,gameName:psnGameTitle(x.gameId),slot:x.slot,startDate:x.startDate||'',returnDate:x.returnDate||'',status:x.status,updatedAt:serverTimestamp()});});}
- async function award(u){const id=await chooseRental(u,true);if(!id)return;if(id.includes('/'))throw Error('Invalid ID.');const rr=doc(db,'psnRentals',id),ls=ledger(u,'rental_'+id);const fs=await getDocs(query(collection(db,'adminFinanceTransactions'),where('rentalId','==',id)));const refs=fs.docs.map(d=>d.ref);if(!refs.length)throw Error('No linked confirmed payment records.');if(!await jdrConfirm('Confirm return proof and eligible payments for this rental? Points will be credited once.'))return;await runTransaction(db,async tx=>{const [a,b,c,...payments]=await Promise.all([tx.get(rr),tx.get(ref(u)),tx.get(ls),...refs.map(f=>tx.get(f))]);if(!a.exists()||!b.exists()||c.exists())throw Error('Missing record or already rewarded.');const x=a.data(),r=b.data();if(x.memberUid!==u||x.status!=='returned'||r.status!=='active')throw Error('Requires linked returned rental and active membership.');const paid=payments.filter(p=>p.exists()&&p.data().type==='income'&&p.data().rentalId===id&&['New rental','Rental extension'].includes(p.data().category)).reduce((sum,p)=>sum+Number(p.data().amount),0);if(!Number.isFinite(paid)||paid<=0)throw Error('No eligible payment.');const delta=Math.floor(Math.floor(paid/10)*multiplier(r.lifetimePoints||0)),life=(r.lifetimePoints||0)+delta;tx.update(ref(u),{points:(r.points||0)+delta,lifetimePoints:life,rank:rank(life),completedRentals:(r.completedRentals||0)+1,updatedAt:serverTimestamp()});tx.set(ls,{kind:'rental',rentalId:id,paid,delta,createdAt:serverTimestamp(),actor:ADMIN_UID});tx.set(doc(db,'memberRentalHistory',u,'records',id),{rentalId:id,gameName:psnGameTitle(x.gameId),slot:x.slot,startDate:x.startDate||'',returnDate:x.returnDate||'',status:'returned',updatedAt:serverTimestamp()});});await load();}
+ async function award(u){const id=await chooseRental(u,true);if(!id)return;if(!await jdrConfirm('Confirm return proof and eligible payments?'))return;const result=await jdr85Complete(id,false,u);await load();if(result)jdrNotice(result);}
  function render(){host.replaceChildren();const q=$('jdrMembersSearch').value.toLowerCase();$('jdrMembersStats').textContent=`Members: ${members.length} | Active: ${[...rewards.values()].filter(r=>r.status==='active').length} | Restricted: ${[...rewards.values()].filter(r=>['blacklisted','suspended'].includes(r.status)).length} | Outstanding points: ${[...rewards.values()].reduce((s,r)=>s+Number(r.points||0),0)}`;for(const m of members.filter(m=>[m.uid,m.fullName,m.email].join(' ').toLowerCase().includes(q))){const r=rewards.get(m.uid),card=document.createElement('div');card.className='psn-entry';psnLine(card,'strong',m.fullName||'Member');psnLine(card,'small',`${m.email} | ${m.uid}`);psnLine(card,'p',r?`${rank(Number(r.lifetimePoints||0))} • ${r.status} • ${r.points} points • ${r.lifetimePoints} lifetime • ${r.completedRentals||0} rewarded rentals`:'Pending activation');if(!r)button(card,'Activate',()=>change(m.uid,'activate',0,'Initial activation'));else{button(card,'Adjust points',async()=>{const raw=prompt('Signed whole points (+ or -):');if(raw===null)return;const n=Number(raw),reason=prompt('Reason:')?.trim();if(!Number.isSafeInteger(n)||!n||!reason)throw Error('Valid points and reason required.');await change(m.uid,'adjust',n,reason);});button(card,'Redeem discount',async()=>{const n=Number(prompt('Points: 100 / 200 / 400 / 800'));if(![100,200,400,800].includes(n))return;if(await jdrConfirm(`Apply ₱${n/4} discount manually to customer payment?`))await change(m.uid,'redeem',-n,'Discount ₱'+n/4);});button(card,'Link rental',()=>link(m.uid));button(card,'Credit completed rental',()=>award(m.uid));button(card,'Change status / violation',async()=>{const s=prompt('active / warning / suspended / blacklisted')?.trim();if(!['active','warning','suspended','blacklisted'].includes(s))return;const reason=prompt('Reason / incident:')?.trim();if(!reason)return;if(await jdrConfirm('Set membership to '+s+'?'))await change(m.uid,'status',0,reason,s);});button(card,'Points / violation history',async()=>{const snap=await getDocs(query(collection(db,'memberPointsHistory',m.uid,'records'),orderBy('createdAt','desc'),limit(50)));const out=card.querySelector('pre')||document.createElement('pre');out.style.whiteSpace='pre-wrap';out.textContent=snap.docs.map(d=>{const x=d.data();return `${x.createdAt?.toDate?.().toLocaleString()||''} | ${x.kind} | ${x.delta} | ${x.reason||x.rentalId||''}`;}).join('\n')||'No history';card.append(out);});}host.append(card);}}
 
  const queue=document.createElement('div');queue.className='psn-entry';host.before(queue);
@@ -3378,3 +3385,36 @@ function jdrConfirm(message){return jdrDialog(message,'Confirm Action','info',tr
  }
  $('openMembersPanel').onclick=()=>{openModal('jdrMembersModal');action(load);};$('closeMembersPanel').onclick=()=>closeModal('jdrMembersModal');$('jdrMembersRefresh').onclick=()=>action(load);$('jdrMembersSearch').oninput=render;
 }
+// V8.5 — optional verified member assignment and idempotent rewards.
+function jdr85History(tx,u,id,r){tx.set(doc(db,'memberRentalHistory',u,'records',id),{rentalId:id,gameName:psnGameTitle(r.gameId),slot:r.slot,startDate:r.startDate||'',returnDate:r.returnDate||'',status:r.status,updatedAt:serverTimestamp()});}
+async function jdr85Complete(id,markReturned,expectedUid){
+ if(auth.currentUser?.uid!==ADMIN_UID)throw Error('Admin only');
+ const rr=doc(db,'psnRentals',id);
+ const initial=await getDoc(rr);if(!initial.exists())throw Error('Rental missing');
+ const uid=initial.data().memberUid;
+ const payments=uid?await getDocs(query(collection(db,'adminFinanceTransactions'),where('rentalId','==',id))):null;
+ return runTransaction(db,async tx=>{
+ const snap=await tx.get(rr);if(!snap.exists())throw Error('Rental missing');const r=snap.data();
+ if(r.memberUid!==uid||(expectedUid&&uid!==expectedUid))throw Error('Member link changed. Refresh and retry.');
+ if(r.status!=='returned'&&(!markReturned||r.status!=='rented'))throw Error('Requires confirmed return.');
+ let message='Return saved.';
+ if(uid){
+ const mr=doc(db,'memberRewards',uid),lr=doc(db,'memberPointsHistory',uid,'records','rental_'+id);
+ const [m,l,...ps]=await Promise.all([tx.get(mr),tx.get(lr),...payments.docs.map(p=>tx.get(p.ref))]);
+ const valid=ps.filter(p=>p.exists()&&p.data().type==='income'&&p.data().rentalId===id&&['New rental','Rental extension'].includes(p.data().category)&&Number.isFinite(Number(p.data().amount))&&Number(p.data().amount)>0);
+ const base=valid.filter(p=>p.data().category==='New rental');
+ const paid=valid.reduce((a,p)=>a+Math.round(Number(p.data().amount)*100),0)/100;
+ if(l.exists())message='Rental already rewarded. No duplicate points.';
+ else if(!m.exists()||m.data().status!=='active')message='Return saved; rewards skipped: membership not active.';
+ else if(base.length!==1||!Number.isFinite(paid)||paid<=0||(r.initialPaymentId&&base[0].id!==r.initialPaymentId)||(r.lastPaidExtensionId&&!valid.some(p=>p.id===r.lastPaidExtensionId)))message='Return saved; rewards skipped: confirmed payment records incomplete. Review and use Credit completed rental.';
+ else {const x=m.data(),life=Number(x.lifetimePoints||0),balance=Number(x.points||0),mult=life>=10000?2:life>=5000?1.5:life>=2500?1.25:life>=1000?1.1:1,delta=Math.floor(Math.floor(paid/10)*mult+1e-9),next=life+delta;
+ if(!Number.isSafeInteger(next)||!Number.isSafeInteger(balance+delta)||balance<0||life<0)throw Error('Invalid member points.');
+ tx.update(mr,{points:balance+delta,lifetimePoints:next,rank:next>=10000?'Legendary Gamer':next>=5000?'Platinum Gamer':next>=2500?'Gold Gamer':next>=1000?'Silver Gamer':'Bronze Gamer',completedRentals:Number(x.completedRentals||0)+1,updatedAt:serverTimestamp()});
+ tx.set(lr,{kind:'rental',rentalId:id,paid,delta,createdAt:serverTimestamp(),actor:ADMIN_UID});message=`Rental completed: +${delta} reward points.`;}
+ jdr85History(tx,uid,id,{...r,status:'returned'});
+ }
+ if(markReturned&&r.status!=='returned')tx.update(rr,{status:'returned',updatedAt:serverTimestamp()});
+ return message;
+ });
+}
+(function(){const input=$('psnRenterName');const wrap=document.createElement('div');wrap.style.cssText='margin:12px 0';const label=document.createElement('label');label.textContent='Member (optional — verify identity)';const select=document.createElement('select');select.id='jdr85Member';select.add(new Option('Guest / no member',''));const load=document.createElement('button');load.type='button';load.textContent='Load active members';wrap.append(label,select,load);input.parentElement.after(wrap);load.onclick=async()=>{load.disabled=true;try{if(auth.currentUser?.uid!==ADMIN_UID)throw Error('Admin only');const [a,b]=await Promise.all([getDocs(collection(db,'members')),getDocs(collection(db,'memberRewards'))]);const active=new Set(b.docs.filter(d=>d.data().status==='active').map(d=>d.id));select.replaceChildren(new Option('Guest / no member',''));for(const d of a.docs.filter(d=>active.has(d.id)))select.add(new Option(`${d.data().fullName||'Member'} — ${d.data().email||d.id}`,d.id));}catch(e){jdrNotice(e.message);}finally{load.disabled=false;}};let last='';document.addEventListener('click',()=>setTimeout(()=>{const id=$('psnRentalEditId').value;wrap.hidden=!!id;if(id!==last){select.value='';last=id;}},0));$('psnRentalForm').addEventListener('reset',()=>{select.value='';});})();
