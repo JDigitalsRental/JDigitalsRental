@@ -3193,7 +3193,7 @@ document.addEventListener('DOMContentLoaded',function(){
     const customerActions=document.createElement('section');customerActions.className='management-shortcuts';
     ['openPsnLibrary','openPsnPanel'].forEach(id=>{if(byId(id))psnActions.appendChild(byId(id))});
     ['openRentalPanel'].forEach(id=>{if(byId(id))rentalActions.appendChild(byId(id))});
-    ['openReviewsPanel','openBlacklistPanel'].forEach(id=>{if(byId(id))customerActions.appendChild(byId(id))});
+    ['openReviewsPanel','openBlacklistPanel','openMembersPanel'].forEach(id=>{if(byId(id))customerActions.appendChild(byId(id))});
     move(psnActions,'psn');move(rentalActions,'rentals');move(customerActions,'customers');
     quick.remove();
   }
