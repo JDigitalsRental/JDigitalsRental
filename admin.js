@@ -2482,6 +2482,21 @@ function psnRender(){
   if(r.status==='rented'){
    psnLine(card,'small','Plan: '+(jdrSwapLabels[r.rentalPlan]||'Not configured')+' • Recorded swaps: '+(r.swapCount||0));
    const swap=document.createElement('button');swap.type='button';swap.textContent='🔄 Swap Game';swap.style.cssText='margin:8px;background:#12543d;border-color:#32a77b';swap.onclick=()=>jdrOpenSwap(r);card.append(swap);
+   // V9.0.2: expose the existing verified return workflow on active rental cards.
+   const returned=document.createElement('button');returned.type='button';returned.textContent='✅ Mark Returned';
+   returned.style.cssText='margin:8px;background:#17633e;border-color:#32a77b';
+   returned.onclick=async()=>{
+    returned.disabled=true;
+    try{
+     if(!await jdrConfirm('Confirm return of '+(r.renterName||'this renter')+' / '+psnGameTitle(r.gameId)+'?\n\nVerify console sharing is disabled and account access is secured. Eligible rewards will be credited once.'))return;
+     await jdrConfirmPsnReturn(r);
+     try{await psnLog('Returned',r,'Confirmed by admin from Rental Management');}
+     catch(error){console.error('Return history log failed:',error);jdrNotice('Return saved, but activity history could not be logged: '+error.message);}
+     await psnLoad();
+    }catch(error){jdrNotice('Could not complete return: '+error.message);}
+    finally{returned.disabled=false;}
+   };
+   card.append(returned);
   }
   rentalBox.append(card);
  }
